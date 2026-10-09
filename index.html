@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصتي التعليمية</title>
+<div style="display:inline-block;background:linear-gradient(90deg,#667eea,#764ba2);color:#fff;padding:6px 16px;border-radius:999px;font-size:12px;font-weight:800;margin-top:10px;">
+  Made by Yasser Mohamed
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI','Tahoma',system-ui,sans-serif;}
+body{background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;padding:12px;color:#111;}
+.wrap{max-width:900px;margin:0 auto;}
+.glass{background:rgba(255,255,255,0.97);border-radius:24px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.screen{display:none;animation:fade .3s ease;}
+.screen.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:32px;font-weight:900;color:#1f2937;text-align:center;margin-bottom:8px;}
+.sub{text-align:center;color:#6b7280;margin-bottom:24px;}
+.btn{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:14px 20px;border-radius:16px;font-weight:700;font-size:16px;cursor:pointer;transition:transform .2s,box-shadow .2s;font-family:inherit;width:100%;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(102,126,234,.4);}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.btn-sm{padding:12px 20px;width:auto;}
+.btn-light{background:#eef2ff;color:#4338ca;}
+.btn-red{background:#ef4444;}
+.btn-green{background:#10b981;}
+.card{background:#fff;border-radius:18px;padding:20px;text-align:right;cursor:pointer;transition:all .25s;border:2px solid transparent;box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.card:hover{transform:translateY(-4px);border-color:#a5b4fc;box-shadow:0 12px 28px rgba(0,0,0,.15);}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+.emoji{font-size:44px;margin-bottom:10px;display:block;}
+.card h3{font-size:17px;font-weight:800;color:#1f2937;margin-bottom:4px;}
+.card p{font-size:13px;color:#6b7280;}
+.input{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:inherit;}
+.input:focus{outline:none;border-color:#667eea;}
+.label{font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:8px;}
+.row{display:flex;gap:8px;}
+.hint{font-size:12px;margin-top:8px;color:#2563eb;font-weight:700;}
+.back{color:#6b7280;font-weight:700;cursor:pointer;background:none;border:none;font-family:inherit;font-size:15px;}
+.back:hover{color:#667eea;}
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.head h2{font-size:22px;font-weight:900;color:#1f2937;}
+.textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:14px;font-size:14px;font-family:inherit;resize:vertical;min-height:140px;}
+.textarea:focus{outline:none;border-color:#667eea;}
+.file-box{background:#fff;border:2px dashed #c7d2fe;border-radius:14px;padding:14px;margin-bottom:12px;}
+.divider{text-align:center;color:#9ca3af;margin:12px 0;font-weight:700;}
+.q-box{background:#fff;border:2px solid #f3f4f6;border-radius:14px;padding:14px;margin-bottom:14px;}
+.q-text{font-weight:800;color:#1f2937;margin-bottom:12px;font-size:15px;line-height:1.6;}
+.opt{width:100%;text-align:right;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:8px;font-family:inherit;color:#1f2937;display:block;}
+.opt:hover{background:#f9fafb;}
+.opt.selected{background:#dbeafe;border-color:#3b82f6;}
+.opt.correct{background:#d1fae5;border-color:#10b981;}
+.opt.wrong{background:#fee2e2;border-color:#ef4444;}
+.opt:disabled{cursor:default;}
+.chat-wrap{display:flex;flex-direction:column;height:75vh;}
+.chat-head{padding:16px 20px;border-bottom:2px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;}
+.chat-body{flex:1;overflow-y:auto;padding:16px;background:#fafafa;}
+.chat-input-bar{padding:14px;border-top:2px solid #f3f4f6;display:flex;gap:8px;background:#fff;border-radius:0 0 24px 24px;}
+.bubble{padding:10px 16px;max-width:80%;font-size:14px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;}
+.bubble.user{background:#667eea;color:#fff;border-radius:18px 18px 4px 18px;}
+.bubble.other{background:#f3f4f6;color:#111;border-radius:18px 18px 18px 4px;}
+.bubble.self{background:#dbeafe;color:#1e40af;border-radius:18px 18px 4px 18px;}
+.bubble-row{display:flex;margin-bottom:10px;flex-direction:column;}
+.bubble-row.user{align-items:flex-end;}
+.bubble-row.other{align-items:flex-start;}
+.bubble-meta{font-size:11px;color:#6b7280;margin-bottom:2px;padding:0 6px;}
+.badge{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:800;}
+.badge.online{background:#d1fae5;color:#065f46;}
+.badge.offline{background:#fee2e2;color:#991b1b;}
+.user-pill{display:inline-flex;align-items:center;gap:6px;background:#fff;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.06);margin:3px;}
+.user-pill .dot{width:8px;height:8px;border-radius:50%;background:#10b981;}
+.video-item{background:#fff;border-radius:14px;padding:12px;display:flex;gap:12px;align-items:center;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.video-thumb{width:90px;height:60px;border-radius:10px;background:linear-gradient(135deg,#1e3a8a,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;flex-shrink:0;cursor:pointer;}
+.video-info{flex:1;overflow:hidden;}
+.video-info p{font-weight:700;color:#1f2937;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;}
+.video-info a{font-size:11px;color:#667eea;font-weight:700;text-decoration:none;}
+.del{color:#ef4444;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;}
+.spinner{display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,.3);border-radius:50%;border-top-color:#fff;animation:spin .8s linear infinite;vertical-align:middle;}
+.spinner-dark{border-color:rgba(102,126,234,.2);border-top-color:#667eea;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px 20px;color:#9ca3af;}
+.empty .emoji{font-size:56px;opacity:.5;}
+.result{background:linear-gradient(90deg,#667eea,#764ba2);color:#fff;border-radius:18px;padding:24px;text-align:center;margin-top:20px;box-shadow:0 12px 30px rgba(102,126,234,.3);}
+.result .big{font-size:48px;margin-bottom:8px;}
+.result .score{font-size:32px;font-weight:900;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;}
+.toast.show{opacity:1;}
+.toast.ok{background:#059669;}
+.toast.err{background:#dc2626;}
+.note{font-size:12px;color:#6b7280;margin-top:8px;text-align:center;}
+.choice-btn{padding:8px 16px;border:2px solid #e5e7eb;background:#fff;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;color:#374151;}
+.choice-btn:hover{border-color:#a5b4fc;background:#f5f3ff;}
+.choice-btn.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(102,126,234,.35);}
+.progress-bar{background:#e5e7eb;height:8px;border-radius:4px;overflow:hidden;margin-bottom:20px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);width:0;transition:width .4s;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
+.stat-card{background:#fff;border-radius:12px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.stat-card .num{font-size:22px;font-weight:900;color:#667eea;}
+.stat-card .lbl{font-size:11px;color:#6b7280;margin-top:4px;}
+.room-code-box{background:linear-gradient(90deg,#eef2ff,#f5f3ff);border:2px dashed #a5b4fc;border-radius:14px;padding:16px;text-align:center;margin-bottom:16px;}
+.room-code{font-size:28px;font-weight:900;color:#4338ca;letter-spacing:4px;font-family:'Courier New',monospace;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9998;padding:20px;}
+.modal.show{display:flex;}
+.modal-content{background:#fff;border-radius:20px;padding:24px;max-width:400px;width:100%;text-align:center;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-thumb{background:#c7d2fe;border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ HOME ============ -->
+<div id="home-screen" class="screen active">
+  <div class="glass">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:56px;margin-bottom:12px;">🎓</div>
+      <h1>منصتي التعليمية</h1>
+      <p class="sub">منصة تفاعلية متعددة المستخدمين</p>
+      <div style="margin-bottom:16px;">
+        <span class="badge online">🟢 متصل</span>
+        <span class="badge online" id="home-users">👥 1</span>
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:16px;">
+      <label class="label">👤 اسمك</label>
+      <input id="username-input" type="text" class="input" placeholder="اكتب اسمك..." maxlength="20">
+      <button onclick="saveUsername()" class="btn btn-sm" style="margin-top:8px;width:100%;">حفظ الاسم</button>
+    </div>
+
+    <div class="room-code-box">
+      <div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:8px;">🏠 كود الغرفة الحالية</div>
+      <div class="room-code" id="current-room">GENERAL</div>
+      <button onclick="showRoomModal()" class="btn btn-light" style="margin-top:12px;font-size:13px;padding:8px;">🔄 تغيير الغرفة</button>
+    </div>
+
+    <div class="grid">
+      <div class="card" onclick="showScreen('chat-screen')">
+        <span class="emoji">💬</span>
+        <h3>الدردشة الجماعية</h3>
+        <p>تحدث مع الجميع</p>
+      </div>
+      <div class="card" onclick="showScreen('quiz-screen')">
+        <span class="emoji">📄</span>
+        <h3>امتحانات PDF</h3>
+        <p>ولّد أسئلة ذكية</p>
+      </div>
+      <div class="card" onclick="showScreen('flashcard-screen')">
+        <span class="emoji">🃏</span>
+        <h3>البطاقات</h3>
+        <p>احفظ المفاهيم</p>
+      </div>
+      <div class="card" onclick="showScreen('video-screen')">
+        <span class="emoji">🎬</span>
+        <h3>الفيديوهات</h3>
+        <p>شارك روابط</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CHAT (GLOBAL) ============ -->
+<div id="chat-screen" class="screen">
+  <div class="glass" style="padding:0;overflow:hidden;">
+    <div class="chat-wrap">
+      <div class="chat-head">
+        <button class="back" onclick="showScreen('home-screen')">← رجوع</button>
+        <div style="display:flex;align-items:center;gap:8px;flex-direction:column;">
+          <h2 style="font-size:17px;">💬 <span id="chat-room-name">GENERAL</span></h2>
+          <div id="online-users" style="font-size:11px;color:#10b981;font-weight:700;">🟢 1 متصل</div>
+        </div>
+        <button class="back" onclick="clearRoomChat()" style="color:#ef4444;">مسح</button>
+      </div>
+      <div id="chat-body" class="chat-body"></div>
+      <div class="chat-input-bar">
+        <input id="chat-input" type="text" class="input" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendChat()">
+        <button onclick="sendChat()" class="btn btn-sm">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ QUIZ ============ -->
+<div id="quiz-screen" class="screen">
+  <div class="glass">
+    <div class="head">
+      <button class="back" onclick="showScreen('home-screen')">← رجوع</button>
+      <h2>📄 امتحانات PDF</h2>
+      <div style="width:60px;"></div>
+    </div>
+
+    <div id="quiz-input">
+      <div class="file-box">
+        <label class="label">📎 ارفع ملف PDF</label>
+        <input type="file" id="pdf-input" accept=".pdf">
+        <p id="pdf-name" class="note"></p>
+      </div>
+      <div class="divider">— أو —</div>
+      <textarea id="text-input" class="textarea" placeholder="الصق النص التعليمي هنا..."></textarea>
+
+      <div style="margin-top:16px;background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+        <div style="margin-bottom:16px;">
+          <label class="label">🔢 عدد الأسئلة</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <button class="choice-btn count-btn active" onclick="selectCount(this, 5)">5</button>
+            <button class="choice-btn count-btn" onclick="selectCount(this, 10)">10</button>
+            <button class="choice-btn count-btn" onclick="selectCount(this, 15)">15</button>
+            <button class="choice-btn count-btn" onclick="selectCount(this, 20)">20</button>
+            <input type="number" id="custom-count" min="1" max="50" placeholder="مخصص"
+              style="width:90px;padding:8px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;text-align:center;font-family:inherit;"
+              oninput="selectCustomCount(this.value)">
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label class="label">🎨 نوع الأسئلة</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="choice-btn type-btn active" onclick="selectType(this, 'mix')">🎲 خلط</button>
+            <button class="choice-btn type-btn" onclick="selectType(this, 'mcq')">📋 MCQ</button>
+            <button class="choice-btn type-btn" onclick="selectType(this, 'tf')">✅ صح/خطأ</button>
+            <button class="choice-btn type-btn" onclick="selectType(this, 'fill')">✍️ فراغ</button>
+          </div>
+        </div>
+
+        <div id="options-count-section" style="margin-bottom:16px;">
+          <label class="label">📊 عدد الخيارات</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="choice-btn opts-btn" onclick="selectOpts(this, 3)">3</button>
+            <button class="choice-btn opts-btn active" onclick="selectOpts(this, 4)">4</button>
+            <button class="choice-btn opts-btn" onclick="selectOpts(this, 5)">5</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label class="label">🎯 الصعوبة</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="choice-btn diff-btn" onclick="selectDiff(this, 'easy')">🟢 سهل</button>
+            <button class="choice-btn diff-btn active" onclick="selectDiff(this, 'medium')">🟡 متوسط</button>
+            <button class="choice-btn diff-btn" onclick="selectDiff(this, 'hard')">🔴 صعب</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <button id="gen-btn" onclick="generateQuiz()" class="btn">✨ توليد الأسئلة</button>
+      </div>
+      <button onclick="shareQuizToRoom()" class="btn btn-light" style="margin-top:8px;">📤 شارك مع الغرفة</button>
+      <button onclick="showSharedQuiz()" class="btn btn-light" style="margin-top:8px;">📥 استقبل اختبار مشترك</button>
+    </div>
+
+    <div id="quiz-display" style="display:none;">
+      <div class="progress-bar"><div class="progress-fill" id="quiz-progress"></div></div>
+      <div id="quiz-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FLASHCARD ============ -->
+<div id="flashcard-screen" class="screen">
+  <div class="glass">
+    <div class="head">
+      <button class="back" onclick="showScreen('home-screen')">← رجوع</button>
+      <h2>🃏 البطاقات</h2>
+      <div style="width:60px;"></div>
+    </div>
+    <div id="flash-input">
+      <textarea id="flash-text" class="textarea" placeholder="الصق نصًا لتوليد بطاقات..."></textarea>
+      <div style="margin-top:14px;">
+        <button onclick="generateFlashcards()" class="btn">✨ توليد البطاقات</button>
+      </div>
+    </div>
+    <div id="flash-display" style="display:none;">
+      <div id="flash-stats" class="stats-grid"></div>
+      <div id="flash-card-area" style="margin:20px 0;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-light" onclick="prevCard()">← السابق</button>
+        <button class="btn" onclick="nextCard()">التالي →</button>
+      </div>
+      <button class="btn btn-light" onclick="resetFlashcards()" style="margin-top:8px;">🔄 جديدة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIDEO ============ -->
+<div id="video-screen" class="screen">
+  <div class="glass">
+    <div class="head">
+      <button class="back" onclick="showScreen('home-screen')">← رجوع</button>
+      <h2>🎬 الفيديوهات</h2>
+      <div style="width:60px;"></div>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:14px;margin-bottom:16px;">
+      <label class="label">🔗 أضف رابط YouTube</label>
+      <div class="row">
+        <input id="video-url" type="text" class="input" placeholder="https://youtube.com/watch?v=...">
+        <button onclick="addVideo()" class="btn btn-sm">إضافة</button>
+      </div>
+      <p style="font-size:11px;color:#6b7280;margin-top:8px;">📢 الفيديو سيُشارك مع جميع من في الغرفة</p>
+    </div>
+    <div id="videos-list"></div>
+  </div>
+</div>
+
+</div>
+
+<!-- ROOM MODAL -->
+<div id="room-modal" class="modal">
+  <div class="modal-content">
+    <h3 style="margin-bottom:16px;">🏠 تغيير الغرفة</h3>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:12px;">اكتب كود الغرفة للانضمام، أو أنشئ غرفة جديدة</p>
+    <input id="room-input" type="text" class="input" placeholder="اكتب كود الغرفة..." maxlength="20" style="text-align:center;font-size:18px;font-weight:800;letter-spacing:2px;">
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button onclick="joinRoom()" class="btn">انضم</button>
+      <button onclick="createRoom()" class="btn btn-light">إنشاء جديد</button>
+    </div>
+    <button onclick="closeRoomModal()" class="back" style="margin-top:12px;">إلغاء</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+/* ============================================================
+   إعدادات Firebase
+   ============================================================ */
+var firebaseConfig = {
+  apiKey: "AIzaSyBU4LQ6TKX5Vn9uiQKr-tFrmTj6H8eoZRA",
+  authDomain: "aaaa-c3572.firebaseapp.com",
+  databaseURL: "https://aaaa-c3572-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "aaaa-c3572",
+  storageBucket: "aaaa-c3572.firebasestorage.app",
+  messagingSenderId: "374251579590",
+  appId: "1:374251579590:web:083c379107735906380fc7"
+};
+
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+
+/* ============================================================
+   حالة المستخدم
+   ============================================================ */
+var MY_ID = 'u_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+var MY_NAME = localStorage.getItem('myName') || '';
+var MY_ROOM = localStorage.getItem('myRoom') || 'GENERAL';
+
+/* ============================================================
+   أدوات مساعدة
+   ============================================================ */
+function $(id) { return document.getElementById(id); }
+function $$(sel) { return document.querySelectorAll(sel); }
+
+function escapeHtml(t) {
+  var d = document.createElement('div');
+  d.textContent = String(t);
+  return d.innerHTML;
+}
+
+function toast(msg, type) {
+  var el = $('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type || '');
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.className = 'toast ' + (type || ''); }, 3000);
+}
+
+function showScreen(id) {
+  $$('.screen').forEach(function(s) { s.classList.remove('active'); });
+  var target = $(id);
+  if (target) target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  if (id === 'chat-screen') {
+    renderChatMessages();
+    setTimeout(function() {
+      var body = $('chat-body');
+      if (body) body.scrollTop = body.scrollHeight;
+    }, 100);
+  }
+}
+
+/* ============================================================
+   إعدادات الاختبار
+   ============================================================ */
+var quizConfig = { count: 5, type: 'mix', optionsCount: 4, difficulty: 'medium' };
+
+function selectCount(btn, n) {
+  $$('.count-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  $('custom-count').value = '';
+  quizConfig.count = n;
+}
+
+function selectCustomCount(val) {
+  var n = parseInt(val);
+  if (n >= 1 && n <= 50) {
+    $$('.count-btn').forEach(function(b) { b.classList.remove('active'); });
+    quizConfig.count = n;
+  }
+}
+
+function selectType(btn, t) {
+  $$('.type-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  quizConfig.type = t;
+  $('options-count-section').style.display = (t === 'mcq' || t === 'mix') ? 'block' : 'none';
+}
+
+function selectOpts(btn, n) {
+  $$('.opts-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  quizConfig.optionsCount = n;
+}
+
+function selectDiff(btn, d) {
+  $$('.diff-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  quizConfig.difficulty = d;
+}
+
+/* ============================================================
+   اسم المستخدم + الغرفة
+   ============================================================ */
+function saveUsername() {
+  var name = $('username-input').value.trim();
+  if (!name) { toast('اكتب اسمك أولاً', 'err'); return; }
+  MY_NAME = name;
+  localStorage.setItem('myName', name);
+  toast('✅ تم حفظ الاسم: ' + name, 'ok');
+  goOnline();
+}
+
+function showRoomModal() {
+  $('room-modal').classList.add('show');
+  $('room-input').value = MY_ROOM;
+  $('room-input').focus();
+}
+
+function closeRoomModal() {
+  $('room-modal').classList.remove('show');
+}
+
+function joinRoom() {
+  var code = $('room-input').value.trim().toUpperCase();
+  if (!code) { toast('اكتب كود', 'err'); return; }
+  changeRoom(code);
+}
+
+function createRoom() {
+  var code = 'ROOM' + Math.floor(Math.random() * 9000 + 1000);
+  $('room-input').value = code;
+  toast('كود الغرفة الجديدة: ' + code, 'ok');
+}
+
+function changeRoom(newCode) {
+  if (!newCode) return;
+  // غادر الغرفة القديمة
+  db.ref('rooms/' + MY_ROOM + '/users/' + MY_ID).remove();
+  db.ref('rooms/' + MY_ROOM + '/messages').off();
+
+  MY_ROOM = newCode;
+  localStorage.setItem('myRoom', newCode);
+  $('current-room').textContent = newCode;
+  $('chat-room-name').textContent = newCode;
+  closeRoomModal();
+  toast('✅ انضممت للغرفة: ' + newCode, 'ok');
+  goOnline();
+}
+
+/* ============================================================
+   الاتصال بـ Firebase
+   ============================================================ */
+function goOnline() {
+  if (!MY_NAME) {
+    toast('اكتب اسمك أولاً', 'err');
+    return;
+  }
+
+  // سجّل نفسي في الغرفة
+  var userRef = db.ref('rooms/' + MY_ROOM + '/users/' + MY_ID);
+  userRef.set({
+    name: MY_NAME,
+    online: true,
+    joinedAt: firebase.database.ServerValue.TIMESTAMP
+  });
+
+  // عند الخروج
+  userRef.onDisconnect().remove();
+
+  // راقب المستخدمين
+  db.ref('rooms/' + MY_ROOM + '/users').on('value', function(snap) {
+    var users = snap.val() || {};
+    var count = Object.keys(users).length;
+    $('home-users').textContent = '👥 ' + count;
+    $('online-users').textContent = '🟢 ' + count + ' متصل';
+  });
+
+  // راقب الرسائل
+  db.ref('rooms/' + MY_ROOM + '/messages').limitToLast(100).on('value', function(snap) {
+    var messages = snap.val() || {};
+    window.currentMessages = messages;
+    if ($('chat-screen').classList.contains('active')) {
+      renderChatMessages();
+    }
+  });
+
+  // راقب الفيديوهات
+  db.ref('rooms/' + MY_ROOM + '/videos').on('value', function(snap) {
+    var vids = snap.val() || {};
+    window.currentVideos = vids;
+    if ($('video-screen').classList.contains('active')) {
+      renderVideos();
+    }
+  });
+
+  // راقب الاختبارات المشتركة
+  db.ref('rooms/' + MY_ROOM + '/quiz').on('value', function(snap) {
+    var q = snap.val();
+    if (q && q.timestamp && (Date.now() - q.timestamp) < 60000) {
+      if (confirm('📝 ' + q.from + ' شارك اختبارًا مع الغرفة (' + q.questions.length + ' أسئلة).\nهل تريد استقباله؟')) {
+        quizConfig.count = q.questions.length;
+        renderQuiz(q.questions);
+        showScreen('quiz-screen');
+      }
+    }
+  });
+
+  console.log('✅ متصل بالغرفة:', MY_ROOM);
+  toast('✅ متصل — مرحبًا ' + MY_NAME, 'ok');
+}
+
+/* ============================================================
+   الدردشة
+   ============================================================ */
+function renderChatMessages() {
+  var body = $('chat-body');
+  var messages = window.currentMessages || {};
+  var keys = Object.keys(messages).sort(function(a, b) {
+    return (messages[a].timestamp || 0) - (messages[b].timestamp || 0);
+  });
+
+  if (keys.length === 0) {
+    body.innerHTML = '<div class="empty"><span class="emoji">💬</span><p>لا توجد رسائل بعد</p></div>';
+    return;
+  }
+
+  body.innerHTML = keys.map(function(k) {
+    var m = messages[k];
+    var isMine = m.userId === MY_ID;
+    var time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
+    return '<div class="bubble-row ' + (isMine ? 'user' : 'other') + '">' +
+      '<div class="bubble-meta">' + escapeHtml(m.name || 'مجهول') + ' • ' + time + '</div>' +
+      '<div class="bubble ' + (isMine ? 'self' : 'other') + '">' + escapeHtml(m.text) + '</div>' +
+    '</div>';
+  }).join('');
+
+  body.scrollTop = body.scrollHeight;
+}
+
+function sendChat() {
+  if (!MY_NAME) { toast('اكتب اسمك أولاً', 'err'); return; }
+  var inp = $('chat-input');
+  var text = inp.value.trim();
+  if (!text) return;
+
+  var msgId = 'm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+  db.ref('rooms/' + MY_ROOM + '/messages/' + msgId).set({
+    text: text,
+    name: MY_NAME,
+    userId: MY_ID,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+
+  inp.value = '';
+}
+
+function clearRoomChat() {
+  if (!confirm('مسح كل رسائل الغرفة؟')) return;
+  db.ref('rooms/' + MY_ROOM + '/messages').remove();
+  toast('تم مسح الرسائل', 'ok');
+}
+
+/* ============================================================
+   الفيديوهات (مشتركة)
+   ============================================================ */
+function renderVideos() {
+  var l = $('videos-list');
+  var videos = window.currentVideos || {};
+  var keys = Object.keys(videos);
+
+  if (keys.length === 0) {
+    l.innerHTML = '<div class="empty"><span class="emoji">📺</span><p>لا توجد فيديوهات بعد</p></div>';
+    return;
+  }
+
+  l.innerHTML = keys.map(function(k) {
+    var v = videos[k];
+    return '<div class="video-item">' +
+      '<div class="video-thumb" onclick="window.open(\'' + escapeHtml(v.url) + '\',\'_blank\')">▶</div>' +
+      '<div class="video-info">' +
+        '<p>' + escapeHtml(v.title || 'فيديو') + '</p>' +
+        '<a href="' + escapeHtml(v.url) + '" target="_blank" rel="noopener">فتح ↗</a>' +
+      '</div>' +
+      '<button class="del" onclick="delVideo(\'' + k + '\')">🗑</button>' +
+    '</div>';
+  }).join('');
+}
+
+function addVideo() {
+  if (!MY_NAME) { toast('اكتب اسمك أولاً', 'err'); return; }
+  var u = $('video-url').value.trim();
+  if (!u) { toast('أدخل رابطًا', 'err'); return; }
+  if (!/^https?:\/\//i.test(u)) { toast('رابط غير صالح', 'err'); return; }
+
+  var vidId = 'v_' + Date.now();
+  db.ref('rooms/' + MY_ROOM + '/videos/' + vidId).set({
+    url: u,
+    title: 'أضافه ' + MY_NAME,
+    addedBy: MY_NAME,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+
+  $('video-url').value = '';
+  toast('✅ تم مشاركة الفيديو مع الغرفة', 'ok');
+}
+
+function delVideo(id) {
+  db.ref('rooms/' + MY_ROOM + '/videos/' + id).remove();
+  toast('تم الحذف', 'ok');
+}
+
+/* ============================================================
+   مشاركة الاختبارات
+   ============================================================ */
+function shareQuizToRoom() {
+  if (!curQuiz || curQuiz.length === 0) {
+    toast('ولّد اختبارًا أولاً', 'err');
+    return;
+  }
+  if (!confirm('مشاركة الاختبار (' + curQuiz.length + ' أسئلة) مع كل من في الغرفة؟')) return;
+
+  db.ref('rooms/' + MY_ROOM + '/quiz').set({
+    questions: curQuiz,
+    from: MY_NAME || 'مجهول',
+    userId: MY_ID,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+
+  toast('✅ تم المشاركة مع الغرفة', 'ok');
+}
+
+function showSharedQuiz() {
+  db.ref('rooms/' + MY_ROOM + '/quiz').once('value').then(function(snap) {
+    var q = snap.val();
+    if (!q) { toast('لا يوجد اختبار مشترك حالياً', 'err'); return; }
+    if (confirm('استقبال اختبار من ' + q.from + ' (' + q.questions.length + ' أسئلة)؟')) {
+      renderQuiz(q.questions);
+    }
+  });
+}
+
+/* ============================================================
+   🤖 قاعدة معرفة محلية (مبسطة)
+   ============================================================ */
+var KB = [
+  { k: ['مرحبا','السلام','اهلا','hi'], r: 'أهلاً! 👋' },
+  { k: ['شكرا','مشكور'], r: 'العفو! 🌟' },
+  { k: ['جمع','طرح'], r: '➕ الجمع: 3+5=8. ➖ الطرح: 10−4=6.' },
+  { k: ['ضرب'], r: '✖️ الضرب: 4×3 = 12.' },
+  { k: ['قسمة'], r: '➗ القسمة: 12 ÷ 3 = 4.' },
+  { k: ['معادلة'], r: '🧮 2x + 3 = 7 → x = 2.' },
+  { k: ['سرعة'], r: '🚀 السرعة = المسافة ÷ الزمن.' },
+  { k: ['قوة'], r: '💪 F = m × a.' },
+  { k: ['طاقة'], r: '⚡ KE = ½mv²، PE = mgh.' },
+  { k: ['ذرة'], r: '⚛️ الذرة: بروتونات (+)، نيوترونات، إلكترونات (−).' },
+  { k: ['خلية'], r: '🔬 الخلية: وحدة البناء الأساسية.' },
+  { k: ['نحو'], r: '📖 المبتدأ مرفوع، الفاعل مرفوع، المفعول به منصوب.' },
+  { k: ['امتحان'], r: '📝 راجع قبل النوم، ابدأ بالسهل، نم جيدًا.' },
+  { k: ['مذاكرة'], r: '📚 بومودورو: 25 دقيقة + 5 راحة.' }
+];
+
+function localReply(msg) {
+  var m = msg.toLowerCase().trim();
+  if (!m) return 'اكتب شيئًا 😊';
+
+  var mm = m.match(/(\d+(?:\.\d+)?)\s*([\+\-\*×\/÷])\s*(\d+(?:\.\d+)?)/);
+  if (mm) {
+    var a = +mm[1], op = mm[2], b = +mm[3], r;
+    if (op === '+') r = a + b;
+    else if (op === '-') r = a - b;
+    else if (op === '*' || op === '×') r = a * b;
+    else if (b === 0) r = 'غير معرّف';
+    else r = +(a / b).toFixed(4);
+    return '🧮 ' + a + ' ' + op + ' ' + b + ' = **' + r + '**';
+  }
+
+  var best = null, bestScore = 0;
+  KB.forEach(function(e) {
+    e.k.forEach(function(kw) {
+      if (m.indexOf(kw.toLowerCase()) !== -1 && kw.length > bestScore) {
+        bestScore = kw.length;
+        best = e;
+      }
+    });
+  });
+  return best ? best.r : '🤔 لم أفهم. جرّب: "اشرح الجمع" أو "5 + 7"';
+}
+
+/* ============================================================
+   دالة الرد التلقائي في الدردشة
+   ============================================================ */
+function botReply(userMessage) {
+  var reply = localReply(userMessage);
+  var msgId = 'bot_' + Date.now();
+  db.ref('rooms/' + MY_ROOM + '/messages/' + msgId).set({
+    text: reply,
+    name: '🤖 المساعد',
+    userId: 'bot',
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+/* ============================================================
+   PDF.js
+   ============================================================ */
+var pdfReady = false;
+function loadPdfLib() {
+  if (pdfReady) return Promise.resolve();
+  return new Promise(function(resolve, reject) {
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      pdfReady = true;
+      return resolve();
+    }
+    reject(new Error('PDF.js غير محمّل'));
+  });
+}
+
+/* ============================================================
+   خوارزمية توليد الأسئلة
+   ============================================================ */
+var STOP = new Set(['في','من','على','إلى','عن','مع','هذا','هذه','ذلك','التي','الذي','كان','كانت','يكون','أن','إن','لا','ما','هل','قد','كل','بعض','بعد','قبل','بين','حيث','لكن','أو','و','ثم','هو','هي','هم','نحن','أنا','أنت','كما','حتى','عند','عندما','إذا','لأن','هناك','عليه','إليه','لها','له','بها','به','منها','منه','أيضا','فيه','فيها','جميع']);
+
+function extractWords(sentence) {
+  return sentence.split(/[^\u0600-\u06FFa-zA-Z0-9]+/).map(function(w) { return w.trim(); })
+    .filter(function(w) { return w.length >= 4 && !STOP.has(w) && !/^\d+$/.test(w); });
+}
+
+function generateLocalQuestions(text, n, type, optionsCount, difficulty) {
+  n = n || 5;
+  type = type || 'mix';
+  optionsCount = optionsCount || 4;
+  difficulty = difficulty || 'medium';
+
+  var clean = String(text).replace(/\s+/g, ' ').trim();
+  if (clean.length < 80) throw new Error('النص قصير جدًا (' + clean.length + ' حرف).');
+
+  var sentences = clean.split(/[.؟!؟\n]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s.length >= 20; });
+  if (sentences.length < 3) {
+    sentences = clean.split(/[،,؛;:]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s.length >= 20; });
+  }
+  if (sentences.length < 3) throw new Error('لم أستطع تقسيم النص.');
+
+  var allWords = new Set();
+  sentences.forEach(function(s) { extractWords(s).forEach(function(w) { allWords.add(w); }); });
+  var uniqueWords = Array.from(allWords);
+
+  if (uniqueWords.length < 4) throw new Error('كلمات غير كافية.');
+
+  function buildMCQ(sentence, words, correctWord, numOptions) {
+    var idx = sentence.indexOf(correctWord);
+    if (idx === -1) return null;
+    var qText = (sentence.substring(0, idx) + '______' + sentence.substring(idx + correctWord.length)).trim();
+    if (qText.length < 15) return null;
+
+    var distractors = [];
+    words.forEach(function(w) {
+      if (distractors.length >= numOptions - 1) return;
+      if (w !== correctWord && distractors.indexOf(w) === -1) distractors.push(w);
+    });
+    if (distractors.length < numOptions - 1) {
+      var others = uniqueWords.filter(function(w) { return w !== correctWord && distractors.indexOf(w) === -1; })
+        .sort(function() { return Math.random() - 0.5; });
+      others.forEach(function(w) { if (distractors.length < numOptions - 1) distractors.push(w); });
+    }
+    var fb = ['عنصر كيميائي','عملية حيوية','مفهوم رياضي','ظاهرة طبيعية','قاعدة لغوية','نظرية علمية'];
+    fb.forEach(function(w) {
+      if (distractors.length >= numOptions - 1) return;
+      if (w !== correctWord && distractors.indexOf(w) === -1) distractors.push(w);
+    });
+
+    var options = [{ text: correctWord, isCorrect: true }];
+    distractors.slice(0, numOptions - 1).forEach(function(t) { options.push({ text: t, isCorrect: false }); });
+    for (var i = options.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = options[i]; options[i] = options[j]; options[j] = tmp;
+    }
+
+    var correctIdx = -1;
+    options.forEach(function(o, k) { if (o.isCorrect) correctIdx = k; });
+
+    return { type: 'mcq', question: qText, options: options.map(function(o) { return o.text; }), correct: correctIdx };
+  }
+
+  function buildTF(sentence, words, correctWord) {
+    if (Math.random() < 0.5) return { type: 'tf', question: sentence, correct: true };
+    var others = uniqueWords.filter(function(w) { return w !== correctWord; });
+    if (!others.length) return null;
+    var wrong = others[Math.floor(Math.random() * others.length)];
+    var idx = sentence.indexOf(correctWord);
+    if (idx === -1) return null;
+    return { type: 'tf', question: sentence.substring(0, idx) + wrong + sentence.substring(idx + correctWord.length), correct: false };
+  }
+
+  function buildFill(sentence, words, correctWord) {
+    var idx = sentence.indexOf(correctWord);
+    if (idx === -1) return null;
+    var qText = (sentence.substring(0, idx) + '______' + sentence.substring(idx + correctWord.length)).trim();
+    if (qText.length < 15) return null;
+    return {
+      type: 'fill', question: qText, correct: correctWord,
+      hint: correctWord.charAt(0) + '...' + correctWord.charAt(correctWord.length - 1) + ' (' + correctWord.length + ' حروف)'
+    };
+  }
+
+  var questions = [];
+  var used = new Set();
+  var usedAns = new Set();
+  var pattern = (type === 'mix') ? ['mcq', 'tf', 'fill'] : [type];
+  var idx = 0;
+  var shuffled = sentences.slice().sort(function() { return Math.random() - 0.5; });
+
+  for (var si = 0; si < shuffled.length; si++) {
+    if (questions.length >= n) break;
+    var sentence = shuffled[si];
+    if (used.has(sentence)) continue;
+
+    var words = extractWords(sentence);
+    if (!words.length) continue;
+
+    var candidates = words.filter(function(w) { return !usedAns.has(w); })
+      .sort(function(a, b) { return b.length - a.length; });
+    if (!candidates.length) continue;
+    var correctWord = candidates[0];
+
+    var curType = pattern[idx % pattern.length];
+    idx++;
+
+    var q = null;
+    if (curType === 'mcq') q = buildMCQ(sentence, words, correctWord, optionsCount);
+    else if (curType === 'tf') q = buildTF(sentence, words, correctWord);
+    else q = buildFill(sentence, words, correctWord);
+
+    if (!q) {
+      q = buildMCQ(sentence, words, correctWord, optionsCount) ||
+          buildTF(sentence, words, correctWord) ||
+          buildFill(sentence, words, correctWord);
+    }
+
+    if (q) {
+      questions.push(q);
+      used.add(sentence);
+      usedAns.add(correctWord);
+    }
+  }
+
+  if (!questions.length) throw new Error('لم أستطع توليد أسئلة.');
+  return questions;
+}
+
+/* ============================================================
+   عرض + تصحيح الاختبار
+   ============================================================ */
+var curQuiz = [];
+var userAns = [];
+
+function generateQuiz() {
+  var text = $('text-input').value.trim();
+  if (!text) { toast('❌ الصق نصًا أولاً', 'err'); return; }
+
+  var btn = $('gen-btn');
+  var orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> جارٍ التوليد...';
+
+  try {
+    var qs = generateLocalQuestions(text, quizConfig.count, quizConfig.type, quizConfig.optionsCount, quizConfig.difficulty);
+    renderQuiz(qs);
+    toast('✅ تم توليد ' + qs.length + ' أسئلة', 'ok');
+  } catch (err) {
+    toast('❌ ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+function renderQuiz(qs) {
+  curQuiz = qs;
+  userAns = new Array(qs.length).fill(null);
+  $('quiz-input').style.display = 'none';
+  $('quiz-display').style.display = 'block';
+  updateProgress();
+
+  var html = '';
+  qs.forEach(function(q, i) {
+    var badge = q.type === 'mcq' ? '<span style="background:#dbeafe;color:#1e40af;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700;">📋 MCQ</span>'
+      : q.type === 'tf' ? '<span style="background:#d1fae5;color:#065f46;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700;">✅ صح/خطأ</span>'
+      : '<span style="background:#fef3c7;color:#92400e;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700;">✍️ فراغ</span>';
+
+    html += '<div class="q-box">';
+    html += '<div style="margin-bottom:10px;">' + badge + '</div>';
+    html += '<div class="q-text">' + (i + 1) + '. ' + escapeHtml(q.question) + '</div>';
+
+    if (q.type === 'mcq') {
+      q.options.forEach(function(o, j) {
+        html += '<button class="opt" onclick="pickAns(' + i + ',' + j + ')" data-q="' + i + '" data-o="' + j + '">' + String.fromCharCode(65 + j) + '. ' + escapeHtml(o) + '</button>';
+      });
+    } else if (q.type === 'tf') {
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+      html += '<button class="opt" style="text-align:center;margin:0;" onclick="pickAns(' + i + ',\'true\')" data-q="' + i + '" data-o="true">✅ صح</button>';
+      html += '<button class="opt" style="text-align:center;margin:0;" onclick="pickAns(' + i + ',\'false\')" data-q="' + i + '" data-o="false">❌ خطأ</button>';
+      html += '</div>';
+    } else {
+      html += '<input type="text" class="input" id="fill-' + i + '" placeholder="اكتب الإجابة..." oninput="pickFill(' + i + ', this.value)">';
+      if (q.hint) html += '<p style="font-size:11px;color:#6b7280;margin-top:6px;">💡 ' + escapeHtml(q.hint) + '</p>';
+    }
+    html += '</div>';
+  });
+
+  html += '<button class="btn" onclick="submitQuiz()" style="margin-top:14px;">✅ تصحيح</button>';
+  html += '<button class="btn btn-light" onclick="resetQuiz()" style="margin-top:8px;">🔄 جديدة</button>';
+
+  $('quiz-content').innerHTML = html;
+  showScreen('quiz-screen');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  var a = 0;
+  curQuiz.forEach(function(q, i) {
+    if (q.type === 'fill') { if (userAns[i] && userAns[i].trim()) a++; }
+    else if (userAns[i] !== null && userAns[i] !== undefined) a++;
+  });
+  $('quiz-progress').style.width = (curQuiz.length ? (a / curQuiz.length) * 100 : 0) + '%';
+}
+
+function pickAns(q, o) {
+  userAns[q] = o;
+  document.querySelectorAll('[data-q="' + q + '"]').forEach(function(b) { b.classList.remove('selected'); });
+  var btn = document.querySelector('[data-q="' + q + '"][data-o="' + o + '"]');
+  if (btn) btn.classList.add('selected');
+  updateProgress();
+}
+
+function pickFill(q, value) {
+  userAns[q] = value.trim();
+  updateProgress();
+}
+
+function submitQuiz() {
+  var score = 0;
+  curQuiz.forEach(function(q, i) {
+    var ua = userAns[i];
+    var ok = false;
+
+    if (q.type === 'mcq') {
+      document.querySelectorAll('[data-q="' + i + '"]').forEach(function(b) {
+        var o = +b.dataset.o;
+        b.disabled = true;
+        b.classList.remove('selected');
+        if (o === q.correct) b.classList.add('correct');
+        else if (o === ua) b.classList.add('wrong');
+      });
+      ok = ua === q.correct;
+
+    } else if (q.type === 'tf') {
+      document.querySelectorAll('[data-q="' + i + '"]').forEach(function(b) {
+        var o = b.dataset.o === 'true';
+        b.disabled = true;
+        b.classList.remove('selected');
+        if (o === q.correct) b.classList.add('correct');
+        else if (ua === b.dataset.o) b.classList.add('wrong');
+      });
+      ok = (ua === 'true') === q.correct;
+
+    } else {
+      var norm = function(s) {
+        return String(s || '').trim().toLowerCase().replace(/[،,.!؟\s]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
+      };
+      var uN = norm(ua), cN = norm(q.correct);
+      ok = uN === cN || (uN.length > 2 && cN.indexOf(uN) !== -1) || (uN.length > 2 && uN.indexOf(cN) !== -1);
+
+      var input = $('fill-' + i);
+      if (input) {
+        input.disabled = true;
+        input.style.background = ok ? '#d1fae5' : '#fee2e2';
+        var fb = document.createElement('div');
+        fb.style.cssText = 'font-size:13px;margin-top:8px;padding:8px 12px;border-radius:8px;' +
+          (ok ? 'background:#d1fae5;color:#065f46;' : 'background:#fee2e2;color:#991b1b;');
+        fb.innerHTML = ok ? '✅ صحيح!' : '❌ الصواب: <strong>' + escapeHtml(q.correct) + '</strong>';
+        input.parentNode.appendChild(fb);
+      }
+    }
+
+    if (ok) score++;
+  });
+
+  var pct = Math.round((score / curQuiz.length) * 100);
+  var emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📚';
+  var old = $('quiz-result');
+  if (old) old.remove();
+
+  var div = document.createElement('div');
+  div.id = 'quiz-result';
+  div.className = 'result';
+  div.innerHTML = '<div class="big">' + emoji + '</div><div class="score">' + score + ' / ' + curQuiz.length + '</div><div style="font-size:18px;margin-top:4px;">' + pct + '%</div>';
+
+  // مشاركة النتيجة مع الغرفة
+  if (MY_NAME && MY_ROOM) {
+    var resultId = 'r_' + MY_ID + '_' + Date.now();
+    db.ref('rooms/' + MY_ROOM + '/results/' + resultId).set({
+      name: MY_NAME,
+      score: score,
+      total: curQuiz.length,
+      percent: pct,
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+    div.innerHTML += '<div style="font-size:12px;margin-top:8px;opacity:.8;">📤 تمت مشاركة نتيجتك مع الغرفة</div>';
+  }
+
+  $('quiz-content').appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetQuiz() {
+  $('quiz-input').style.display = 'block';
+  $('quiz-display').style.display = 'none';
+  $('quiz-content').innerHTML = '';
+  $('quiz-progress').style.width = '0';
+}
+
+/* ============================================================
+   البطاقات التعليمية
+   ============================================================ */
+var flashcards = [];
+var flashIdx = 0;
+
+function generateFlashcards() {
+  var text = $('flash-text').value.trim();
+  if (!text) { toast('الصق نصًا', 'err'); return; }
+  var clean = text.replace(/\s+/g, ' ').trim();
+  var sentences = clean.split(/[.؟!؟\n]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s.length >= 20; });
+  if (sentences.length < 2) { toast('النص قصير', 'err'); return; }
+
+  flashcards = sentences.map(function(s) {
+    var words = extractWords(s);
+    if (!words.length) return null;
+    words.sort(function(a, b) { return b.length - a.length; });
+    return { front: 'ما معنى: **' + words[0] + '**؟', back: s, _flipped: false };
+  }).filter(Boolean);
+
+  if (!flashcards.length) { toast('فشل التوليد', 'err'); return; }
+  flashIdx = 0;
+  $('flash-input').style.display = 'none';
+  $('flash-display').style.display = 'block';
+  renderFlashcard();
+  toast('✅ ' + flashcards.length + ' بطاقة', 'ok');
+}
+
+function renderFlashcard() {
+  if (!flashcards.length) return;
+  var c = flashcards[flashIdx];
+  var html = '<div style="background:#fff;border:2px solid #e0e7ff;border-radius:16px;padding:30px;min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:17px;font-weight:700;color:#1f2937;line-height:1.7;box-shadow:0 8px 24px rgba(102,126,234,.15);cursor:pointer;" onclick="flipCard()">';
+  html += c._flipped ? escapeHtml(c.back) : escapeHtml(c.front);
+  html += '</div><p style="text-align:center;font-size:13px;color:#6b7280;margin-top:10px;">اضغط للقلب</p>';
+  $('flash-card-area').innerHTML = html;
+  $('flash-stats').innerHTML = '<div class="stat-card"><div class="num">' + (flashIdx + 1) + '</div><div class="lbl">الحالية</div></div>' +
+    '<div class="stat-card"><div class="num">' + flashcards.length + '</div><div class="lbl">الإجمالي</div></div>' +
+    '<div class="stat-card"><div class="num">' + Math.round(((flashIdx + 1) / flashcards.length) * 100) + '%</div><div class="lbl">التقدم</div></div>';
+}
+
+function flipCard() { flashcards[flashIdx]._flipped = !flashcards[flashIdx]._flipped; renderFlashcard(); }
+function nextCard() { if (flashIdx < flashcards.length - 1) { flashIdx++; flashcards[flashIdx]._flipped = false; renderFlashcard(); } else toast('آخر بطاقة', 'ok'); }
+function prevCard() { if (flashIdx > 0) { flashIdx--; flashcards[flashIdx]._flipped = false; renderFlashcard(); } }
+function resetFlashcards() { flashcards = []; $('flash-input').style.display = 'block'; $('flash-display').style.display = 'none'; }
+
+/* ============================================================
+   التهيئة
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function() {
+  // اسم المستخدم
+  if (MY_NAME) {
+    $('username-input').value = MY_NAME;
+    setTimeout(goOnline, 500);
+  } else {
+    $('username-input').focus();
+  }
+
+  // الغرفة
+  $('current-room').textContent = MY_ROOM;
+  $('chat-room-name').textContent = MY_ROOM;
+
+  // PDF
+  $('pdf-input').addEventListener('change', async function(e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    var nameEl = $('pdf-name');
+    nameEl.textContent = '⏳ استخراج...';
+    try {
+      await loadPdfLib();
+      var buf = await f.arrayBuffer();
+      var pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      var text = '';
+      for (var i = 1; i <= pdf.numPages; i++) {
+        var page = await pdf.getPage(i);
+        var content = await page.getTextContent();
+        text += content.items.map(function(x) { return x.str; }).join(' ') + '\n';
+      }
+      $('text-input').value = text.trim();
+      nameEl.textContent = '✅ ' + pdf.numPages + ' صفحة';
+      toast('✅ تم الاستخراج', 'ok');
+    } catch (err) {
+      nameEl.textContent = '❌ ' + err.message;
+      toast('فشل PDF', 'err');
+    }
+  });
+
+  // ESC لإغلاق المودال
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeRoomModal();
+  });
+
+  console.log('%c🎓 التطبيق جاهز!', 'color:#667eea;font-size:18px;font-weight:bold');
+  console.log('🆔 معرّفك:', MY_ID);
+  console.log('🏠 غرفتك:', MY_ROOM);
+});
+</script>
+</body>
+</html>
