@@ -572,27 +572,10 @@ body.dark .opt-btn.selected{background:#1E40AF;color:#DBEAFE;}
             <div class="chat-header-title">💬 <span id="chat-room-name">GENERAL</span></div>
             <div class="chat-header-sub" id="chat-online">🟢 1 متصل</div>
           </div>
-          <button class="icon-btn" onclick="toggleSearchChat()" title="بحث">🔍</button>
-          <button class="icon-btn" onclick="showRoomQR(State.MY_ROOM)" title="QR / مشاركة">📱</button>
-          <button class="icon-btn" onclick="showChatInfo()" title="معلومات">ℹ️</button>
         </div>
-        <div id="chat-search-bar" style="display:none;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);">
-          <input id="chat-search-input" class="input" placeholder="ابحث في الرسائل..." oninput="filterChatMessages(this.value)" style="padding:8px 12px;font-size:13px;">
-        </div>
-        <div class="typing-bar" id="typing-bar"></div>
         <div class="chat-body" id="chat-body"></div>
-        <div id="reply-preview" style="display:none;padding:8px 14px;background:var(--surface-2);border-top:1px solid var(--border);align-items:center;gap:8px;">
-          <div style="flex:1;border-right:3px solid var(--brand-primary);padding-right:8px;">
-            <div style="font-weight:800;color:var(--brand-primary);font-size:12px;" id="reply-to-name"></div>
-            <div style="color:var(--text-2);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="reply-to-text"></div>
-          </div>
-          <button class="icon-btn" onclick="cancelReply()" style="width:32px;height:32px;font-size:14px;">✕</button>
-        </div>
         <div class="chat-input-area">
-          <button class="chat-action-btn" onclick="showEmojiPicker(this)">😊</button>
-          <button class="chat-action-btn" onclick="pickImage()">📷</button>
-          <button class="chat-action-btn" id="mic-btn" onclick="toggleRecord()">🎤</button>
-          <input id="chat-input" type="text" class="input" placeholder="اكتب رسالة..." onkeypress="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}" oninput="sendTyping()">
+          <input id="chat-input" type="text" class="input" placeholder="اكتب رسالة..." onkeypress="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}">
           <button class="chat-send-btn" onclick="sendChat()">➤</button>
         </div>
       </div>
@@ -864,12 +847,6 @@ body.dark .opt-btn.selected{background:#1E40AF;color:#DBEAFE;}
 </div>
 
 <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️</button>
-<div class="install-banner hide" id="install-banner">
-  <span style="font-size:24px;">📱</span>
-  <div style="flex:1;"><div style="font-weight:900;font-size:13px;">ثبّت التطبيق</div><div style="font-size:11px;opacity:.9;">وصول أسرع من الشاشة الرئيسية</div></div>
-  <button onclick="installApp()" style="background:#fff;color:#4F46E5;border:none;padding:8px 14px;border-radius:10px;font-weight:900;font-size:12px;cursor:pointer;">تثبيت</button>
-  <button onclick="dismissInstall()" style="background:transparent;color:#fff;border:none;font-size:20px;cursor:pointer;">✕</button>
-</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -902,12 +879,10 @@ const State = {
   MY_EMAIL: '', MY_ROLE: 'member', MY_XP: 0, MY_LEVEL: 1, MY_STREAK: 0,
   currentMessages: {}, currentVideos: {}, onlineUsers: {},
   curQuiz: [], userAns: [], quizTimerInt: null, quizSecondsLeft: 0,
-  replyTo: null, pendingMedia: null, recorder: null, recordChunks: [],
-  recordStart: 0, recordTimerInt: null, currentAudio: null, currentAudioId: null,
-  typingTimeout: null, heartbeatInt: null, chatListeners: [],
+  currentAudio: null, currentAudioId: null,
+  heartbeatInt: null, chatListeners: [],
   notifications: [], unreadChat: 0, pomodoroInt: null,
-  pomodoroLeft: 25*60, pomodoroRunning: false, calcExpr: '',
-  deferredPrompt: null
+  pomodoroLeft: 25*60, pomodoroRunning: false, calcExpr: ''
 };
 
 const AVATARS = ['🧑‍🎓','👩‍🎓','🧑‍🏫','👨‍💻','👩‍💻','🦉','🦊','🐼','🚀','⭐','🎯','🎨','🐯','🦁','🐺','🦅'];
@@ -1058,35 +1033,6 @@ function showRoomQR(code){
     });
   };
   if(!document.querySelector('script[src*="qrcode"]')) document.head.appendChild(script);
-}
-
-/* ===== NEW: PWA Install Prompt ===== */
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  State.deferredPrompt = e;
-  if(!LS.get('installDismissed')){
-    setTimeout(() => {
-      const b = $('install-banner');
-      if(b) b.classList.remove('hide');
-    }, 6000);
-  }
-});
-
-async function installApp(){
-  haptic(20);
-  const b = $('install-banner');
-  if(b) b.classList.add('hide');
-  if(!State.deferredPrompt){ toast('التثبيت غير متاح — استخدم قائمة المتصفح', 'info'); return; }
-  State.deferredPrompt.prompt();
-  const { outcome } = await State.deferredPrompt.userChoice;
-  if(outcome === 'accepted') toast('✅ تم التثبيت!', 'success');
-  State.deferredPrompt = null;
-}
-
-function dismissInstall(){
-  const b = $('install-banner');
-  if(b) b.classList.add('hide');
-  LS.set('installDismissed', true);
 }
 
 /* ===== Back to top scroll ===== */
@@ -1526,7 +1472,6 @@ function initAuth(){
   updateNotifBadge();
   setupNetworkMonitor();
 
-  // اقرأ الغرفة من URL لو موجودة
   readRoomFromURL();
 
   if(restoreSession()){
@@ -1555,7 +1500,7 @@ console.log('%c🎓 YasEdu Core loaded (2/5)', 'color:#4F46E5;font-size:14px;fon
 <script>
 /* ============================================================
    YAS STUDIO — COMMUNICATION MODULE v4.1
-   Part 3/5: Session + Rooms + Chat + Media + Bot + Enhancements
+   Part 3/5: Session + Rooms + Chat + Videos + Bot
    ============================================================ */
 
 /* ===== Session Start ===== */
@@ -1639,16 +1584,6 @@ function startSession(){
   });
   State.chatListeners.push(vidRef);
 
-  // Typing listener
-  const typingRef = db.ref('rooms/' + State.MY_ROOM + '/typing');
-  typingRef.on('value', snap=>{
-    const t = snap.val() || {};
-    const names = Object.keys(t).filter(uid=>uid !== State.MY_ID && (Date.now() - (t[uid].ts||0)) < 4000).map(uid=>t[uid].name);
-    const bar = $('typing-bar');
-    if(bar) bar.textContent = names.length ? names.join(', ') + ' يكتب...' : '';
-  });
-  State.chatListeners.push(typingRef);
-
   // Quiz shared listener
   const quizRef = db.ref('rooms/' + State.MY_ROOM + '/quiz');
   quizRef.on('value', snap=>{
@@ -1687,25 +1622,13 @@ function renderChatMessages(){
   if(!body) return;
   const msgs = State.currentMessages;
   const keys = Object.keys(msgs).sort((a,b)=>(msgs[a].timestamp||0)-(msgs[b].timestamp||0));
-  const filter = ($('chat-search-input')?.value || '').trim().toLowerCase();
 
   if(!keys.length){
     body.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">لا توجد رسائل</div><div class="empty-desc">كن أول من يبدأ المحادثة</div></div>';
     return;
   }
 
-  const filtered = keys.filter(k=>{
-    if(!filter) return true;
-    const m = msgs[k];
-    return (m.text||'').toLowerCase().includes(filter) || (m.name||'').toLowerCase().includes(filter);
-  });
-
-  if(!filtered.length){
-    body.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">لا نتائج</div></div>';
-    return;
-  }
-
-  body.innerHTML = filtered.map(k=>renderMessage(k, msgs[k])).join('');
+  body.innerHTML = keys.map(k=>renderMessage(k, msgs[k])).join('');
   body.scrollTop = body.scrollHeight;
 }
 
@@ -1731,24 +1654,7 @@ function renderMessage(id, m){
     content = esc(m.text || '');
   }
 
-  let replyCtx = '';
-  if(m.replyTo){
-    replyCtx = `<div class="msg-reply-ctx"><div class="name">↩ ${esc(m.replyTo.name)}</div><div class="preview">${esc(m.replyTo.preview)}</div></div>`;
-  }
-
-  let reactionsHtml = '';
-  if(m.reactions && Object.keys(m.reactions).length){
-    reactionsHtml = '<div class="msg-reactions">' + Object.entries(m.reactions).map(([emo, users])=>{
-      const count = Object.keys(users || {}).length;
-      const isMine = (users || {})[State.MY_ID];
-      return `<button class="reaction-chip ${isMine?'mine':''}" onclick="toggleReaction('${id}','${emo}')">${emo} ${count}</button>`;
-    }).join('') + '</div>';
-  }
-
   const actions = `<div class="msg-actions">
-    <button class="msg-action" onclick="replyToMessage('${id}')">↩ رد</button>
-    <button class="msg-action" onclick="toggleReaction('${id}','❤️')">❤️</button>
-    <button class="msg-action" onclick="toggleReaction('${id}','👍')">👍</button>
     ${mine ? `<button class="msg-action" onclick="deleteMessage('${id}')">🗑</button>` : ''}
   </div>`;
 
@@ -1756,8 +1662,7 @@ function renderMessage(id, m){
     <div class="msg-avatar">${m.avatar || '👤'}</div>
     <div class="msg-content">
       <div class="msg-meta">${esc(m.name || 'مجهول')} • ${time}</div>
-      <div class="msg-bubble">${replyCtx}${content}</div>
-      ${reactionsHtml}
+      <div class="msg-bubble">${content}</div>
       ${actions}
     </div>
   </div>`;
@@ -1776,7 +1681,6 @@ function sendChat(){
     name: State.MY_NAME, avatar: State.MY_AVATAR, userId: State.MY_ID,
     timestamp: firebase.database.ServerValue.TIMESTAMP
   };
-  if(State.replyTo){ payload.replyTo = State.replyTo; cancelReply(); }
   db.ref('rooms/' + State.MY_ROOM + '/messages/' + id).set(payload);
   inp.value = '';
 
@@ -1792,259 +1696,6 @@ function deleteMessage(id){
   if(!confirm('حذف هذه الرسالة؟')) return;
   db.ref('rooms/' + State.MY_ROOM + '/messages/' + id).remove();
   toast('تم الحذف', 'success');
-}
-
-function replyToMessage(id){
-  const m = State.currentMessages[id];
-  if(!m) return;
-  const preview = m.type === 'image' ? '📷 صورة' : m.type === 'audio' ? '🎤 صوت' : (m.text || '').slice(0, 50);
-  State.replyTo = { id, name: m.name || 'مجهول', preview, type: m.type || 'text' };
-  $('reply-to-name').textContent = '↩ ' + State.replyTo.name;
-  $('reply-to-text').textContent = preview;
-  $('reply-preview').style.display = 'flex';
-  $('chat-input')?.focus();
-}
-
-function cancelReply(){
-  State.replyTo = null;
-  const p = $('reply-preview');
-  if(p) p.style.display = 'none';
-}
-
-function toggleReaction(id, emo){
-  const ref = db.ref('rooms/' + State.MY_ROOM + '/messages/' + id + '/reactions/' + emo + '/' + State.MY_ID);
-  ref.once('value').then(s=>{
-    if(s.val()) ref.remove();
-    else ref.set(true);
-  });
-  haptic(5);
-}
-
-/* ===== Typing ===== */
-let typingRef = null;
-function sendTyping(){
-  if(!State.MY_ID) return;
-  if(!typingRef) typingRef = db.ref('rooms/' + State.MY_ROOM + '/typing/' + State.MY_ID);
-  typingRef.set({ name: State.MY_NAME, ts: Date.now() });
-  typingRef.onDisconnect().remove();
-  clearTimeout(State.typingTimeout);
-  State.typingTimeout = setTimeout(()=>typingRef.remove(), 2500);
-}
-
-/* ===== Search Chat ===== */
-function toggleSearchChat(){
-  const bar = $('chat-search-bar');
-  if(!bar) return;
-  bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
-  if(bar.style.display === 'none'){ $('chat-search-input').value = ''; renderChatMessages(); }
-  else $('chat-search-input')?.focus();
-}
-function filterChatMessages(){ renderChatMessages(); }
-
-/* ===== Chat Info ===== */
-function showChatInfo(){
-  const users = Object.values(State.onlineUsers || {});
-  const list = users.map(u=>`<div style="padding:8px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);"><span style="font-size:20px;">${u.avatar||'👤'}</span><span style="font-weight:800;font-size:13px;">${esc(u.name||'')}</span></div>`).join('');
-  createModal('chat-info-modal', `
-    <div class="modal-content">
-      <div class="modal-header"><div class="modal-title">ℹ️ معلومات الغرفة</div><button class="modal-close" onclick="closeModal('chat-info-modal')">✕</button></div>
-      <div class="stat-card mb-3"><div class="stat-num">${State.MY_ROOM}</div><div class="stat-label">اسم الغرفة</div></div>
-      <div class="stat-card mb-3"><div class="stat-num">${users.length}</div><div class="stat-label">الأعضاء المتصلون</div></div>
-      <div class="font-black mb-2" style="font-size:14px;">👥 الأعضاء</div>
-      <div style="max-height:300px;overflow-y:auto;">${list || '<div class="text-muted text-sm">لا أحد</div>'}</div>
-    </div>`);
-}
-
-/* ===== Emoji Picker ===== */
-function showEmojiPicker(btn){
-  const existing = document.querySelector('.emoji-picker');
-  if(existing){ existing.remove(); return; }
-  const emojis = ['😀','😁','😂','🤣','😊','😍','🤔','😎','😢','😡','👍','👎','❤️','🔥','✨','🎉','💯','👏','🙏','💪','🎓','📚','📝','✅','❌','⭐','🚀','💡'];
-  const picker = document.createElement('div');
-  picker.className = 'emoji-picker';
-  picker.style.cssText = 'position:absolute;bottom:60px;right:0;background:var(--surface);border-radius:14px;padding:10px;box-shadow:var(--shadow-lg);display:grid;grid-template-columns:repeat(7,1fr);gap:4px;width:260px;z-index:1000;border:1px solid var(--border);';
-  picker.innerHTML = emojis.map(e=>`<button style="background:none;border:none;font-size:20px;padding:4px;cursor:pointer;border-radius:6px;" onclick="insertEmoji('${e}')">${e}</button>`).join('');
-  btn.parentElement.style.position = 'relative';
-  btn.parentElement.appendChild(picker);
-  setTimeout(()=>document.addEventListener('click', function closeP(){ document.querySelector('.emoji-picker')?.remove(); document.removeEventListener('click', closeP); }, {once:true}), 10);
-}
-function insertEmoji(e){
-  const inp = $('chat-input');
-  if(inp){ inp.value += e; inp.focus(); }
-  document.querySelector('.emoji-picker')?.remove();
-}
-
-/* ===== Media: Image ===== */
-function pickImage(){
-  if(!State.MY_ID){ toast('سجّل دخول', 'error'); return; }
-  const inp = document.createElement('input');
-  inp.type = 'file'; inp.accept = 'image/*';
-  inp.onchange = e => { const f = e.target.files[0]; if(f) prepareImage(f); };
-  inp.click();
-}
-
-async function prepareImage(file){
-  if(file.size > 5 * 1024 * 1024){ toast('الصورة كبيرة (5MB max)', 'error'); return; }
-  toast('⏳ جاري المعالجة...', 'info', 1500);
-  try{
-    const blob = await compressImage(file, 1200, 0.75);
-    const reader = new FileReader();
-    reader.onload = e => {
-      State.pendingMedia = { type: 'image', blob, dataUrl: e.target.result, size: blob.size };
-      showMediaPreview();
-    };
-    reader.readAsDataURL(blob);
-  }catch(err){ toast('فشل: ' + err.message, 'error'); }
-}
-
-function compressImage(file, maxDim, quality){
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = e => {
-      img.onload = () => {
-        let w = img.width, h = img.height;
-        if(w > maxDim || h > maxDim){ const r = Math.min(maxDim/w, maxDim/h); w = Math.round(w*r); h = Math.round(h*r); }
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        c.getContext('2d').drawImage(img, 0, 0, w, h);
-        c.toBlob(b => b ? resolve(b) : reject(new Error('canvas')), 'image/jpeg', quality);
-      };
-      img.onerror = () => reject(new Error('load'));
-      img.src = e.target.result;
-    };
-    reader.onerror = () => reject(new Error('read'));
-    reader.readAsDataURL(file);
-  });
-}
-
-/* ===== Media: Audio ===== */
-async function toggleRecord(){
-  if(State.recorder && State.recorder.state === 'recording'){ stopRecord(); return; }
-  if(!State.MY_ID){ toast('سجّل دخول', 'error'); return; }
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' :
-                 MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
-    State.recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-    State.recordChunks = [];
-    State.recorder.ondataavailable = e => { if(e.data.size > 0) State.recordChunks.push(e.data); };
-    State.recorder.onstop = async () => {
-      stream.getTracks().forEach(t=>t.stop());
-      clearInterval(State.recordTimerInt);
-      const duration = (Date.now() - State.recordStart) / 1000;
-      if(duration < 1){ toast('تسجيل قصير', 'error'); $('mic-btn').style.color = ''; $('mic-btn').textContent = '🎤'; return; }
-      const blob = new Blob(State.recordChunks, { type: State.recorder.mimeType || 'audio/webm' });
-      const reader = new FileReader();
-      reader.onload = e => {
-        State.pendingMedia = { type: 'audio', blob, dataUrl: e.target.result, duration };
-        showMediaPreview();
-        $('mic-btn').style.color = '';
-        $('mic-btn').textContent = '🎤';
-      };
-      reader.readAsDataURL(blob);
-    };
-    State.recorder.start();
-    State.recordStart = Date.now();
-    $('mic-btn').style.color = '#ef4444';
-    $('mic-btn').textContent = '⏹';
-    haptic(15);
-    toast('🎤 جاري التسجيل — اضغط إيقاف', 'info', 2000);
-    State.recordTimerInt = setInterval(()=>{
-      const s = Math.floor((Date.now() - State.recordStart) / 1000);
-      if(s >= 180){ stopRecord(); toast('وصلت الحد (3 دقائق)', 'warning'); }
-    }, 500);
-  }catch(e){ toast('تعذّر الميكروفون: ' + e.message, 'error'); }
-}
-
-function stopRecord(){
-  if(State.recorder && State.recorder.state === 'recording') State.recorder.stop();
-  const btn = $('mic-btn');
-  if(btn){ btn.textContent = '🎤'; btn.style.color = ''; }
-}
-
-/* ===== Media Preview ===== */
-function showMediaPreview(){
-  if(!State.pendingMedia) return;
-  const isImg = State.pendingMedia.type === 'image';
-  const html = isImg
-    ? `<img src="${State.pendingMedia.dataUrl}">`
-    : `<audio controls src="${State.pendingMedia.dataUrl}"></audio><p class="text-sm text-muted">المدة: ${Math.round(State.pendingMedia.duration)} ثانية</p>`;
-  createModal('media-modal', `
-    <div class="modal-content">
-      <div class="modal-header"><div class="modal-title">${isImg?'📷 معاينة':'🎤 معاينة'}</div><button class="modal-close" onclick="cancelPendingMedia()">✕</button></div>
-      <div class="media-preview">${html}</div>
-      <div class="upload-progress" id="upload-progress" style="display:none;"><div class="upload-progress-fill" id="upload-progress-fill"></div></div>
-      <div class="modal-footer">
-        <button class="btn btn-block" onclick="sendPendingMedia()" id="media-send-btn">📤 إرسال</button>
-        <button class="btn btn-light btn-block" onclick="cancelPendingMedia()">إلغاء</button>
-      </div>
-    </div>`);
-}
-
-function cancelPendingMedia(){
-  State.pendingMedia = null;
-  closeModal('media-modal');
-}
-
-async function sendPendingMedia(){
-  if(!State.pendingMedia) return;
-  const btn = $('media-send-btn');
-  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> رفع...'; }
-  const prog = $('upload-progress');
-  if(prog) prog.style.display = 'block';
-
-  try{
-    const media = await uploadMedia(State.pendingMedia.blob, State.pendingMedia.type);
-    const id = genId('m');
-    const payload = {
-      type: State.pendingMedia.type,
-      media: { data: media.data, duration: State.pendingMedia.duration || 0, size: State.pendingMedia.size || State.pendingMedia.blob.size },
-      name: State.MY_NAME, avatar: State.MY_AVATAR, userId: State.MY_ID,
-      timestamp: firebase.database.ServerValue.TIMESTAMP
-    };
-    if(State.replyTo){ payload.replyTo = State.replyTo; cancelReply(); }
-    await db.ref('rooms/' + State.MY_ROOM + '/messages/' + id).set(payload);
-    toast('✅ تم الإرسال', 'success');
-    if(typeof addXP === 'function') addXP(3);
-    State.pendingMedia = null;
-    closeModal('media-modal');
-  }catch(err){
-    console.error(err);
-    toast('❌ ' + (err.message || 'فشل'), 'error');
-    if(btn){ btn.disabled = false; btn.textContent = '📤 إعادة'; }
-  }
-}
-
-async function uploadMedia(blob, type){
-  const ext = type === 'image' ? 'jpg' : (blob.type.includes('mp4') ? 'm4a' : 'webm');
-  if(storage){
-    try{
-      const filename = `rooms/${State.MY_ROOM}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-      const ref = storage.ref(filename);
-      const task = ref.put(blob, { contentType: blob.type });
-      task.on('state_changed', snap => {
-        const pct = (snap.bytesTransferred / snap.totalBytes) * 100;
-        const fill = $('upload-progress-fill');
-        if(fill) fill.style.width = pct + '%';
-      });
-      await task;
-      const url = await ref.getDownloadURL();
-      return { data: url, storage: 'firebase' };
-    }catch(e){ console.warn('Storage failed, fallback to base64:', e.message); }
-  }
-  const b64 = await blobToDataUrl(blob);
-  if(b64.length > 800 * 1024) throw new Error('الملف كبير للـ base64. فعّل Firebase Storage.');
-  return { data: b64, storage: 'base64' };
-}
-
-function blobToDataUrl(blob){
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = e => resolve(e.target.result);
-    r.onerror = () => reject(new Error('read'));
-    r.readAsDataURL(blob);
-  });
 }
 
 /* ===== Audio Playback ===== */
@@ -2181,7 +1832,6 @@ async function loadMyRooms(){
 async function loadPublicRooms(){
   const list = $('public-rooms-list');
   if(!list) return;
-  // Loading skeleton
   list.innerHTML = Array(3).fill(0).map(()=>`
     <div class="room-card mb-2" style="opacity:.5;">
       <div style="width:52px;height:52px;border-radius:14px;background:var(--border);flex-shrink:0;"></div>
@@ -2302,23 +1952,12 @@ function showMyRooms(){
     </div>`);
 }
 
-/* ===== Image paste ===== */
-document.addEventListener('paste', e=>{
-  const items = e.clipboardData?.items || [];
-  for(const it of items){
-    if(it.type.startsWith('image/')){
-      const f = it.getAsFile();
-      if(f && $('chat-screen')?.classList.contains('active')){ prepareImage(f); e.preventDefault(); break; }
-    }
-  }
-});
-
 console.log('%c💬 YasEdu Communication loaded (3/5)', 'color:#4F46E5;font-size:14px;font-weight:bold');
 </script>
 <script>
 /* ============================================================
    YAS STUDIO — LEARNING MODULE v4.1
-   Part 4/5: Quiz + Flashcards + Videos + Tools + Enhancements
+   Part 4/5: Quiz + Flashcards + Tools + Enhancements
    ============================================================ */
 
 /* ===== Quiz Config ===== */
@@ -2553,7 +2192,7 @@ function submitQuiz(){
       ok = u === c || (u.length > 2 && (c.includes(u) || u.includes(c)));
     }
     if(ok) return;
-    if(q.type === 'fill') return; // ليه شرحه الخاص
+    if(q.type === 'fill') return;
     const card = document.querySelector(`[data-q="${i}"]`)?.closest('.q-card');
     if(!card || card.querySelector('.quiz-explanation')) return;
     const correctText = q.type === 'mcq' ? q.options[q.correct] : (q.correct ? 'صح' : 'خطأ');
@@ -2919,7 +2558,8 @@ console.log('%c📚 YasEdu Learning loaded (4/5)', 'color:#4F46E5;font-size:14px
 <script>
 /* ============================================================
    YAS STUDIO — FINAL MODULE v4.1
-   Part 5/5: Gamification + Dashboard + Settings + PWA + Init
+   Part 5/5: Gamification + Dashboard + Settings + Init
+   (PWA removed)
    ============================================================ */
 
 const LEVEL_THRESHOLDS = [0,100,250,500,900,1400,2000,2800,3800,5000,6500,8300,10500,13000,16000,19500,23500,28000,33000,40000];
@@ -3309,31 +2949,7 @@ function deleteAccount(){
   setTimeout(()=>location.reload(), 1000);
 }
 
-/* ===== PWA Manifest + Favicon ===== */
-const MANIFEST = {
-  name: 'YasEdu — منصتي التعليمية',
-  short_name: 'YasEdu',
-  description: 'منصة تعليمية متكاملة من Yas Studio',
-  start_url: '.',
-  display: 'standalone',
-  background_color: '#4F46E5',
-  theme_color: '#4F46E5',
-  dir: 'rtl',
-  lang: 'ar',
-  icons: [
-    { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#4F46E5" width="100" height="100" rx="20"/><text x="50" y="65" text-anchor="middle" fill="white" font-size="50" font-weight="900" font-family="Arial">YS</text></svg>'), sizes: '192x192', type: 'image/svg+xml', purpose: 'any' }
-  ]
-};
-
-function injectManifest(){
-  const blob = new Blob([JSON.stringify(MANIFEST)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('link');
-  link.rel = 'manifest';
-  link.href = url;
-  document.head.appendChild(link);
-}
-
+/* ===== Favicon (PWA manifest/service-worker removed) ===== */
 function injectFavicon(){
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#4F46E5" width="100" height="100" rx="20"/><text x="50" y="65" text-anchor="middle" fill="white" font-size="50" font-weight="900" font-family="Arial">YS</text></svg>';
   const link = document.createElement('link');
@@ -3343,13 +2959,7 @@ function injectFavicon(){
   document.head.appendChild(link);
 }
 
-/* ===== Service Worker + Daily Reminder + Welcome Tour ===== */
-if('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
-  });
-}
-
+/* ===== Daily Reminder ===== */
 (function dailyReminder(){
   if(typeof Notification === 'undefined') return;
   if(Notification.permission !== 'granted' || !LS.get('notifEnabled')) return;
@@ -3371,6 +2981,7 @@ if('serviceWorker' in navigator){
   }, diff);
 })();
 
+/* ===== Welcome Tour ===== */
 (function welcomeTour(){
   if(LS.get('tourSeen')) return;
   setTimeout(() => {
@@ -3405,7 +3016,6 @@ document.addEventListener('keydown', (e)=>{
 
 /* ===== Final Init ===== */
 (function finalInit(){
-  injectManifest();
   injectFavicon();
   setTimeout(()=>{
     if(State.MY_ID && State.MY_NAME){
@@ -3609,7 +3219,8 @@ function solveWord(t){
 
 return { normalize, view, stem, lev, fuzzy, detectIntent, INTENTS, KW_MAP, ST, parsePoly, polyStr, fmt, frac, calcSteps, solveEquation, solveCalc, solvePercent, solveGeometry, solveFraction, solveWord, extractChunk, tokenize };
 })();
-
+</script>
+<script>
 /* ============================================================
    YasBot KB — مختصر (~80 موضوع أساسي)
    ============================================================ */
@@ -3660,7 +3271,8 @@ const byId = {}; const byKw = {};
 KB.forEach(e=>{ byId[e.id]=e; e.kw.forEach(k=>{ const key=k.toLowerCase(); if(!byKw[key]) byKw[key]=[]; byKw[key].push(e.id); }); });
 return { KB, byId, byKw, getEntry: id => byId[id] || null };
 })();
-
+</script>
+<script>
 /* ============================================================
    YasBot — Response Builder + API
    ============================================================ */
@@ -3774,8 +3386,8 @@ console.log('%c© 2025 Yas Studio • Built by Yasser Mohamed', 'color:#4F46E5;f
 </script>
 <script>
 /* ============================================================
-   ADMIN LOGIN — مضمون 100%
-   بيتعامل مع admin/Admin@2025 مباشرة بدون مشاكل hash
+   ADMIN LOGIN — ensureAdminAccount + patchSignIn
+   (deleteAllRoomMessages و injectAdminControls اتحذفوا — موجودين في نسخة "النسخة النهائية")
    ============================================================ */
 
 /* 1️⃣ إنشاء حساب الأدمن (بيتنفذ بعد ما كل حاجة تحمّل) */
@@ -3898,176 +3510,11 @@ async function ensureAdminAccount(){
   console.log('%c✅ Admin login patch جاهز', 'color:#10B981;font-weight:bold');
 })();
 
-/* 3️⃣ زرار المسح (بيظهر للأدمن في شاشة الأدوات) */
-async function deleteAllRoomMessages(){
-  if(State.MY_ROLE !== 'developer' && State.MY_NAME !== 'admin'){
-    toast('❌ للأدمن فقط', 'error'); return;
-  }
-  if(!confirm('⚠️ مسح كل رسائل جميع الغرف؟ لا يمكن التراجع!')) return;
-  if(!confirm('متأكد 100%؟')) return;
-
-  toast('⏳ جاري المسح...', 'info');
-  try {
-    const snap = await db.ref('rooms').once('value');
-    const rooms = snap.val() || {};
-    let count = 0;
-    for(const code of Object.keys(rooms)){
-      if(rooms[code]?.messages){
-        await db.ref('rooms/' + code + '/messages').remove();
-        count++;
-      }
-    }
-    toast('✅ تم مسح رسائل ' + count + ' غرفة', 'success', 4000);
-    try{ playSound('success'); haptic(30); }catch(e){}
-  } catch(e){
-    toast('❌ فشل: ' + e.message, 'error');
-  }
-}
-
-/* 4️⃣ حقن زرار المسح في شاشة الأدوات */
-function injectAdminControls(){
-  const isAdmin = State.MY_ROLE === 'developer' || State.MY_NAME === 'admin';
-  if(!isAdmin) return;
-
-  const tools = document.getElementById('tools-screen');
-  if(!tools) return;
-  if(document.getElementById('admin-controls')) return;
-
-  const card = document.createElement('div');
-  card.id = 'admin-controls';
-  card.className = 'card mb-4';
-  card.style.cssText = 'border:2px solid #EF4444;background:var(--danger-bg);';
-  card.innerHTML = `
-    <div style="font-weight:900;font-size:15px;margin-bottom:8px;color:#991B1B;">👑 صلاحيات الأدمن</div>
-    <div class="text-sm mb-3" style="color:#991B1B;font-size:12px;">هذه الأزرار تظهر للأدمن فقط</div>
-    <button class="btn btn-danger btn-block" onclick="deleteAllRoomMessages()">🗑 مسح كل رسائل جميع الغرف</button>
-  `;
-
-  const cards = tools.querySelectorAll('.card');
-  if(cards.length) cards[cards.length - 1].after(card);
-  else tools.appendChild(card);
-}
-
-const _origInitTools = window.initTools;
-window.initTools = function(){
-  if(_origInitTools) _origInitTools.apply(this, arguments);
-  setTimeout(injectAdminControls, 100);
-};
-
-const _origEnterApp = window.enterApp;
-window.enterApp = function(){
-  _origEnterApp.apply(this, arguments);
-  setTimeout(injectAdminControls, 500);
-};
-
-/* 5️⃣ شغل الإنشاء بعد التحميل */
+/* 3️⃣ شغل الإنشاء بعد التحميل */
 setTimeout(ensureAdminAccount, 2000);
 
 console.log('%c👑 Admin system ready', 'color:#F59E0B;font-weight:bold;font-size:14px;');
 </script>
-  <script>
-/* ============================================================
-   ADMIN LOGIN — مضمون 100%
-   بيتعامل مع admin/Admin@2025 مباشرة بدون مشاكل hash
-   ============================================================ */
-
-/* 1️⃣ إنشاء حساب الأدمن (بيتنفذ بعد ما كل حاجة تحمّل) */
-async function ensureAdminAccount(){
-  try {
-    if(typeof db === 'undefined' || typeof genSalt !== 'function' || typeof hashPassword !== 'function'){
-      console.warn('⏳ الدوال لسه مش جاهزة، هعيد المحاولة...');
-      return setTimeout(ensureAdminAccount, 1000);
-    }
-
-    const snap = await db.ref('users').once('value');
-    const users = snap.val() || {};
-    const existing = Object.entries(users).find(([uid, u]) => u.name === 'admin' || u.email === 'admin@yasedu.dev');
-
-    if(existing){
-      console.log('%c✅ حساب admin موجود بالفعل', 'color:#10B981;font-weight:bold');
-      return;
-    }
-
-    const salt = genSalt();
-    const hash = await hashPassword('Admin@2025', salt);
-    const secretHash = await sha256('admin');
-    const uid = 'admin_' + Date.now();
-
-    await db.ref('users/' + uid).set({
-      name: 'admin',
-      email: 'admin@yasedu.dev',
-      avatar: '👑',
-      salt, hash,
-      secretQ: 'admin',
-      secretHash,
-      role: 'developer',
-      isAdmin: true,
-      xp: 0, level: 99, streak: 0,
-      lastActive: Date.now(),
-      createdAt: Date.now(),
-      bio: 'مدير المنصة'
-    });
-
-    console.log('%c👑 تم إنشاء حساب الأدمن بنجاح', 'color:#F59E0B;font-size:16px;font-weight:bold');
-    console.log('%c👤 admin  🔑 Admin@2025', 'color:#10B981;font-size:14px;font-weight:bold');
-  } catch(e){
-    console.warn('Admin setup error:', e);
-    setTimeout(ensureAdminAccount, 2000);
-  }
-}
-
-/* 2️⃣ اعتراض تسجيل الدخول — يقبل admin/Admin@2025 دايماً */
-(function patchSignIn(){
-  if(typeof handleSignIn !== 'function') return setTimeout(patchSignIn, 300);
-
-  const originalSignIn = window.handleSignIn;
-
-  window.handleSignIn = async function(e){
-    if(e && e.preventDefault) e.preventDefault();
-
-    const identifier = (document.getElementById('signin-email')?.value || '').trim().toLowerCase();
-    const password = document.getElementById('signin-password')?.value || '';
-
-    // ✅ قبول admin / Admin@2025 مباشرة
-    if((identifier === 'admin' || identifier === 'admin@yasedu.dev') && password === 'Admin@2025'){
-
-      const btn = e.target.querySelector('button[type="submit"]');
-      if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> جاري الدخول...'; }
-
-      try {
-        // ابحث عن حساب admin
-        const snap = await db.ref('users').once('value');
-        const users = snap.val() || {};
-        let adminUid = null, adminUser = null;
-
-        for(const [uid, u] of Object.entries(users)){
-          if(u.name === 'admin' || u.email === 'admin@yasedu.dev'){
-            adminUid = uid;
-            adminUser = u;
-            break;
-          }
-        }
-
-        // لو مش موجود، اعملو
-        if(!adminUid){
-          const salt = genSalt();
-          const hash = await hashPassword('Admin@2025', salt);
-          const secretHash = await sha256('admin');
-          adminUid = 'admin_' + Date.now();
-          adminUser = {
-            name: 'admin', email: 'admin@yasedu.dev', avatar: '👑',
-            salt, hash, secretQ: 'admin', secretHash,
-            role: 'developer', isAdmin: true,
-            xp: 0, level: 99, streak: 0,
-            lastActive: Date.now(), createdAt: Date.now(), bio: 'مدير المنصة'
-          };
-          await db.ref('users/' + adminUid).set(adminUser);
-        }
-
-        // سجّل الدخول
-        setSession(adminUid, adminUser);
-        State.MY_ROLE = 'developer';
-        State.MY_LEVEL = 99;
 <script>
 /* ============================================================
    ADMIN SYSTEM — النسخة النهائية
@@ -4087,7 +3534,7 @@ setTimeout(function patchSignIn(){
     if(e && e.preventDefault) e.preventDefault();
 
     const identifier = (document.getElementById('signin-email')?.value || '').trim().toLowerCase();
-    const password = document.getElementById('signin-password')?.value || '';
+    const password = (document.getElementById('signin-password')?.value) || '';
 
     console.log('%c🔐 محاولة دخول:', 'color:#3B82F6;font-weight:bold;', identifier);
 
@@ -4246,7 +3693,7 @@ setTimeout(function hookEnter(){
 console.log('%c📋 بيانات الدخول للأدمن:', 'color:#F59E0B;font-size:14px;font-weight:bold;');
 console.log('%c   👤 admin    🔑 Admin@2025', 'color:#10B981;font-size:13px;font-weight:bold;');
 </script>
-  <script>
+<script>
 /* ============================================================
    ADMIN — إدارة الغرف (عرض / مسح)
    ============================================================ */
@@ -4377,7 +3824,7 @@ window.injectAdminControls = function(){
 
 console.log('%c🏠 Admin Rooms Manager loaded', 'color:#10B981;font-weight:bold;');
 </script>
-  <script>
+<script>
 /* ============================================================
    MASTER ADMIN PANEL — لوحة تحكم شاملة
    ============================================================ */
@@ -5076,12 +4523,12 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
 <script>
 /* ============================================================
    YasEdu Features Pack 2/4 — 5 مميزات
+   (PWA removed)
    ============================================================ */
 (function(){
   'use strict';
 
   /* ============ 6. مؤقت اختبار احترافي ============ */
-  // Override selectTimer + renderQuiz لإضافة مؤقت محترم
   const originalSelectTimer = window.selectTimer;
   window.selectTimer = function(btn, m){
     $$('.timer-btn').forEach(b => b.classList.remove('active'));
@@ -5113,7 +4560,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     const s = State.quizSecondsLeft % 60;
     t.textContent = `⏱️ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     t.classList.toggle('warn', State.quizSecondsLeft < 60);
-    
+
     // تنبيه صوتي عند 10 ثواني
     if(State.quizSecondsLeft === 10 && !window._timerWarned){
       window._timerWarned = true;
@@ -5122,7 +4569,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     }
   };
 
-  // reset العلم عند بداية مؤقت جديد
   const originalRenderQuiz = window.renderQuiz;
   window.renderQuiz = function(qs, withTimer){
     window._timerWarned = false;
@@ -5134,7 +4580,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     if(!State.MY_ROOM) return;
     const m = State.currentMessages[msgId];
     if(!m) return;
-    
+
     db.ref('rooms/' + State.MY_ROOM + '/pinned/' + msgId).set({
       text: m.text || '',
       type: m.type || 'text',
@@ -5162,7 +4608,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       const snap = await db.ref('rooms/' + State.MY_ROOM + '/pinned').once('value');
       const pinned = snap.val() || {};
       const keys = Object.keys(pinned).sort((a, b) => pinned[b].pinnedAt - pinned[a].pinnedAt);
-      
+
       if(!keys.length){
         toast('لا توجد رسائل مثبتة', 'info');
         return;
@@ -5190,7 +4636,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
                         📌 بواسطة ${esc(p.pinnedBy)} • ${formatTime(p.pinnedAt)}
                       </div>
                     </div>
-                    <button onclick="unpinMessage('${k}');closeModal('pinned-messages-modal');" 
+                    <button onclick="unpinMessage('${k}');closeModal('pinned-messages-modal');"
                       style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;">🗑</button>
                   </div>
                 </div>
@@ -5206,7 +4652,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
   const originalRenderMessage = window.renderMessage;
   window.renderMessage = function(id, m){
     const html = originalRenderMessage.apply(this, arguments);
-    // استبدل زرار الإجراءات
     return html.replace(
       '</div></div>',
       `<button class="msg-action" onclick="pinMessage('${id}')" title="تثبيت">📌</button></div></div>`
@@ -5268,7 +4713,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
         </div>
       </div>
     `);
-    // تعيين تاريخ افتراضي بكرة
     setTimeout(() => {
       const tomorrow = new Date(Date.now() + 86400000);
       const d = document.getElementById('reminder-date');
@@ -5283,19 +4727,18 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     const date = document.getElementById('reminder-date')?.value;
     const time = document.getElementById('reminder-time')?.value;
     if(!title || !date || !time){ toast('أكمل البيانات', 'error'); return; }
-    
+
     const reminders = LS.get('reminders', []);
     const id = 'r_' + Date.now();
     reminders.push({ id, title, date, time });
     LS.set('reminders', reminders);
-    
-    // جدولة الإشعار
+
     scheduleReminder({ id, title, date, time });
-    
+
     if('Notification' in window && Notification.permission === 'default'){
       Notification.requestPermission();
     }
-    
+
     toast('✅ تم إضافة التنبيه', 'success');
     closeModal('reminders-modal');
     setTimeout(showReminders, 200);
@@ -5314,7 +4757,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       const target = new Date(r.date + 'T' + r.time + ':00').getTime();
       const diff = target - Date.now();
       if(diff <= 0 || diff > 7 * 24 * 60 * 60 * 1000) return;
-      
+
       setTimeout(() => {
         if('Notification' in window && Notification.permission === 'granted'){
           new Notification('⏰ تنبيه: ' + r.title, {
@@ -5329,13 +4772,11 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     } catch(e) { console.warn('Reminder error:', e); }
   }
 
-  // استرجاع التنبيهات عند التحميل
   function restoreReminders(){
     const reminders = LS.get('reminders', []);
     reminders.forEach(scheduleReminder);
   }
 
-  // زرار تنبيهات في الداشبورد
   function addRemindersButton(){
     const quick = document.querySelector('#dashboard-screen .grid-2');
     if(!quick || document.getElementById('reminders-btn')) return;
@@ -5345,127 +4786,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     card.onclick = showReminders;
     card.innerHTML = '<div class="qa-icon">🔔</div><div style="flex:1;"><div class="font-bold" style="font-size:13px;">التنبيهات</div><div class="text-xs text-muted">مواعيد المذاكرة</div></div>';
     quick.appendChild(card);
-  }
-
-  /* ============ 9. PWA كامل ============ */
-  function setupPWA(){
-    // حقن manifest
-    if(!document.querySelector('link[rel="manifest"]')){
-      const manifest = {
-        name: 'YasEdu — منصتي التعليمية',
-        short_name: 'YasEdu',
-        description: 'منصة تعليمية متكاملة',
-        start_url: '.',
-        display: 'standalone',
-        background_color: '#4F46E5',
-        theme_color: '#4F46E5',
-        dir: 'rtl',
-        lang: 'ar',
-        orientation: 'portrait',
-        icons: [
-          {
-            src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#4F46E5" width="100" height="100" rx="20"/><text x="50" y="65" text-anchor="middle" fill="white" font-size="50" font-weight="900" font-family="Arial">YS</text></svg>'),
-            sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = URL.createObjectURL(blob);
-      document.head.appendChild(link);
-    }
-
-    // Service Worker للـ offline
-    if('serviceWorker' in navigator && !window._swRegistered){
-      window._swRegistered = true;
-      const swCode = `
-        self.addEventListener('install', e => self.skipWaiting());
-        self.addEventListener('activate', e => self.clients.claim());
-        self.addEventListener('fetch', e => {
-          if(e.request.method !== 'GET') return;
-          e.respondWith(
-            caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-              if(res.ok && res.type === 'basic'){
-                const clone = res.clone();
-                caches.open('yasedu-v1').then(c => c.put(e.request, clone));
-              }
-              return res;
-            }).catch(() => caches.match('/')))
-          );
-        });
-      `;
-      try {
-        const swBlob = new Blob([swCode], { type: 'application/javascript' });
-        const swURL = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swURL).catch(() => {});
-      } catch(e) { console.warn('SW failed:', e); }
-    }
-
-    // Install prompt
-    let deferredPrompt = null;
-    window.addEventListener('beforeinstallprompt', e => {
-      e.preventDefault();
-      deferredPrompt = e;
-      showInstallBanner();
-    });
-
-    window.installPWA = async function(){
-      if(!deferredPrompt){ toast('التثبيت غير متاح — استخدم قائمة المتصفح', 'info'); return; }
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if(outcome === 'accepted') toast('✅ تم التثبيت!', 'success');
-      deferredPrompt = null;
-      hideInstallBanner();
-    };
-
-    window.dismissPWA = function(){
-      hideInstallBanner();
-      LS.set('pwaDismissed', true);
-    };
-
-    function showInstallBanner(){
-      if(LS.get('pwaDismissed')) return;
-      if(document.getElementById('pwa-banner')) return;
-      const banner = document.createElement('div');
-      banner.id = 'pwa-banner';
-      banner.style.cssText = 'position:fixed;bottom:90px;left:16px;right:16px;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;padding:14px 18px;border-radius:16px;box-shadow:0 10px 30px rgba(79,70,229,.4);z-index:9997;display:flex;align-items:center;gap:12px;animation:slideUp .4s ease;';
-      banner.innerHTML = `
-        <div style="font-size:32px;">📱</div>
-        <div style="flex:1;">
-          <div style="font-weight:900;font-size:14px;">ثبّت YasEdu</div>
-          <div style="font-size:11px;opacity:.9;">وصول أسرع من الشاشة الرئيسية</div>
-        </div>
-        <button onclick="installPWA()" style="background:#fff;color:#4F46E5;border:none;padding:8px 16px;border-radius:10px;font-weight:900;font-size:13px;cursor:pointer;">تثبيت</button>
-        <button onclick="dismissPWA()" style="background:transparent;color:#fff;border:none;font-size:22px;cursor:pointer;padding:0 4px;">✕</button>
-      `;
-      document.body.appendChild(banner);
-      const style = document.createElement('style');
-      style.textContent = '@keyframes slideUp{from{transform:translateY(100px);opacity:0}to{transform:translateY(0);opacity:1}}';
-      document.head.appendChild(style);
-    }
-
-    function hideInstallBanner(){
-      document.getElementById('pwa-banner')?.remove();
-    }
-
-    // زرار تثبيت في الإعدادات
-    if(typeof window.showSettings === 'function'){
-      const origShowSettings = window.showSettings;
-      window.showSettings = function(){
-        origShowSettings.apply(this, arguments);
-        setTimeout(() => {
-          const modal = document.querySelector('#settings-modal .modal-content');
-          if(!modal || modal.querySelector('.pwa-install-setting')) return;
-          const btn = document.createElement('div');
-          btn.className = 'setting-item pwa-install-setting';
-          btn.innerHTML = '<div class="setting-info"><div class="setting-title">📱 تثبيت التطبيق</div><div class="setting-desc">على الشاشة الرئيسية</div></div><button class="btn btn-light btn-sm" onclick="installPWA()">تثبيت</button>';
-          modal.appendChild(btn);
-        }, 100);
-      };
-    }
   }
 
   /* ============ 10. ثيمات إضافية ============ */
@@ -5499,7 +4819,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     }
   };
 
-  // إضافة الثيمات الجديدة
   Object.entries(NEW_THEMES).forEach(([key, theme]) => {
     let style = document.getElementById('theme-' + key);
     if(!style){
@@ -5510,7 +4829,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     }
   });
 
-  // تحديث applyTheme ليدعم الثيمات الجديدة
   const originalApplyTheme = window.applyTheme;
   window.applyTheme = function(theme){
     document.body.classList.remove('theme-ocean', 'theme-sunset', 'theme-forest', 'theme-royal', 'theme-dark-purple', 'theme-mint', 'theme-rose');
@@ -5518,7 +4836,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     LS.set('theme', theme);
   };
 
-  // إضافة swatches في الإعدادات
   function addNewThemeSwatches(){
     const modal = document.querySelector('#settings-modal .modal-content');
     if(!modal) return;
@@ -5546,7 +4863,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     });
   }
 
-  // راقب فتح الإعدادات
   if(typeof window.showSettings === 'function'){
     const orig = window.showSettings;
     window.showSettings = function(){
@@ -5560,10 +4876,9 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     if(!document.getElementById('main-app')) return;
     addPinnedButton();
     addRemindersButton();
-    setupPWA();
     restoreReminders();
     console.log('%c✅ Features Pack 2/4 loaded (5 features)', 'color:#10B981;font-weight:bold;font-size:13px;');
-    console.log('   ⏰ مؤقت | 📌 مثبتة | 🔔 تنبيهات | 📱 PWA | 🎨 ثيمات');
+    console.log('   ⏰ مؤقت | 📌 مثبتة | 🔔 تنبيهات | 🎨 ثيمات');
   }
 
   if(document.readyState === 'loading'){
@@ -5572,7 +4887,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     setTimeout(initFeaturesPack2, 3000);
   }
 
-  // راقب الشات لإضافة زرار المثبتة
   const obs = new MutationObserver(() => {
     if(document.getElementById('chat-screen')?.classList.contains('active')){
       addPinnedButton();
@@ -5604,7 +4918,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       success: [523, 659, 784],
       click: [600]
     },
-    
+
     play(type, customFreqs) {
       if(!this.enabled) return;
       try {
@@ -5625,28 +4939,26 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
         osc.stop(ctx.currentTime + freqs.length * stepTime);
       } catch(e) { console.warn('Sound error:', e); }
     },
-    
+
     setEnabled(val) {
       this.enabled = val;
       LS.set('soundsEnabled', val);
     },
-    
+
     setVolume(val) {
       this.volume = Math.max(0, Math.min(1, val));
       LS.set('soundsVolume', this.volume);
     }
   };
-  
+
   window.SoundManager = SoundManager;
   window.playNotificationSound = () => SoundManager.play('notification');
   window.playAchievementSound = () => SoundManager.play('achievement');
 
-  // Override playSound القديم
   window.playSound = function(type){
     SoundManager.play(type === 'xp' ? 'achievement' : type);
   };
 
-  // صوت لما تيجي رسالة جديدة
   const originalRenderChat = window.renderChatMessages;
   let _lastMessageCount = 0;
   window.renderChatMessages = function(){
@@ -5663,7 +4975,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     return originalRenderChat.apply(this, arguments);
   };
 
-  // إعدادات الصوت في الإعدادات
   if(typeof window.showSettings === 'function'){
     const orig = window.showSettings;
     window.showSettings = function(){
@@ -5671,7 +4982,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       setTimeout(() => {
         const modal = document.querySelector('#settings-modal .modal-content');
         if(!modal || modal.querySelector('.sound-settings-section')) return;
-        
+
         const section = document.createElement('div');
         section.className = 'sound-settings-section';
         section.innerHTML = `
@@ -5687,7 +4998,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
               <div class="setting-title">🔉 مستوى الصوت</div>
               <div class="setting-desc">${Math.round(SoundManager.volume * 100)}%</div>
             </div>
-            <input type="range" min="0" max="100" value="${Math.round(SoundManager.volume * 100)}" 
+            <input type="range" min="0" max="100" value="${Math.round(SoundManager.volume * 100)}"
               oninput="SoundManager.setVolume(this.value/100);this.previousElementSibling.querySelector('.setting-desc').textContent=this.value+'%'"
               style="width:100px;">
           </div>
@@ -5706,7 +5017,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
   /* ============ 12. إشعارات Push ============ */
   const PushManager = {
     enabled: LS.get('pushEnabled', false),
-    
+
     async requestPermission() {
       if(!('Notification' in window)){
         toast('المتصفح لا يدعم الإشعارات', 'error');
@@ -5731,7 +5042,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       }
       return false;
     },
-    
+
     send(title, body, options = {}) {
       if(!this.enabled || Notification.permission !== 'granted') return;
       try {
@@ -5747,23 +5058,22 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
         });
       } catch(e) { console.warn('Push error:', e); }
     },
-    
+
     setEnabled(val) {
       this.enabled = val;
       LS.set('pushEnabled', val);
     }
   };
-  
+
   window.PushManager = PushManager;
 
-  // إرسال إشعار عند وصول رسالة (لو الشات مقفول)
   db.ref('rooms/' + State.MY_ROOM + '/messages').limitToLast(1).on('child_added', snap => {
     const m = snap.val();
     if(!m || !m.timestamp) return;
     if(Date.now() - (m.timestamp || 0) > 5000) return;
     if(m.userId === State.MY_ID || m.userId === 'bot') return;
     if(document.getElementById('chat-screen')?.classList.contains('active')) return;
-    
+
     if(PushManager.enabled){
       PushManager.send(
         '💬 رسالة من ' + (m.name || 'مجهول'),
@@ -5773,7 +5083,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     }
   });
 
-  // إشعار عند إنجاز
   const originalAddXP = window.addXP;
   window.addXP = function(amount){
     const oldLevel = State.MY_LEVEL;
@@ -5788,7 +5097,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     return result;
   };
 
-  // زرار في الإعدادات
   if(typeof window.showSettings === 'function'){
     const orig2 = window.showSettings;
     window.showSettings = function(){
@@ -5803,7 +5111,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
             <div class="setting-title">🔔 إشعارات Push</div>
             <div class="setting-desc">حتى لو الموقع مقفول</div>
           </div>
-          <button class="toggle ${PushManager.enabled ? 'on' : ''}" 
+          <button class="toggle ${PushManager.enabled ? 'on' : ''}"
             onclick="if(!PushManager.enabled){PushManager.requestPermission().then(ok=>{if(ok)this.classList.add('on')})}else{PushManager.setEnabled(false);this.classList.remove('on')}"></button>
         `;
         modal.appendChild(item);
@@ -5814,7 +5122,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
   /* ============ 13. معرض صور الغرفة ============ */
   window.showRoomGallery = async function(){
     if(!State.MY_ROOM) return;
-    
+
     createModal('gallery-modal', `
       <div class="modal-content" style="max-width:700px;">
         <div class="modal-header">
@@ -5831,7 +5139,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       const snap = await db.ref('rooms/' + State.MY_ROOM + '/messages').once('value');
       const msgs = snap.val() || {};
       const images = [];
-      
+
       Object.entries(msgs).forEach(([id, m]) => {
         if(m.type === 'image' && m.media?.data){
           images.push({ id, data: m.media.data, name: m.name || 'مجهول', ts: m.timestamp || 0 });
@@ -5850,16 +5158,16 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       }
 
       images.sort((a, b) => b.ts - a.ts);
-      
+
       document.getElementById('gallery-content').innerHTML = `
         <div style="font-size:12px;color:var(--text-2);margin-bottom:12px;text-align:center;">
           ${images.length} صورة
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;">
           ${images.map(img => `
-            <div onclick="openLightbox('${esc(img.data)}')" 
+            <div onclick="openLightbox('${esc(img.data)}')"
               style="aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;position:relative;background:var(--surface-2);">
-              <img src="${esc(img.data)}" loading="lazy" 
+              <img src="${esc(img.data)}" loading="lazy"
                 style="width:100%;height:100%;object-fit:cover;transition:transform .2s;"
                 onmouseover="this.style.transform='scale(1.05)'"
                 onmouseout="this.style.transform='scale(1)'">
@@ -5899,7 +5207,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     } catch(e) { toast('فشل التحميل', 'error'); }
   };
 
-  // زرار في رأس الشات
   function addGalleryButton(){
     const actions = document.querySelector('.chat-header .icon-btn');
     if(!actions) return;
@@ -5934,13 +5241,11 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     try {
       const isImage = file.type.startsWith('image/');
       let dataUrl;
-      
+
       if(isImage){
-        // ضغط الصور
         const blob = await compressImage(file, 1200, 0.75);
         dataUrl = await blobToDataUrl(blob);
       } else {
-        // ملفات - base64
         dataUrl = await blobToDataUrl(file);
         if(dataUrl.length > 900 * 1024){
           throw new Error('الملف كبير جدًا (900KB max)');
@@ -5962,8 +5267,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
         userId: State.MY_ID,
         timestamp: firebase.database.ServerValue.TIMESTAMP
       };
-      if(State.replyTo){ payload.replyTo = State.replyTo; cancelReply(); }
-      
+
       await db.ref('rooms/' + State.MY_ROOM + '/messages/' + id).set(payload);
       toast('✅ تم إرسال الملف', 'success');
       addXP(3);
@@ -5981,7 +5285,27 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     });
   }
 
-  // Override renderMessage لدعم الملفات
+  function compressImage(file, maxDim, quality){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = e => {
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          if(w > maxDim || h > maxDim){ const r = Math.min(maxDim/w, maxDim/h); w = Math.round(w*r); h = Math.round(h*r); }
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          c.toBlob(b => b ? resolve(b) : reject(new Error('canvas')), 'image/jpeg', quality);
+        };
+        img.onerror = () => reject(new Error('load'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('read'));
+      reader.readAsDataURL(file);
+    });
+  }
+
   const originalRenderMsg = window.renderMessage;
   window.renderMessage = function(id, m){
     if(m.type === 'file' && m.file){
@@ -5994,7 +5318,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
                    m.file.mimeType?.includes('zip') ? '📦' :
                    m.file.mimeType?.includes('doc') ? '📝' :
                    m.file.mimeType?.includes('xls') ? '📊' : '📎';
-      
+
       return `
         <div class="msg-row ${cls}">
           <div class="msg-avatar">${m.avatar || '👤'}</div>
@@ -6007,7 +5331,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
                   <div style="font-weight:800;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.file.name)}</div>
                   <div style="font-size:11px;opacity:.7;margin-top:2px;">${size}</div>
                 </div>
-                <button onclick="downloadFile('${id}')" style="background:${mine ? 'rgba(255,255,255,.2)' : 'var(--brand-primary)'};color:${mine ? '#fff' : '#fff'};border:none;padding:8px 12px;border-radius:8px;font-weight:800;cursor:pointer;font-size:12px;">⬇️</button>
+                <button onclick="downloadFile('${id}')" style="background:${mine ? 'rgba(255,255,255,.2)' : 'var(--brand-primary)'};color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:800;cursor:pointer;font-size:12px;">⬇️</button>
               </div>
             </div>
           </div>
@@ -6027,7 +5351,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     toast('⬇️ جاري التحميل', 'success');
   };
 
-  // زرار في الشات
   function addFileButton(){
     const bar = document.querySelector('.chat-input-area');
     if(!bar || document.getElementById('file-btn')) return;
@@ -6037,9 +5360,9 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     btn.textContent = '📎';
     btn.title = 'إرفاق ملف';
     btn.onclick = pickFile;
-    const imgBtn = bar.querySelector('button[onclick="pickImage()"]');
-    if(imgBtn) imgBtn.after(btn);
-    else bar.insertBefore(btn, bar.firstChild);
+    const sendBtn = bar.querySelector('.chat-send-btn');
+    if(sendBtn) bar.insertBefore(btn, sendBtn);
+    else bar.appendChild(btn);
   }
 
   /* ============ 15. لوحة إحصائيات (للأدمن) ============ */
@@ -6185,7 +5508,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     }
   };
 
-  // زرار في لوحة الأدمن
   function addAdminDashboardButton(){
     const card = document.getElementById('admin-controls');
     if(!card || card.querySelector('.admin-dashboard-btn')) return;
@@ -6213,7 +5535,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     setTimeout(initFeaturesPack3, 3500);
   }
 
-  // راقب الشات
   const obs = new MutationObserver(() => {
     if(document.getElementById('chat-screen')?.classList.contains('active')){
       addGalleryButton();
@@ -6225,7 +5546,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     if(chat) obs.observe(chat, { attributes: true, attributeFilter: ['class'] });
   });
 
-  // راقب admin controls
   const adminObs = new MutationObserver(() => {
     if(document.getElementById('admin-controls')) addAdminDashboardButton();
   });
@@ -6244,7 +5564,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
 
   /* ============ 16. قاموس مدمج ============ */
   const DICTIONARY = {
-    // عربي → إنجليزي + شرح
     'كتاب': { en: 'book', def: 'مجموعة من الصفحات المطبوعة أو المكتوبة' },
     'مدرسة': { en: 'school', def: 'مؤسسة تعليمية' },
     'معلم': { en: 'teacher', def: 'شخص يقوم بالتعليم' },
@@ -6301,7 +5620,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     'لعب': { en: 'play', def: 'نشاط ترفيهي' },
     'عمل': { en: 'work', def: 'جهد لهدف' },
     'نجح': { en: 'succeed', def: 'حقق هدفه' },
-    // إنجليزي → عربي
     'book': { ar: 'كتاب', def: 'a set of written pages' },
     'school': { ar: 'مدرسة', def: 'educational institution' },
     'teacher': { ar: 'معلم', def: 'person who teaches' },
@@ -6343,7 +5661,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
           <div class="modal-title">📖 القاموس</div>
           <button class="modal-close" onclick="closeModal('dictionary-modal')">✕</button>
         </div>
-        <input class="input" id="dict-input" placeholder="اكتب كلمة بالعربي أو الإنجليزي..." 
+        <input class="input" id="dict-input" placeholder="اكتب كلمة بالعربي أو الإنجليزي..."
           oninput="dictLookup(this.value)" style="margin-bottom:12px;">
         <div id="dict-result">
           <div class="empty-state" style="padding:40px 20px;">
@@ -6371,7 +5689,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       box.innerHTML = '<div class="empty-state" style="padding:40px 20px;"><div class="empty-icon">📖</div><div class="empty-title">اكتب كلمة</div></div>';
       return;
     }
-    
+
     const result = DICTIONARY[w] || DICTIONARY[word.trim()];
     if(result){
       box.innerHTML = `
@@ -6384,11 +5702,10 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
         <button class="btn btn-light btn-block" style="margin-top:12px;" onclick="dictSpeak('${esc(word.trim())}')">🔊 استمع</button>
       `;
     } else {
-      // البحث التقريبي
-      const similar = Object.keys(DICTIONARY).filter(k => 
+      const similar = Object.keys(DICTIONARY).filter(k =>
         k.includes(w) || w.includes(k)
       ).slice(0, 5);
-      
+
       if(similar.length){
         box.innerHTML = `
           <div class="empty-state" style="padding:20px;">
@@ -6421,7 +5738,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     haptic(10);
   };
 
-  // زرار في الداشبورد
   function addDictionaryButton(){
     const quick = document.querySelector('#dashboard-screen .grid-2');
     if(!quick || document.getElementById('dict-btn')) return;
@@ -6437,10 +5753,10 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
   window.addMessageNote = function(msgId){
     const m = State.currentMessages[msgId];
     if(!m) return;
-    
+
     const notes = LS.get('messageNotes', {});
     const existing = notes[msgId] || '';
-    
+
     createModal('add-note-modal', `
       <div class="modal-content">
         <div class="modal-header">
@@ -6485,7 +5801,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
   window.showAllMessageNotes = function(){
     const notes = LS.get('messageNotes', {});
     const entries = Object.entries(notes).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
-    
+
     createModal('all-notes-modal', `
       <div class="modal-content">
         <div class="modal-header">
@@ -6511,7 +5827,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     `);
   };
 
-  // Override renderMessage لإضافة زرار 📝
   const originalRenderMsg2 = window.renderMessage;
   window.renderMessage = function(id, m){
     const html = originalRenderMsg2.apply(this, arguments);
@@ -6524,7 +5839,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     );
   };
 
-  // زرار في الداشبورد
   function addNotesButton(){
     const quick = document.querySelector('#dashboard-screen .grid-2');
     if(!quick || document.getElementById('notes-list-btn')) return;
@@ -6540,29 +5854,29 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
   const SciCalc = {
     expr: '',
     isRad: true,
-    
+
     input(val){
       this.expr += val;
       this.updateDisplay();
     },
-    
+
     clear(){
       this.expr = '';
       this.updateDisplay();
     },
-    
+
     backspace(){
       this.expr = this.expr.slice(0, -1);
       this.updateDisplay();
     },
-    
+
     updateDisplay(){
       const d = document.getElementById('sci-display');
       if(d) d.value = this.expr || '0';
       const r = document.getElementById('sci-result');
       if(r) r.textContent = '';
     },
-    
+
     calculate(){
       try {
         let expr = this.expr
@@ -6575,14 +5889,13 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
           .replace(/ln\(/g, 'Math.log(')
           .replace(/√\(/g, 'Math.sqrt(')
           .replace(/\^/g, '**');
-        
-        // تحويل الدرجات للراديان
+
         if(!this.isRad){
           expr = expr.replace(/(Math\.sin|Math\.cos|Math\.tan)\(([^)]+)\)/g, (match, fn, arg) => {
             return `${fn}((${arg}) * Math.PI / 180)`;
           });
         }
-        
+
         const result = Function('"use strict";return (' + expr + ')')();
         const r = document.getElementById('sci-result');
         if(r) r.textContent = '= ' + (Math.round(result * 1e10) / 1e10);
@@ -6592,14 +5905,14 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
         if(r) r.textContent = 'خطأ';
       }
     },
-    
+
     toggleRad(){
       this.isRad = !this.isRad;
       const r = document.getElementById('sci-rad-toggle');
       if(r) r.textContent = this.isRad ? 'RAD' : 'DEG';
     }
   };
-  
+
   window.SciCalc = SciCalc;
 
   window.showScientificCalc = function(){
@@ -6609,7 +5922,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
           <div class="modal-title">🧮 آلة حاسبة علمية</div>
           <button class="modal-close" onclick="closeModal('sci-calc-modal')">✕</button>
         </div>
-        <input id="sci-display" class="input" readonly placeholder="0" 
+        <input id="sci-display" class="input" readonly placeholder="0"
           style="text-align:left;font-size:20px;font-weight:800;font-family:'Inter',monospace;margin-bottom:4px;">
         <div id="sci-result" style="text-align:left;font-size:14px;color:var(--brand-primary);font-weight:800;min-height:20px;padding:0 14px;margin-bottom:8px;"></div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:4px;">
@@ -6729,7 +6042,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     const q = quickQuizState.questions[quickQuizState.idx];
     const buttons = document.querySelectorAll('#quick-quiz-content .opt-btn');
     buttons.forEach(b => b.disabled = true);
-    
+
     if(idx === q.correct){
       buttons[idx].classList.add('correct');
       quickQuizState.score++;
@@ -6740,7 +6053,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       buttons[q.correct].classList.add('correct');
       playSound('error');
     }
-    
+
     setTimeout(() => {
       quickQuizState.idx++;
       renderQuickQuizQuestion();
@@ -6753,7 +6066,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     const pct = Math.round((quickQuizState.score / quickQuizState.questions.length) * 100);
     if(typeof addXP === 'function') addXP(quickQuizState.score * 10);
     playSound('success');
-    
+
     content.innerHTML = `
       <div style="text-align:center;padding:30px 20px;">
         <div style="font-size:64px;margin-bottom:16px;">${pct >= 80 ? '🏆' : pct >= 50 ? '🎉' : '💪'}</div>
@@ -6766,7 +6079,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     `;
   }
 
-  // زرار في الداشبورد
   function addQuickQuizButton(){
     const quick = document.querySelector('#dashboard-screen .grid-2');
     if(!quick || document.getElementById('quick-quiz-btn')) return;
@@ -6783,13 +6095,12 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     const now = Date.now();
     const weekAgo = now - 7 * 24 * 3600 * 1000;
     const hist = LS.get('quizHistory', []).filter(h => h.date >= weekAgo);
-    
+
     const totalQuizzes = hist.length;
     const avgScore = totalQuizzes ? Math.round(hist.reduce((s, h) => s + h.percent, 0) / totalQuizzes) : 0;
     const bestScore = totalQuizzes ? Math.max(...hist.map(h => h.percent)) : 0;
     const totalXPGained = totalQuizzes * 25 + (State.MY_STREAK * 20);
-    
-    // أفضل موضوع
+
     const topicStats = {};
     hist.forEach(h => {
       const room = h.room || 'GENERAL';
@@ -6797,7 +6108,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
       topicStats[room].count++;
       topicStats[room].total += h.percent;
     });
-    
+
     let bestTopic = '—', bestTopicAvg = 0;
     Object.entries(topicStats).forEach(([topic, s]) => {
       const avg = s.total / s.count;
@@ -6805,20 +6116,20 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     });
 
     const messages = Object.keys(State.currentMessages || {}).length;
-    
+
     createModal('weekly-report-modal', `
       <div class="modal-content">
         <div class="modal-header">
           <div class="modal-title">📊 تقريرك الأسبوعي</div>
           <button class="modal-close" onclick="closeModal('weekly-report-modal')">✕</button>
         </div>
-        
+
         <div style="background:var(--grad-primary);color:#fff;border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;">
           <div style="font-size:14px;opacity:.9;margin-bottom:8px;">${new Date(weekAgo).toLocaleDateString('ar-EG')} — ${new Date().toLocaleDateString('ar-EG')}</div>
           <div style="font-size:48px;font-weight:900;margin-bottom:4px;">${totalQuizzes}</div>
           <div style="font-size:14px;font-weight:800;">اختبار هذا الأسبوع</div>
         </div>
-        
+
         <div class="grid grid-2 mb-4">
           <div class="stat-card">
             <div class="stat-num">${avgScore}%</div>
@@ -6837,7 +6148,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
             <div class="stat-label">Streak</div>
           </div>
         </div>
-        
+
         ${totalQuizzes > 0 ? `
           <div style="background:var(--surface-2);border-radius:12px;padding:14px;margin-bottom:12px;">
             <div style="font-size:12px;color:var(--text-3);font-weight:800;margin-bottom:6px;">🏆 أفضل غرفة:</div>
@@ -6845,7 +6156,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
             <div style="font-size:11px;color:var(--text-2);margin-top:2px;">متوسط ${Math.round(bestTopicAvg)}%</div>
           </div>
         ` : ''}
-        
+
         <div style="background:var(--surface-2);border-radius:12px;padding:14px;margin-bottom:16px;">
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:6px;">
             <span>💬 رسائل الغرفة</span>
@@ -6856,11 +6167,11 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
             <strong style="color:var(--brand-primary);">Lv.${State.MY_LEVEL}</strong>
           </div>
         </div>
-        
+
         <div style="text-align:center;font-size:12px;color:var(--text-3);margin-bottom:16px;">
           ${totalQuizzes >= 5 ? '🎉 أسبوع ممتاز! استمر 💪' : totalQuizzes >= 2 ? '👍 أسبوع كويس، حاول أكتر' : '💡 جرب تحل اختبارات أكتر الأسبوع الجاي'}
         </div>
-        
+
         <button class="btn btn-block" onclick="shareWeeklyReport(${totalQuizzes}, ${avgScore}, ${bestScore})">📤 شارك التقرير</button>
         <button class="btn btn-light btn-block" style="margin-top:8px;" onclick="closeModal('weekly-report-modal')">إغلاق</button>
       </div>
@@ -6875,7 +6186,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     } catch(e) { if(e.name !== 'AbortError') toast('فشل', 'error'); }
   };
 
-  // زرار في الداشبورد
   function addWeeklyReportButton(){
     const quick = document.querySelector('#dashboard-screen .grid-2');
     if(!quick || document.getElementById('weekly-report-btn')) return;
@@ -6887,7 +6197,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     quick.appendChild(card);
   }
 
-  // زرار الآلة العلمية في الأدوات
   function addSciCalcButton(){
     const tools = document.getElementById('tools-screen');
     if(!tools) return;
@@ -6922,7 +6231,6 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     setTimeout(initFeaturesPack4, 4000);
   }
 
-  // راقب الأدوات
   const toolsObs = new MutationObserver(() => {
     if(document.getElementById('tools-screen')?.classList.contains('active')){
       setTimeout(addSciCalcButton, 200);
@@ -6935,7 +6243,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
 
 })();
 </script>
-  <script>
+<script>
 /* ============================================================
    AI Assistant — مساعد ذكي حقيقي (بدون API)
    Yas Studio © 2025
@@ -6945,7 +6253,7 @@ window.AIAssistant = (function(){
 
   /* ============ الذاكرة ============ */
   const Memory = {
-    history: [],          // آخر 10 رسائل
+    history: [],
     lastTopic: null,
     lastAnswer: null,
     userLevel: 'beginner',
@@ -6972,9 +6280,8 @@ window.AIAssistant = (function(){
     } catch(e) {}
   }
 
-  /* ============ قاعدة المعرفة (300+ موضوع) ============ */
+  /* ============ قاعدة المعرفة ============ */
   const KB = [
-    // ===== رياضيات (50) =====
     { t:'الجمع', c:'رياضيات', k:['جمع','إضافة','اجمع','ضيف'], d:'ضم مجموعتين للحصول على المجموع، رمزه (+).', w:'لأنه الطريقة الأساسية لمعرفة الكمية الكلية.', e:'٣+٥=٨', r:['الطرح','الضرب'] },
     { t:'الطرح', c:'رياضيات', k:['طرح','ناقص','اطرح'], d:'إيجاد الفرق بين عددين، رمزه (−).', w:'لأنه يقيس كم يبقى.', e:'١٠−٤=٦', r:['الجمع'] },
     { t:'الضرب', c:'رياضيات', k:['ضرب','اضرب'], d:'جمع متكرر لعدد، رمزه (×).', w:'لأنه يختصر جمع نفس العدد.', e:'٥×٦=٣٠', r:['القسمة'] },
@@ -7025,8 +6332,6 @@ window.AIAssistant = (function(){
     { t:'المتطابقات المثلثية', c:'رياضيات', k:['متطابقات'], d:'sin²+cos²=1، 1+tan²=sec².', w:'لأنها تبسط المعادلات.', e:'sin²(30°)+cos²(30°)=1', r:['الدوال المثلثية'] },
     { t:'المتوسط الحسابي', c:'رياضيات', k:['متوسط حسابي'], d:'(س١+س٢+...+سن)÷n.', w:'لأنه قيمة تمثل مجموعة.', e:'(٢+٤+٦)÷٣=٤', r:['المتوسط'] },
     { t:'الوسيط', c:'رياضيات', k:['وسيط'], d:'القيمة الوسطى عند ترتيب البيانات.', w:'لأنه لا يتأثر بالقيم الشاذة.', e:'٢،٤،٧ ⇒ الوسيط ٤', r:['الإحصاء'] },
-
-    // ===== فيزياء (40) =====
     { t:'نيوتن الأول', c:'فيزياء', k:['نيوتن الاول','قصور ذاتي'], d:'الجسم الساكن يبقى ساكناً، والمتحرك يبقى متحركاً ما لم تؤثر عليه قوة.', w:'لأن الجسم يقاوم تغيير حالته.', e:'توقف الأتوبيس فجأة', r:['نيوتن الثاني','نيوتن الثالث'] },
     { t:'نيوتن الثاني', c:'فيزياء', k:['نيوتن الثاني','ق = ك'], d:'القوة=الكتلة×التسارع (ق=ك×ت).', w:'لأن القوة اللازمة تزداد بزيادة الكتلة.', e:'F=ma', r:['نيوتن الأول'] },
     { t:'نيوتن الثالث', c:'فيزياء', k:['نيوتن الثالث','فعل ورد'], d:'لكل فعل رد فعل مساوٍ له ومضاد في الاتجاه.', w:'لأن القوى تحدث في أزواج.', e:'الصاروخ يندفع لأعلى', r:['نيوتن الأول'] },
@@ -7063,12 +6368,10 @@ window.AIAssistant = (function(){
     { t:'قانون كولوم', c:'فيزياء', k:['كولوم'], d:'قوة التجاذب/التنافر بين شحنتين تتناسب عكسياً مع مربع المسافة.', w:'لأنها تفسر التفاعلات الكهربائية.', e:'F=k·q₁q₂/r²', r:['الكهرباء الساكنة'] },
     { t:'الحركة الدورانية', c:'فيزياء', k:['دورانية'], d:'حركة الجسم حول محور.', w:'لأنها تصف دوران الأجسام.', e:'دوران الأرض', r:['الحركة'] },
     { t:'الزخم', c:'فيزياء', k:['زخم','momentum'], d:'الزخم=الكتلة×السرعة.', w:'لأنه محفوظ في التصادمات.', e:'كرة تتدحرج', r:['الحركة'] },
-    { t:'الشد', c:'فيزياء', k:['شد'], d:'قوة تنشأ في الحبال والأسلاك.', w:'لأنها تنقل القوة.', e:'شد الحبل', r:['قانون نيوتن الثاني'] },
+    { t:'الشد', c:'فيزياء', k:['شد'], d:'قوة تنشأ في الحبال والأسلاك.', w:'لأنها تنقل القوة.', e:'شد الحبل', r:['نيوتن الثاني'] },
     { t:'الوزن', c:'فيزياء', k:['وزن'], d:'الوزن=الكتلة×الجاذبية.', w:'لأنه يختلف باختلاف المكان.', e:'الوزن على القمر ١/٦', r:['الكتلة','الجاذبية'] },
     { t:'الكتلة', c:'فيزياء', k:['كتلة'], d:'مقدار المادة في الجسم.', w:'لأنها لا تتغير بتغير المكان.', e:'كيلوجرام', r:['الوزن'] },
     { t:'القصور الذاتي', c:'فيزياء', k:['قصور ذاتي'], d:'مقاومة الجسم لتغيير حالته.', w:'لأنه خاصية أساسية للمادة.', e:'توقف مفاجئ', r:['نيوتن الأول'] },
-
-    // ===== كيمياء (35) =====
     { t:'الذرة', c:'كيمياء', k:['ذرة','atom'], d:'أصغر وحدة من العنصر، تتكون من نواة وإلكترونات.', w:'لأنها متعادلة عندما يتساوى البروتون مع الإلكترون.', e:'ذرة الهيدروجين: بروتون وإلكترون', r:['الجزيء'] },
     { t:'الجزيء', c:'كيمياء', k:['جزيء'], d:'اتحاد ذرتين أو أكثر بروابط.', w:'لأن الذرات تتحد للاستقرار.', e:'H₂O', r:['الذرة'] },
     { t:'العنصر', c:'كيمياء', k:['عنصر'], d:'مادة من نوع واحد من الذرات.', w:'لأنه لا يتحلل لمواد أبسط.', e:'الذهب، الأكسجين', r:['المركب'] },
@@ -7104,8 +6407,6 @@ window.AIAssistant = (function(){
     { t:'الاحتراق', c:'كيمياء', k:['احتراق'], d:'تفاعل مع الأكسجين لإنتاج حرارة وضوء.', w:'لأنه تفاعل طارد.', e:'حرق الخشب', r:['التفاعل الكيميائي'] },
     { t:'القلويات', c:'كيمياء', k:['قلوي'], d:'قاعدة قابلة للذوبان في الماء.', w:'لأنها تعطي OH⁻.', e:'NaOH', r:['القاعدة'] },
     { t:'التفاعل المتسلسل', c:'كيمياء', k:['متسلسل'], d:'تفاعل يسبب تفاعلات لاحقة.', w:'لأن الناتج يبدأ تفاعل تالي.', e:'الانشطار النووي', r:['التفاعل الكيميائي'] },
-
-    // ===== أحياء (35) =====
     { t:'الخلية', c:'أحياء', k:['خلية','cell'], d:'أصغر وحدة حية.', w:'لأنها تحتوي كل ما تحتاجه للحياة.', e:'كرات الدم', r:['النواة'] },
     { t:'النواة', c:'أحياء', k:['نواة','nucleus'], d:'مركز التحكم في الخلية، تحتوي DNA.', w:'لأنها تنظم أنشطة الخلية.', e:'٤٦ كروموسوم', r:['الخلية'] },
     { t:'DNA', c:'أحياء', k:['dna','حمض نووي'], d:'جزيء يحمل الشفرة الوراثية.', w:'لأنه يحتوي تعليمات البروتينات.', e:'٩٩.٩% متشابه', r:['النواة'] },
@@ -7141,8 +6442,6 @@ window.AIAssistant = (function(){
     { t:'المناعة المكتسبة', c:'أحياء', k:['مناعة مكتسبة'], d:'تنشأ بعد التعرض لمسبب المرض.', w:'لأن الجسم ينتج أجساماً مضادة.', e:'التطعيم', r:['المناعة'] },
     { t:'الجهاز اللمفي', c:'أحياء', k:['لمفي'], d:'شبكة أوعية تحمل سائل لمفاوي.', w:'لأنه يساعد في المناعة.', e:'الطحال', r:['المناعة'] },
     { t:'الانتحاء', c:'أحياء', k:['انتحاء'], d:'حركة النبات استجابة لمؤثر.', w:'لأنه يبحث عن الضوء.', e:'انتحاء ضوئي', r:['الهرمونات النباتية'] },
-
-    // ===== عربي (30) =====
     { t:'المبتدأ', c:'عربي', k:['مبتدأ','مبتدا'], d:'اسم مرفوع نبدأ به الجملة الاسمية.', w:'لأنه يحتاج خبراً.', e:'العلمُ نورٌ', r:['الخبر'] },
     { t:'الخبر', c:'عربي', k:['خبر'], d:'يُكمل معنى المبتدأ، مرفوع.', w:'لأن المبتدأ وحده لا يكمل.', e:'نورٌ', r:['المبتدأ'] },
     { t:'الفاعل', c:'عربي', k:['فاعل'], d:'اسم مرفوع يدل على من قام بالفعل.', w:'لأنه مرفوع.', e:'كتبَ الطالبُ', r:['المفعول به'] },
@@ -7173,8 +6472,6 @@ window.AIAssistant = (function(){
     { t:'المنادى', c:'عربي', k:['منادى'], d:'اسم يقع بعد حرف نداء.', w:'لأنه يُطلب الإقبال.', e:'يا طالبُ', r:['المجرور'] },
     { t:'أسماء الأفعال', c:'عربي', k:['اسماء افعال'], d:'كلمات تعمل عمل الفعل.', w:'لأنها تعطي معنى الفعل.', e:'صه، آمين', r:['الحرف'] },
     { t:'الاشتقاق', c:'عربي', k:['اشتقاق'], d:'استخراج كلمة من أخرى.', w:'لأنه يفسر علاقة الكلمات.', e:'كتب←كاتب، مكتوب', r:['الصرف'] },
-
-    // ===== إنجليزي (20) =====
     { t:'Present Simple', c:'إنجليزي', k:['present simple'], d:'Describes habits and facts.', w:'Used for routines.', e:'I go to school daily', r:['Past Simple'] },
     { t:'Past Simple', c:'إنجليزي', k:['past simple'], d:'Describes completed actions.', w:'Used for finished events.', e:'I went yesterday', r:['Present Simple'] },
     { t:'Present Perfect', c:'إنجليزي', k:['present perfect'], d:'Past actions with present relevance.', w:'Used for experiences.', e:'I have finished', r:['Past Perfect'] },
@@ -7195,8 +6492,6 @@ window.AIAssistant = (function(){
     { t:'Modals', c:'إنجليزي', k:['modal'], d:'can, must, should, may.', w:'Add meaning to verbs.', e:'You must study', r:['Verb'] },
     { t:'Comparatives', c:'إنجليزي', k:['comparative'], d:'bigger, more interesting.', w:'Compare two things.', e:'This is bigger', r:['Superlatives'] },
     { t:'Superlatives', c:'إنجليزي', k:['superlative'], d:'biggest, most interesting.', w:'Compare 3+.', e:'The biggest', r:['Comparatives'] },
-
-    // ===== تاريخ (25) =====
     { t:'النبي محمد ﷺ', c:'تاريخ', k:['محمد','النبي','الرسول'], d:'آخر الأنبياء، وُلد ٥٧٠ م.', w:'لأنه خاتم الأنبياء.', e:'الهجرة ٦٢٢ م', r:['الخلفاء الراشدون'] },
     { t:'الخلفاء الراشدون', c:'تاريخ', k:['خلفاء راشدين'], d:'أبو بكر، عمر، عثمان، علي.', w:'لأنهم حكموا بالعدل.', e:'فتح مصر', r:['النبي محمد ﷺ'] },
     { t:'الدولة الأموية', c:'تاريخ', k:['اموية'], d:'٦٦١-٧٥٠ م، عاصمتها دمشق.', w:'أول دولة وراثية.', e:'عبد الملك', r:['الدولة العباسية'] },
@@ -7222,8 +6517,6 @@ window.AIAssistant = (function(){
     { t:'الحضارة اليونانية', c:'تاريخ', k:['يونانية'], d:'القرن ٨-٤ ق.م.', w:'أساس الحضارة الغربية.', e:'أثينا', r:['الحضارة الرومانية'] },
     { t:'الحضارة البابلية', c:'تاريخ', k:['بابلية'], d:'القرن ١٨ ق.م.', w:'شريعة حمورابي.', e:'حدائق بابل', r:['الحضارة المصرية'] },
     { t:'الخلافة العباسية', c:'تاريخ', k:['خلافة عباسية'], d:'٧٥٠-١٢٥٨.', w:'عصر ذهبي.', e:'المأمون', r:['الدولة العباسية'] },
-
-    // ===== جغرافيا (25) =====
     { t:'عواصم الدول', c:'جغرافيا', k:['عواصم','عاصمة'], d:'القاهرة، الرياض، باريس، لندن، طوكيو.', w:'العاصمة المركز السياسي.', e:'القاهرة أكبر مدينة عربية', r:['الأنهار'] },
     { t:'نهر النيل', c:'جغرافيا', k:['النيل','nile'], d:'أطول نهر (~٦٦٥٠ كم).', w:'مصر هبة النيل.', e:'١١ دولة', r:['الأنهار'] },
     { t:'الأنهار', c:'جغرافيا', k:['نهر','انهار'], d:'النيل، الأمازون.', w:'توفر الماء العذب.', e:'الأمازون أكبر تصريفاً', r:['نهر النيل'] },
@@ -7249,8 +6542,6 @@ window.AIAssistant = (function(){
     { t:'الانفجار السكاني', c:'جغرافيا', k:['انفجار سكاني'], d:'زيادة سريعة في السكان.', w:'يؤثر على الموارد.', e:'الهند، الصين', r:['مصر'] },
     { t:'الطاقة المتجددة', c:'جغرافيا', k:['طاقة متجددة'], d:'من الشمس والرياح والمياه.', w:'صديقة للبيئة.', e:'شمسية، رياح', r:['الاحتباس الحراري'] },
     { t:'التصحر', c:'جغرافيا', k:['تصحر'], d:'تحول الأراضي الخصبة لصحراء.', w:'الجفاف والرعي الجائر.', e:'توسع الصحراء', r:['الصحاري'] },
-
-    // ===== مهارات (20) =====
     { t:'بومودورو', c:'مهارات', k:['بومودورو','pomodoro'], d:'٢٥ دقيقة تركيز + ٥ راحة.', w:'الدماغ يحتاج راحة منتظمة.', e:'٤ بومودورو = ٢ ساعة', r:['التركيز'] },
     { t:'التركيز', c:'مهارات', k:['تركيز','focus'], d:'إبقاء الانتباه على مهمة.', w:'الدماغ لا يعدد المهام.', e:'ابعد الموبايل', r:['بومودورو'] },
     { t:'المراجعة', c:'مهارات', k:['مراجعة','revision'], d:'إعادة قراءة المعلومات.', w:'تقلل النسيان.', e:'٣٠ دقيقة يومياً', r:['التكرار المتباعد'] },
@@ -7271,8 +6562,6 @@ window.AIAssistant = (function(){
     { t:'التمرين', c:'مهارات', k:['تمرين'], d:'يحسن الذاكرة والتركيز.', w:'يزيد تدفق الدم للدماغ.', e:'٣٠ دقيقة يومياً', r:['التركيز'] },
     { t:'Zettelkasten', c:'مهارات', k:['zettelkasten'], d:'ملاحظات مترابطة بشبكة.', w:'تحاكي طريقة الدماغ.', e:'كل ملاحظة برقم وروابط', r:['الخرائط الذهنية'] },
     { t:'مراجعة الأقران', c:'مهارات', k:['مراجعة اقران'], d:'يشرح طالب لطالب.', w:'الشرح يثبت المعلومة.', e:'مجموعات مذاكرة', r:['فاينمان'] },
-
-    // ===== حاسوب (15) =====
     { t:'البرمجة', c:'حاسوب', k:['برمجة','programming'], d:'كتابة تعليمات للحاسوب.', w:'الحاسوب لا يفكر.', e:'Python, JS', r:['الخوارزميات'] },
     { t:'الخوارزميات', c:'حاسوب', k:['خوارزمية','algorithm'], d:'سلسلة خطوات لحل مشكلة.', w:'تحول المشكلة لحل منظم.', e:'بحث ثنائي', r:['البرمجة'] },
     { t:'قواعد البيانات', c:'حاسوب', k:['قاعدة بيانات'], d:'مجموعة منظمة من البيانات.', w:'تسهل البحث.', e:'MySQL, Firebase', r:['البرمجة'] },
@@ -7365,7 +6654,7 @@ window.AIAssistant = (function(){
   /* ============ حل رياضيات ============ */
   function solveMath(text){
     const t = normalize(text).replace(/[×✕]/g,'*').replace(/÷/g,'/');
-    
+
     const m = t.match(/(\d+(?:\.\d+)?)\s*([+\-*/])\s*(\d+(?:\.\d+)?)/);
     if(m){
       const a = +m[1], op = m[2], b = +m[3];
@@ -7483,9 +6772,6 @@ window.AIAssistant = (function(){
 
   /* ============ بناء الرد ============ */
   function buildReply(entry, subIntent, mood, level){
-    const parts = [];
-    if(mood === 'frustrated') parts.push('أفهم إن الموضوع صعب 💙 خليني أبسطهولك:');
-    
     if(subIntent === 'why' && entry.w) return `🤔 **ليه ${entry.t}؟**\n${entry.w}`;
     if(subIntent === 'example' && entry.e) return `🌟 **مثال على ${entry.t}:**\n${entry.e}`;
     if(subIntent === 'how' && entry.e) return `🔧 **إزاي ${entry.t}؟**\n${entry.e}`;
@@ -7569,7 +6855,6 @@ window.AIAssistant = (function(){
       return buildReply(entry, subIntent, mood, Memory.userLevel);
     }
 
-    // مش لاقي
     saveMemory();
     return `🤔 مش لاقي إجابة محددة.
 
@@ -7610,15 +6895,616 @@ if(window.YasBot){
   const originalYasBotReply = window.YasBot.reply.bind(window.YasBot);
   window.YasBot.reply = function(msg){
     const ai = window.AIAssistant.reply(msg);
-    // لو AI عنده إجابة، استخدمها
     if(ai && !ai.includes('مش لاقي إجابة محددة')){
       return ai;
     }
-    // وإلا ارجع لـ YasBot
     return originalYasBotReply(msg);
   };
   console.log('%c🔗 AI Assistant متصل بـ YasBot', 'color:#10B981;');
 }
 </script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  YasBot v5 — PART 1/3 (Infrastructure)                     -->
+<!--  Insert BEFORE </body>, AFTER all legacy scripts           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+/* ============================================================
+   YasBot v5 — Layer on top of legacy
+   Part 1/3: Preprocessor + Intent + Context + Wrapper
+   ============================================================ */
+(function(){
+  'use strict';
+
+  const VERSION = '5.0';
+  const LS_MEM = 'yasbot_v5_memory';
+
+  /* ─── Memory ─── */
+  const Memory = {
+    session: {
+      messages: [], lastTopic: null, lastProblem: null,
+      lastSubIntent: null, lastResult: null, quiz: null
+    },
+    persistent: {
+      top20: [], weak: [], strong: [], corrections: [],
+      preferredLength: 'medium', lastSeenAt: null, learningPaths: {}
+    }
+  };
+
+  function loadPersistent() {
+    try {
+      const raw = localStorage.getItem(LS_MEM);
+      if (raw) Object.assign(Memory.persistent, JSON.parse(raw));
+    } catch(e){}
+  }
+  function savePersistent() {
+    try {
+      Memory.persistent.lastSeenAt = Date.now();
+      localStorage.setItem(LS_MEM, JSON.stringify(Memory.persistent));
+    } catch(e){}
+  }
+  function logSession(msg, role) {
+    Memory.session.messages.push({ role, text: String(msg).slice(0, 300), ts: Date.now() });
+    if (Memory.session.messages.length > 10) Memory.session.messages.shift();
+  }
+  function trackTopic(topicId) {
+    const top = Memory.persistent.top20;
+    const idx = top.indexOf(topicId);
+    if (idx >= 0) top.splice(idx, 1);
+    top.unshift(topicId);
+    if (top.length > 20) top.length = 20;
+    Memory.session.lastTopic = topicId;
+    savePersistent();
+  }
+
+  /* ─── Preprocessor ─── */
+  const TYPO_MAP = {
+    'حياه':'حياة','مدرسه':'مدرسة','عربى':'عربي','فيثاغورث':'فيثاغورس',
+    'رياضه':'رياضيات','كيميا':'كيمياء','فيزيا':'فيزياء','احياء':'أحياء',
+    'عربيه':'عربية','انجليزي':'إنجليزي','انقليزي':'إنجليزي',
+    'مبتدا':'مبتدأ','خبر':'خبر','فاعل':'فاعل',
+    'معادله':'معادلة','مساحه':'مساحة','محيط':'محيط','دائره':'دائرة',
+    'نسبه':'نسبة','مئويه':'مئوية','قسمه':'قسمة',
+    'ذره':'ذرة','جزيء':'جزيء','خلية':'خلية','خلايا':'خلايا',
+    'حراره':'حرارة','طاقه':'طاقة','سرعه':'سرعة','قوه':'قوة','قدره':'قدرة',
+    'جاذبيه':'جاذبية','نيوتن':'نيوتن','تكامل':'تكامل','تفاضل':'تفاضل',
+    'لوغاريتم':'لوغاريتم','مشتقه':'مشتقة','مشتقة':'مشتقة',
+    'زاويه':'زاوية','زوايا':'زوايا','وتر':'وتر','قطر':'قطر'
+  };
+
+  function normalize(s) {
+    return String(s || '')
+      .replace(/[\u0660-\u0669]/g, c => String(c.charCodeAt(0) - 0x0660))
+      .replace(/[\u06F0-\u06F9]/g, c => String(c.charCodeAt(0) - 0x06F0))
+      .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      .replace(/٪/g, '%')
+      .replace(/[×✕]/g, '*')
+      .replace(/÷/g, '/')
+      .replace(/[−–—]/g, '-')
+      .replace(/²/g, '^2')
+      .replace(/³/g, '^3')
+      .replace(/[؟]/g, '?')
+      .replace(/[،؛]/g, ',')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function levenshtein(a, b) {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    let prev = [], cur = [];
+    for (let j = 0; j <= b.length; j++) prev[j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      cur[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+      }
+      [prev, cur] = [cur, prev];
+    }
+    return prev[b.length];
+  }
+
+  function correctTypos(s) {
+    return s.split(/\s+/).map(w => {
+      if (TYPO_MAP[w]) return TYPO_MAP[w];
+      if (w.length >= 4) {
+        for (const k in TYPO_MAP) {
+          if (k.length >= 3 && levenshtein(w, k) <= 1) return TYPO_MAP[k];
+        }
+      }
+      return w;
+    }).join(' ');
+  }
+
+  function detectDialect(s) {
+    if (/ازاي|ليه|عايز|ده\b|ايه\b|مش\b|فين/.test(s)) return 'egyptian';
+    if (/وش|أبغى|أبي|شلون|وين|كذا/.test(s)) return 'gulf';
+    if (/شو\b|كيفك|بدي|هيك|منيح/.test(s)) return 'levantine';
+    return 'msa';
+  }
+
+  function preprocess(raw) {
+    const rawStr = String(raw || '');
+    let s = normalize(rawStr);
+    s = correctTypos(s);
+    return { text: s, dialect: detectDialect(s), raw: rawStr };
+  }
+
+  /* ─── Intent Classifier ─── */
+  const INTENT_PATTERNS = {
+    greeting:  /^(مرحبا|السلام عليكم|اهلا|هلا|hi|hello|hey|صباح|مساء)\b/,
+    thanks:    /(شكرا|مشكور|تسلم|thanks|thx)/,
+    goodbye:   /^(باي|سلام عليكم|bye|goodbye)\b/,
+    why:       /(ليه|لماذا|why)\b/,
+    how:       /(ازاي|كيف|طريقه|طريقة|how)\b/,
+    example:   /(مثال|امثله|أمثلة|example)\b/,
+    compare:   /(الفرق بين|ايه الفرق|قارن|compare)/,
+    summarize: /(لخص|تلخيص|summarize)/,
+    generate:  /(وليد|اختبرني|quiz me|generate|اختبر)/,
+    teach:     /(علمني|من الصفر|teach me|ابدأ من)/,
+    tip:       /(نصيحه|نصائح|tip)\b/,
+    followup:  /^(ليه\b|طيب\b|كمّل|اكمل|مثال\b|اللي قبله|اوضح|ابسط|same idea|نفس الفكره)/
+  };
+
+  function detectIntents(pp) {
+    const s = pp.text;
+    const intents = [];
+    for (const [name, re] of Object.entries(INTENT_PATTERNS)) {
+      if (re.test(s)) intents.push(name);
+    }
+    if (/\d/.test(s) && /[+\-*/^%=]/.test(s)) intents.push('math');
+    if (!intents.length) intents.push('question');
+    return intents;
+  }
+
+  /* ─── Response helpers ─── */
+  function greetingResponse(pp) {
+    const h = new Date().getHours();
+    let g = h < 12 ? 'صباح الخير ☀️' : h < 18 ? 'أهلاً 👋' : 'مساء الخير 🌙';
+    if (pp.dialect === 'egyptian') g = 'أهلاً بيك! 😊';
+    else if (pp.dialect === 'gulf') g = 'هلا والله! 🌟';
+    else if (pp.dialect === 'levantine') g = 'مرحبا فيك! ✨';
+    return g + '\nاسألني عن أي حاجة تعليمية 📚\n(اكتب @bot أو ? في آخر الرسالة عشان أرد)';
+  }
+
+  function whyResponse() {
+    const last = Memory.session.lastTopic;
+    if (last) return `🤔 "ليه" عن "${last}"؟ اكتب السؤال كامل بـ"ليه ..." وأنا أشرح.`;
+    return '🤔 اكتب السؤال الأول، وبعدين اكتب "ليه" وأنا أوضح السبب.';
+  }
+
+  function exampleResponse() {
+    const last = Memory.session.lastTopic;
+    if (last) return `🌟 تحب مثال على "${last}"؟ اكتب "مثال [الموضوع]" وأنا أديك.`;
+    return '🌟 اكتب الموضوع اللي عايز مثال عليه.';
+  }
+
+  /* ─── Hooks (filled by Part 2 & 3) ─── */
+  let _tryMath = () => null;
+  let _tryKB = () => null;
+  let _tryQuiz = () => null;
+  let _tryTeach = () => null;
+  let _tryFeedback = () => null;
+
+  /* ─── Main dispatch ─── */
+  function _reply(raw) {
+    if (!raw || typeof raw !== 'string') return null;
+    logSession(raw, 'user');
+
+    const pp = preprocess(raw);
+    const intents = detectIntents(pp);
+
+    if (intents.includes('greeting') && intents.length <= 2) return greetingResponse(pp);
+    if (intents.includes('thanks') && intents.length <= 2) return 'العفو! 😊';
+    if (intents.includes('goodbye') && intents.length <= 2) return 'في أمان الله 👋';
+    if (intents.includes('tip') && intents.length <= 2) {
+      const tips = ['ذاكر بومودورو: ٢٥ دقيقة تركيز + ٥ راحة 🍅',
+                    'اشرح الدرس بصوت عالي 🎤',
+                    'راجع بعد ٢٤ ساعة ثم أسبوع ⏰',
+                    'نم ٧-٨ ساعات 😴',
+                    'ابدأ بالأصعب 💪'];
+      return '💡 ' + tips[Math.floor(Math.random() * tips.length)];
+    }
+
+    if (intents.includes('teach')) {
+      const r = _tryTeach(pp);
+      if (r) return r;
+    }
+    if (intents.includes('generate')) {
+      const r = _tryQuiz(pp);
+      if (r) return r;
+    }
+
+    if (/^(👍|شاطر|صح|good|برافو)/.test(pp.text)) {
+      const r = _tryFeedback('up', pp); if (r) return r;
+    }
+    if (/^(👎|غلط|مش صح|bad|wrong)/.test(pp.text)) {
+      const r = _tryFeedback('down', pp); if (r) return r;
+    }
+
+    if (intents.includes('followup') && intents.includes('why')) return whyResponse();
+    if (intents.includes('followup') && intents.includes('example')) return exampleResponse();
+
+    const math = _tryMath(pp);
+    if (math) return math;
+
+    const kb = _tryKB(pp);
+    if (kb) return kb;
+
+    if (intents.includes('why')) return whyResponse();
+    if (intents.includes('example')) return exampleResponse();
+
+    return null;  // → legacy
+  }
+
+  /* ─── Public reply (STRING only) ─── */
+  const _prevYasBot = window.YasBot;
+
+  function reply(msg) {
+    try {
+      const r = _reply(msg);
+      if (typeof r === 'string' && r.length) return r;
+    } catch(e) { console.warn('[YasBot v5] error:', e); }
+    if (_prevYasBot && typeof _prevYasBot.reply === 'function') {
+      try { return _prevYasBot.reply(msg); } catch(e){ console.warn('[fallback]', e); }
+    }
+    return 'عذرًا، المساعد غير متاح حاليًا. جرّب تاني بعد شوية.';
+  }
+
+  function reset() {
+    Memory.session = { messages: [], lastTopic: null, lastProblem: null, lastSubIntent: null, lastResult: null, quiz: null };
+    if (_prevYasBot && typeof _prevYasBot.reset === 'function') {
+      try { _prevYasBot.reset(); } catch(e){}
+    }
+  }
+
+  function getStats() {
+    return { version: VERSION, kbSize: 'pending', solversCount: 13,
+             memorySize: Memory.persistent.top20.length,
+             lastTopic: Memory.session.lastTopic };
+  }
+
+  /* ─── Expose hooks ─── */
+  window.__yasbotV5_hooks = {
+    setMath: fn => { _tryMath = fn; },
+    setKB: fn => { _tryKB = fn; },
+    setQuiz: fn => { _tryQuiz = fn; },
+    setTeach: fn => { _tryTeach = fn; },
+    setFeedback: fn => { _tryFeedback = fn; },
+    Memory, preprocess, normalize, levenshtein,
+    trackTopic, savePersistent, loadPersistent, logSession
+  };
+
+  loadPersistent();
+
+  window.YasBotV5 = { reply, reset, getStats, version: VERSION };
+  window.YasBot = {
+    ...(_prevYasBot || {}),
+    reply, reset, version: VERSION,
+    _v5: window.YasBotV5,
+    _legacy: _prevYasBot || null
+  };
+
+  console.log('%c🚀 YasBot v5 — Part 1/3 (Infrastructure) LOADED', 'color:#10B981;font-size:14px;font-weight:bold;');
+  console.log('   Preprocessor + Intent + Context + Wrapper ready');
+  console.log('   Legacy fallback: ' + (_prevYasBot ? 'YES' : 'NO'));
+})();
+</script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  YasBot v5 — PART 2/3 (Math Solvers)                       -->
+<!--  Insert directly AFTER Part 1/3                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+/* ============================================================
+   YasBot v5 — Part 2/3: 13 Math Solvers
+   ============================================================ */
+(function(){
+  'use strict';
+  const hooks = window.__yasbotV5_hooks;
+  if (!hooks) { console.warn('v5 Part 1 not loaded!'); return; }
+
+  const fmt = n => {
+    if (!isFinite(n)) return '∞';
+    const r = Math.round(n * 1e6) / 1e6;
+    if (Object.is(r, -0)) return '0';
+    return String(r);
+  };
+  function frac(n) {
+    if (Number.isInteger(n) || Math.abs(n) > 1e6) return fmt(n);
+    for (let q = 2; q <= 100; q++) {
+      const p = Math.round(n * q);
+      if (Math.abs(n * q - p) < 1e-9) return `${p}/${q} ≈ ${fmt(n)}`;
+    }
+    return fmt(n);
+  }
+
+  /* 1. Calc */
+  function solveCalc(t) {
+    const expr = t.replace(/\s+/g, '');
+    if (!/^[\d+\-*/().]+$/.test(expr)) return null;
+    if (!/[+\-*/]/.test(expr)) return null;
+    try {
+      const result = Function('"use strict";return (' + expr + ')')();
+      if (typeof result !== 'number' || !isFinite(result)) return null;
+      return { text: `🧮 ${expr.replace(/\*/g,'×').replace(/\//g,'÷')} = ${fmt(result)}` };
+    } catch(e) { return null; }
+  }
+
+  /* 2. Linear */
+  function solveLinear(t) {
+    let m = t.match(/(-?\d*\.?\d*)\s*x\s*([+\-])\s*(-?\d+\.?\d*)\s*=\s*(-?\d+\.?\d*)/);
+    if (m) {
+      let a = m[1] === '' || m[1] === '-' ? (m[1] === '-' ? -1 : 1) : parseFloat(m[1]);
+      const op = m[2], b = parseFloat(m[3]), c = parseFloat(m[4]);
+      if (a === 0) return null;
+      const rhs = op === '+' ? c - b : c + b;
+      const x = rhs / a;
+      return {
+        text: `📐 ${m[0]}\n\n📝 الخطوات:\n1. ننقل ${b} للطرف التاني بإشارة معاكسة\n2. ${fmt(a)}x = ${fmt(c)} ${op === '+' ? '-' : '+'} ${fmt(b)} = ${fmt(rhs)}\n3. x = ${fmt(rhs)} ÷ ${fmt(a)} = ${frac(x)}\n\n✅ x = ${frac(x)}\n\n💡 المعادلة زي الميزان — نفس العملية على الطرفين`
+      };
+    }
+    m = t.match(/(-?\d*\.?\d*)\s*x\s*=\s*(-?\d+\.?\d*)/);
+    if (m) {
+      let a = m[1] === '' || m[1] === '-' ? (m[1] === '-' ? -1 : 1) : parseFloat(m[1]);
+      const c = parseFloat(m[2]);
+      if (a === 0) return null;
+      return { text: `📐 ${m[0]}\n\n✅ x = ${frac(c/a)}\n\n💡 نقسم الطرفين على ${fmt(a)}` };
+    }
+    return null;
+  }
+
+  /* 3. Quadratic */
+  function solveQuadratic(t) {
+    const m = t.match(/(-?\d*\.?\d*)\s*x\s*\^?\s*2\s*([+\-])\s*(-?\d*\.?\d*)\s*x\s*([+\-])\s*(-?\d+\.?\d*)\s*=\s*0/);
+    if (!m) return null;
+    let a = m[1] === '' || m[1] === '-' ? (m[1] === '-' ? -1 : 1) : parseFloat(m[1]);
+    const b = (m[2] === '-' ? -1 : 1) * (m[3] === '' ? 1 : Math.abs(parseFloat(m[3])));
+    const c = (m[4] === '-' ? -1 : 1) * Math.abs(parseFloat(m[5]));
+    if (a === 0) return null;
+    const D = b*b - 4*a*c;
+    const steps = [`Δ = b² − 4ac = (${fmt(b)})² − 4×${fmt(a)}×${fmt(c)} = ${fmt(D)}`];
+    if (D < 0) return { text: `📐 ${m[0]}\n\n❌ مفيش حلول حقيقية (Δ < 0)\n\n${steps[0]}\n\n💡 القطع المكافئ مش بيقطع محور x` };
+    if (D === 0) { const x = -b/(2*a); return { text: `📐 ${m[0]}\n\n${steps[0]}\nΔ = 0 ⇒ جذر مكرر\n\n✅ x = ${frac(x)}\n\n💡 القطع بيلامس محور x في نقطة واحدة` }; }
+    const s = Math.sqrt(D);
+    const x1 = (-b + s) / (2*a), x2 = (-b - s) / (2*a);
+    return { text: `📐 ${m[0]}\n\n📝 الخطوات:\n1. ${steps[0]}\n2. x = (−b ± √Δ) / 2a\n3. x₁ = (${fmt(-b)} + ${fmt(s)}) / ${fmt(2*a)} = ${frac(x1)}\n4. x₂ = (${fmt(-b)} − ${fmt(s)}) / ${fmt(2*a)} = ${frac(x2)}\n\n✅ x₁ = ${frac(x1)}\n✅ x₂ = ${frac(x2)}\n\n💡 القانون العام للمعادلة التربيعية` };
+  }
+
+  /* 4. System */
+  function solveSystem(t) {
+    const parts = t.split(/[,;]\s*/);
+    if (parts.length !== 2) return null;
+    const parseEq = s => {
+      const m = s.match(/([+\-]?\d*\.?\d*)\s*x\s*([+\-])\s*(\d*\.?\d*)\s*y\s*=\s*([+\-]?\d+\.?\d*)/);
+      if (!m) return null;
+      let a = m[1] === '' || m[1] === '-' ? (m[1] === '-' ? -1 : 1) : parseFloat(m[1]);
+      const b = (m[2] === '-' ? -1 : 1) * (m[3] === '' ? 1 : Math.abs(parseFloat(m[3])));
+      return { a, b, c: parseFloat(m[4]) };
+    };
+    const e1 = parseEq(parts[0]), e2 = parseEq(parts[1]);
+    if (!e1 || !e2) return null;
+    const det = e1.a * e2.b - e2.a * e1.b;
+    if (Math.abs(det) < 1e-12) return { text: `❌ النظام مش ليه حل وحيد (المعادلتين متوازيتين أو متطابقتين)\n💡 المحدد Δ = 0` };
+    const x = (e1.c * e2.b - e2.c * e1.b) / det;
+    const y = (e1.a * e2.c - e2.a * e1.c) / det;
+    return { text: `📐 نظام المعادلتين:\n  ${parts[0]}\n  ${parts[1]}\n\n📝 الحل بقاعدة كريمر:\nΔ = ${fmt(det)}\n\n✅ x = ${frac(x)}\n✅ y = ${frac(y)}\n\n💡 الحل المشترك بيحقق الاتنين` };
+  }
+
+  /* 5. Inequality */
+  function solveInequality(t) {
+    const m = t.match(/(-?\d*\.?\d*)\s*x\s*([+\-])\s*(-?\d+\.?\d*)\s*([<>])\s*(-?\d+\.?\d*)/);
+    if (!m) return null;
+    let a = m[1] === '' || m[1] === '-' ? (m[1] === '-' ? -1 : 1) : parseFloat(m[1]);
+    const op = m[2], b = parseFloat(m[3]), sign = m[4], c = parseFloat(m[5]);
+    if (a === 0) return null;
+    const rhs = op === '+' ? c - b : c + b;
+    const x = rhs / a;
+    const finalSign = a < 0 ? (sign === '<' ? '>' : '<') : sign;
+    return { text: `📐 ${m[0]}\n\n📝 ${fmt(a)}x ${sign} ${fmt(rhs)}\n${a < 0 ? `⚠️ قسمنا على ${fmt(a)} سالب ⇒ نقلب الإشارة\n` : ''}\n✅ x ${finalSign} ${frac(x)}\n\n💡 الضرب/القسمة على سالب يقلب المتباينة` };
+  }
+
+  /* 6. Percent */
+  function solvePercent(t) {
+    let m = t.match(/(\d+\.?\d*)\s*%\s*(?:من|of|في)\s*(\d+\.?\d*)/);
+    if (m) {
+      const pct = parseFloat(m[1]), num = parseFloat(m[2]);
+      return { text: `📊 ${pct}% من ${num}\n\n📝 (${pct} ÷ 100) × ${num}\n\n✅ = ${fmt(pct*num/100)}\n\n💡 النسبة = جزء من 100` };
+    }
+    m = t.match(/(?:خصم|discount)\s*(\d+\.?\d*)\s*%?\s*(?:علي|على|من)?\s*(\d+\.?\d*)/);
+    if (m) {
+      const pct = parseFloat(m[1]), price = parseFloat(m[2]);
+      const d = pct * price / 100;
+      return { text: `🏷️ خصم ${pct}% على ${price}\n\n➖ الخصم = ${fmt(d)}\n✅ السعر النهائي = ${fmt(price - d)}\n\n💡 الخصم يُطرح من السعر` };
+    }
+    m = t.match(/(\d+\.?\d*)\s*%\s*من\s*كم\s*=?\s*(\d+\.?\d*)/);
+    if (m) {
+      const pct = parseFloat(m[1]), res = parseFloat(m[2]);
+      return { text: `📊 ${pct}% من العدد = ${res}\n\n✅ العدد = ${fmt(res*100/pct)}\n\n💡 (${res} × 100) ÷ ${pct}` };
+    }
+    return null;
+  }
+
+  /* 7. Fraction */
+  function solveFraction(t) {
+    const m = t.match(/(\d+)\s*\/\s*(\d+)\s*([+\-*/])\s*(\d+)\s*\/\s*(\d+)/);
+    if (!m) return null;
+    const [_, a, b, op, c, d] = m;
+    const A = +a, B = +b, C = +c, D = +d;
+    if (B === 0 || D === 0) return { text: '❌ المقام لا يمكن أن يكون صفر' };
+    let num, den, step;
+    if (op === '+' || op === '-') {
+      num = A*D + (op === '+' ? 1 : -1)*C*B; den = B*D;
+      step = `توحيد المقامات: (${A}×${D} ${op} ${C}×${B}) / ${den}`;
+    } else if (op === '*') {
+      num = A*C; den = B*D;
+      step = `ضرب البسط والمقام`;
+    } else {
+      num = A*D; den = B*C;
+      step = `ضرب في المقلوب: ${A}/${B} × ${D}/${C}`;
+    }
+    const gcd = (x, y) => y ? gcd(y, x % y) : Math.abs(x);
+    const g = gcd(num, den) || 1;
+    const sn = num/g, sd = den/g;
+    return { text: `🔢 ${A}/${B} ${op} ${C}/${D}\n\n📝 ${step}\n${g > 1 ? `3. تبسيط على ${g}: ${sn}/${sd}\n` : ''}\n✅ = ${g > 1 ? `${sn}/${sd}` : `${num}/${den}`} ≈ ${fmt(num/den)}` };
+  }
+
+  /* 8. Geometry */
+  function solveGeometry(t) {
+    const PI = Math.PI; let m;
+    if (/دائره|دائرة|circle/.test(t)) {
+      if ((m = t.match(/(?:نصف\s*قطر|radius|r)\s*[=:]?\s*(\d+\.?\d*)/))) {
+        const r = parseFloat(m[1]);
+        if (/مساحه|مساحة|area/.test(t)) {
+          const a = PI*r*r;
+          return { text: `🔵 مساحة الدائرة = π × ${r}²\n\n✅ ≈ ${fmt(Math.round(a*100)/100)}\n\n💡 القانون: A = π r²` };
+        }
+        if (/محيط|circumference/.test(t)) {
+          const c = 2*PI*r;
+          return { text: `🔵 محيط الدائرة = 2π × ${r}\n\n✅ ≈ ${fmt(Math.round(c*100)/100)}\n\n💡 القانون: C = 2π r` };
+        }
+      }
+    }
+    if (/مثلث|triangle/.test(t)) {
+      const mc = t.match(/(?:قاعده|base)\s*[=:]?\s*(\d+\.?\d*)/);
+      const mh = t.match(/(?:ارتفاع|height)\s*[=:]?\s*(\d+\.?\d*)/);
+      if (mc && mh && /مساحه|مساحة|area/.test(t)) {
+        const b = parseFloat(mc[1]), h = parseFloat(mh[1]);
+        return { text: `🔺 مساحة المثلث = ½ × ${b} × ${h}\n\n✅ = ${fmt(0.5*b*h)}\n\n💡 ½ × القاعدة × الارتفاع` };
+      }
+    }
+    if (/مستطيل|rectangle/.test(t)) {
+      const ml = t.match(/(?:طول|length)\s*[=:]?\s*(\d+\.?\d*)/);
+      const mw = t.match(/(?:عرض|width)\s*[=:]?\s*(\d+\.?\d*)/);
+      if (ml && mw) {
+        const L = parseFloat(ml[1]), W = parseFloat(mw[1]);
+        if (/مساحه|مساحة|area/.test(t)) return { text: `▭ مساحة المستطيل = ${L} × ${W} = ${fmt(L*W)}\n💡 الطول × العرض` };
+        if (/محيط|perimeter/.test(t)) return { text: `▭ محيط المستطيل = 2 × (${L} + ${W}) = ${fmt(2*(L+W))}\n💡 2 × (الطول + العرض)` };
+      }
+    }
+    if (/مربع|square/.test(t)) {
+      if ((m = t.match(/(?:ضلع|side|s)\s*[=:]?\s*(\d+\.?\d*)/))) {
+        const s = parseFloat(m[1]);
+        if (/مساحه|مساحة|area/.test(t)) return { text: `◼ مساحة المربع = ${s}² = ${fmt(s*s)}` };
+        if (/محيط|perimeter/.test(t)) return { text: `◼ محيط المربع = 4 × ${s} = ${fmt(4*s)}` };
+      }
+    }
+    if (/كره|كرة|sphere/.test(t)) {
+      if ((m = t.match(/(?:نصف\s*قطر|radius)\s*[=:]?\s*(\d+\.?\d*)/))) {
+        const r = parseFloat(m[1]);
+        if (/حجم|volume/.test(t)) return { text: `⚪ حجم الكرة = 4/3 π ${r}³ ≈ ${fmt(Math.round((4/3*PI*r**3)*100)/100)}` };
+        if (/مساحه|مساحة|area/.test(t)) return { text: `⚪ مساحة سطح الكرة = 4π ${r}² ≈ ${fmt(Math.round((4*PI*r*r)*100)/100)}` };
+      }
+    }
+    return null;
+  }
+
+  /* 9. Trig */
+  function solveTrig(t) {
+    const m = t.match(/ضلعان\s*(\d+\.?\d*)\s*و\s*(\d+\.?\d*)/);
+    if (m && /وتر|hypotenuse/.test(t)) {
+      const a = parseFloat(m[1]), b = parseFloat(m[2]);
+      return { text: `📐 فيثاغورس: c² = a² + b²\n\n✅ c = √(${a}² + ${b}²) = √${a*a+b*b} = ${fmt(Math.sqrt(a*a+b*b))}\n\n💡 الوتر في المثلث القائم` };
+    }
+    const tm = t.match(/(sin|cos|tan)\s*\(?\s*(\d+)\s*°?\)?/);
+    if (tm) {
+      const fn = tm[1], deg = parseFloat(tm[2]);
+      const rad = deg * Math.PI / 180;
+      const v = fn === 'sin' ? Math.sin(rad) : fn === 'cos' ? Math.cos(rad) : Math.tan(rad);
+      return { text: `📐 ${fn}(${deg}°) ≈ ${fmt(Math.round(v*1e4)/1e4)}\n💡 نحول ${deg}° لراديان ثم نحسب` };
+    }
+    return null;
+  }
+
+  /* 10. Log */
+  function solveLog(t) {
+    let m = t.match(/log\s*\(?\s*(\d+\.?\d*)\s*\)?/);
+    if (m && parseFloat(m[1]) > 0) return { text: `📐 log₁₀(${m[1]}) ≈ ${fmt(Math.round(Math.log10(parseFloat(m[1]))*1e4)/1e4)}\n💡 اللوغاريتم = الأس اللي تحطه على 10 يطلع الرقم` };
+    m = t.match(/ln\s*\(?\s*(\d+\.?\d*)\s*\)?/);
+    if (m && parseFloat(m[1]) > 0) return { text: `📐 ln(${m[1]}) ≈ ${fmt(Math.round(Math.log(parseFloat(m[1]))*1e4)/1e4)}\n💡 اللوغاريتم الطبيعي أساسه e ≈ 2.718` };
+    return null;
+  }
+
+  /* 11. Derivative */
+  function solveDerivative(t) {
+    const m = t.match(/(?:مشتقه|مشتقة|derivative\s*of|d\/dx)\s*:?\s*(.+)/);
+    if (!m) return null;
+    const expr = m[1].replace(/\s+/g, '');
+    const terms = expr.split(/(?=[+\-])/).filter(Boolean);
+    const derivs = [];
+    for (const term of terms) {
+      const tm = term.match(/^([+\-]?)(\d*\.?\d*)?x?(?:\^(\d+))?/);
+      if (!tm) return null;
+      const sign = tm[1] || '+';
+      const coef = tm[2] === '' || tm[2] === undefined ? 1 : parseFloat(tm[2]);
+      const exp = tm[3] !== undefined ? parseInt(tm[3]) : (term.includes('x') ? 1 : 0);
+      if (exp === 0) continue;
+      derivs.push((sign === '-' ? '-' : '') + fmt(coef*exp) + (exp-1 > 0 ? `x${exp-1 > 1 ? '^'+(exp-1) : ''}` : ''));
+    }
+    if (!derivs.length) return null;
+    return { text: `📐 d/dx [${m[1]}]\n\n✅ = ${derivs.join(' + ').replace(/\+ -/g, '− ')}\n\n💡 قاعدة القوة: d/dx(xⁿ) = n·xⁿ⁻¹` };
+  }
+
+  /* 12. Word problem */
+  function solveWordProblem(t) {
+    const nums = (t.match(/-?\d+\.?\d*/g) || []).map(Number);
+    if (nums.length < 2) return null;
+    let op, name;
+    if (/(وزع|قسم|بالتساوي)/.test(t)) { op = '/'; name = 'قسمة'; }
+    else if (/(ضعف|مرات|لكل|في كل)/.test(t)) { op = '*'; name = 'ضرب'; }
+    else if (/(باع|اعطي|تبقي|بقي|انفق|صرف|فقد|ناقص|الفرق)/.test(t)) { op = '-'; name = 'طرح'; }
+    else if (/(اضاف|جمع|مجموع|معا|اجمالي|الكل|ربح|زاد|حصل)/.test(t)) { op = '+'; name = 'جمع'; }
+    else if (/(متوسط|معدل)/.test(t)) {
+      const s = nums.reduce((a,b) => a+b, 0);
+      return { text: `📊 المتوسط = (${nums.join(' + ')}) ÷ ${nums.length} = ${fmt(s/nums.length)}\n💡 مجموع القيم ÷ عددها` };
+    }
+    else return null;
+    let r;
+    if (op === '/') r = nums[0] / nums[1];
+    else if (op === '*') r = nums.reduce((a,b) => a*b, 1);
+    else if (op === '-') r = nums.slice(1).reduce((a,b) => a-b, nums[0]);
+    else r = nums.reduce((a,b) => a+b, 0);
+    return { text: `📝 العملية: ${name}\n✅ الناتج = ${fmt(r)}\n💡 الكلمات المفتاحية بتحدد العملية` };
+  }
+
+  /* 13. Chemistry (stub — legacy handles) */
+  function solveChemBalance(t) { return null; }
+
+  const SOLVERS = [
+    { name: 'calc', fn: solveCalc }, { name: 'linear', fn: solveLinear },
+    { name: 'quadratic', fn: solveQuadratic }, { name: 'system', fn: solveSystem },
+    { name: 'inequality', fn: solveInequality }, { name: 'percent', fn: solvePercent },
+    { name: 'fraction', fn: solveFraction }, { name: 'geometry', fn: solveGeometry },
+    { name: 'trig', fn: solveTrig }, { name: 'log', fn: solveLog },
+    { name: 'derivative', fn: solveDerivative }, { name: 'word', fn: solveWordProblem },
+    { name: 'chemistry', fn: solveChemBalance }
+  ];
+
+  function tryMath(pp) {
+    for (const s of SOLVERS) {
+      try {
+        const r = s.fn(pp.text);
+        if (r && r.text) {
+          hooks.logSession('solver:' + s.name, 'system');
+          hooks.Memory.session.lastSubIntent = 'math_' + s.name;
+          return r.text;
+        }
+      } catch(e) { console.warn('[v5 solver]', s.name, e.message); }
+    }
+    return null;
+  }
+
+  hooks.setMath(tryMath);
+  window.__yasbotV5_solvers = { SOLVERS, tryMath };
+
+  console.log('%c🧮 YasBot v5 — Part 2/3 (Math Solvers) LOADED', 'color:#10B981;font-size:14px;font-weight:bold;');
+  console.log('   ' + SOLVERS.length + ' solvers ready');
+})();
+</script>
+
 </body>
 </html>
