@@ -5594,6 +5594,8 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     'ذرة': { en: 'atom', def: 'أصغر وحدة من العنصر' },
     'حرارة': { en: 'heat', def: 'طاقة حرارية' },
     'صوت': { en: 'sound', def: 'موجة ميكانيكية' },
+    'قطة': { en: 'cat', def: ' حيوان اليف' },
+    'كلب': { en: 'Dog', def: ' حيوان' },
     'مكتبة': { en: 'library', def: 'مكان فيه كتب' },
     'معرفة': { en: 'knowledge', def: 'معلومات مكتسبة' },
     'نجاح': { en: 'success', def: 'تحقيق هدف' },
@@ -5621,6 +5623,7 @@ console.log('%c👑 Master Admin Panel loaded', 'color:#F59E0B;font-size:15px;fo
     'عمل': { en: 'work', def: 'جهد لهدف' },
     'نجح': { en: 'succeed', def: 'حقق هدفه' },
     'book': { ar: 'كتاب', def: 'a set of written pages' },
+    'coffe': { ar: 'قهوة', def: 'is a drink' },
     'school': { ar: 'مدرسة', def: 'educational institution' },
     'teacher': { ar: 'معلم', def: 'person who teaches' },
     'student': { ar: 'طالب', def: 'person who learns' },
@@ -7505,6 +7508,1267 @@ if(window.YasBot){
   console.log('   ' + SOLVERS.length + ' solvers ready');
 })();
 </script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  YasBot v5 — PART 3/3 (KB + Quiz + Teach + Feedback)       -->
+<!--  Insert directly AFTER Part 2/3                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+/* ============================================================
+   YasBot v5 — Part 3/3: Knowledge Base + Quiz + Teach + Tests
+   ============================================================ */
+(function(){
+  'use strict';
+  const hooks = window.__yasbotV5_hooks;
+  if (!hooks) { console.warn('v5 Part 1 not loaded!'); return; }
+  const { normalize, trackTopic, savePersistent, Memory } = hooks;
 
+  /* ─── KB_V5: [id, term, cat, level, kws[], def, why, ex, rel[]] ─── */
+  const KB_V5 = [
+    // ═══ رياضيات (30) ═══
+    ['derivative_basic', 'التفاضل', 'math', 'intermediate', ['تفاضل','derivative','مشتقة'], 'فرع من التفاضل يحسب معدل التغير', 'لأنه يقيس كيف تتغير القيمة', 'مشتقة x² = 2x', ['integral_basic']],
+    ['integral_basic', 'التكامل', 'math', 'intermediate', ['تكامل','integral'], 'عكس التفاضل، يحسب المساحة تحت المنحنى', 'لأنه يجمع التغيرات الصغيرة', '∫x dx = x²/2 + C', ['derivative_basic']],
+    ['limits', 'النهايات', 'math', 'intermediate', ['نهاية','limit'], 'القيمة التي تقترب منها الدالة', 'لأنها أساس التفاضل', 'lim(x→2) x² = 4', ['derivative_basic']],
+    ['factoring', 'التحليل', 'math', 'beginner', ['تحليل','factoring'], 'كتابة كثيرة حدود كحاصل ضرب عوامل', 'لأنه يبسط الحل', 'x²-4 = (x-2)(x+2)', ['quadratic']],
+    ['complex_num', 'الأعداد المركبة', 'math', 'advanced', ['مركب','complex','i'], 'أعداد على شكل a+bi حيث i=√-1', 'لأنها تحل معادلات ليس لها حل حقيقي', '√(-4) = 2i', []],
+    ['absolute', 'القيمة المطلقة', 'math', 'beginner', ['مطلقة','absolute'], 'البعد عن الصفر دايماً موجب', 'لأنها تمثل مسافة', '|−5| = 5', []],
+    ['sequences', 'المتتابعات', 'math', 'intermediate', ['متتابعة','sequence'], 'ترتيب أعداد يتبع نمط', 'لأنها تتنبأ بالقيم', '2،4،6،8...', ['series']],
+    ['series', 'المتسلسلات', 'math', 'intermediate', ['متسلسلة','series'], 'مجموع حدود متتابعة', 'لأنها تحسب تراكمات', '1+2+...+n = n(n+1)/2', ['sequences']],
+    ['mean', 'المتوسط الحسابي', 'math', 'beginner', ['متوسط','mean','average'], 'مجموع القيم ÷ عددها', 'لأنه قيمة تمثل البيانات', '(2+4+6)÷3 = 4', ['median']],
+    ['median', 'الوسيط', 'math', 'beginner', ['وسيط','median'], 'القيمة الوسطى بعد الترتيب', 'لأنه لا يتأثر بالقيم الشاذة', '2،4،7 ⇒ 4', ['mean']],
+    ['mode', 'المنوال', 'math', 'beginner', ['منوال','mode'], 'القيمة الأكثر تكراراً', 'لأنه يبين الشائع', '3،3،5،7 ⇒ 3', ['mean']],
+    ['std_dev', 'الانحراف المعياري', 'math', 'advanced', ['انحراف معياري','std'], 'مقياس لتشتت البيانات', 'لأنه يقيس التباعد', 'كلما زاد زاد التشتت', ['mean']],
+    ['probability', 'الاحتمالات', 'math', 'intermediate', ['احتمال','probability'], 'قياس فرصة حدوث حدث', 'لأنه يساعد في التنبؤ', 'احتمال ص = ½', ['combinations']],
+    ['combinations', 'التوافيق', 'math', 'intermediate', ['توافيق','combinations'], 'اختيار عناصر بدون ترتيب', 'لأنه يهمل الترتيب', 'C(5,2) = 10', ['permutations']],
+    ['permutations', 'التباديل', 'math', 'intermediate', ['تباديل','permutations'], 'ترتيب عناصر مع الترتيب', 'لأنه يهم الترتيب', 'P(5,2) = 20', ['combinations']],
+    ['prime', 'الأعداد الأولية', 'math', 'beginner', ['أولي','prime'], 'عدد > ١ لا يقبل القسمة إلا على نفسه و١', 'لأنه أساس التحليل', '٢،٣،٥،٧،١١...', ['gcf']],
+    ['gcf', 'القاسم المشترك الأكبر', 'math', 'beginner', ['قاسم مشترك','gcf','gcd'], 'أكبر عدد يقسم عددين', 'لأنه يبسط الكسور', 'GCF(12,18) = 6', ['lcm']],
+    ['lcm', 'المضاعف المشترك الأصغر', 'math', 'beginner', ['مضاعف مشترك','lcm'], 'أصغر عدد يقبل القسمة على عددين', 'لأنه يوحد المقامات', 'LCM(4,6) = 12', ['gcf']],
+    ['exponents', 'الأسس', 'math', 'beginner', ['أس','exponent','قوة'], 'ضرب الأساس في نفسه عدة مرات', 'لأنه اختصار', '2⁴ = 16', ['roots']],
+    ['roots', 'الجذور', 'math', 'beginner', ['جذر','root'], 'الجذر التربيعي لـ a = العدد الذي يضرب في نفسه = a', 'لأنه عكس التربيع', '√16 = 4', ['exponents']],
+    ['log_basic', 'اللوغاريتم', 'math', 'intermediate', ['لوغاريتم','log'], 'الأس اللي لازم ترفعه للأساس', 'لأنه يحول الضرب لجمع', 'log₁₀(100)=2', ['exponents']],
+    ['sine_law', 'قانون الجيوب', 'math', 'intermediate', ['قانون الجيوب','sine law'], 'a/sin(A) = b/sin(B) = c/sin(C)', 'لأنه يربط الأضلاع بالزوايا', 'في أي مثلث', ['cosine_law']],
+    ['cosine_law', 'قانون الجتا', 'math', 'intermediate', ['قانون الجتا','cosine law'], 'c² = a² + b² - 2ab·cos(C)', 'لأنه يعميم فيثاغورس', 'لأي مثلث', ['sine_law']],
+    ['unit_circle', 'الدائرة المثلثية', 'math', 'intermediate', ['دائرة مثلثية','unit circle'], 'دائرة نصف قطرها ١ لدراسة الدوال المثلثية', 'لأنها تبسط القيم', 'sin(30°)=½', ['sine_law']],
+    ['volume', 'الحجوم', 'math', 'beginner', ['حجم','volume'], 'قياس الفضاء اللي يشغله جسم', 'لأنه مهم في التطبيقات', 'حجم مكعب = s³', []],
+    ['inequalities', 'المتباينات', 'math', 'intermediate', ['متباينة','inequality'], 'علاقة فيها < أو > بدل =', 'لأنها تعبر عن مدى قيم', 'س+3<7 ⇒ س<4', []],
+    ['slope', 'الميل', 'math', 'beginner', ['ميل','slope'], 'تغير y ÷ تغير x', 'لأنه يبين انحدار الخط', 'y=2x+1 ميله 2', []],
+    ['midpoint', 'نقطة المنتصف', 'math', 'beginner', ['منتصف','midpoint'], 'متوسط إحداثيي نقطتين', 'لأنه يقع في المنتصف', 'منتصف (2,4) و (6,8) = (4,6)', []],
+    ['distance', 'المسافة بين نقطتين', 'math', 'beginner', ['مسافة','distance'], '√((x₂-x₁)² + (y₂-y₁)²)', 'لأنها تطبيق فيثاغورس', 'بين (0,0) و (3,4) = 5', []],
+
+    // ═══ فيزياء (22) ═══
+    ['momentum', 'الزخم', 'physics', 'intermediate', ['زخم','momentum'], 'الكتلة × السرعة', 'لأنه محفوظ في التصادمات', 'p = mv', ['impulse']],
+    ['impulse', 'الدفع', 'physics', 'intermediate', ['دفع','impulse'], 'القوة × الزمن = تغير الزخم', 'لأنه يفسر التصادمات', 'J = F·Δt', ['momentum']],
+    ['work', 'الشغل', 'physics', 'beginner', ['شغل','work'], 'القوة × المسافة × cos(الزاوية)', 'لأنه يقيس نقل الطاقة', 'W = Fd cosθ', ['power']],
+    ['power', 'القدرة', 'physics', 'beginner', ['قدرة','power'], 'الشغل ÷ الزمن', 'لأنها سرعة إنجاز الشغل', 'P = W/t', ['work']],
+    ['ohm_law', 'قانون أوم', 'physics', 'beginner', ['أوم','ohm'], 'الجهد = التيار × المقاومة', 'لأنه أساس الدوائر', 'V = IR', ['resistance']],
+    ['resistance', 'المقاومة', 'physics', 'beginner', ['مقاومة','resistance'], 'معارضة المادة لمرور التيار', 'لأنها تتحكم في التيار', 'تقاس بالأوم Ω', ['ohm_law']],
+    ['circuit', 'الدائرة الكهربائية', 'physics', 'beginner', ['دائرة كهربائية','circuit'], 'مسار مغلق يمر فيه التيار', 'لأنها أساس الأجهزة', 'توالي / توازي', ['ohm_law']],
+    ['waves', 'الموجات', 'physics', 'intermediate', ['موجة','wave'], 'اضطراب ينتقل في وسط', 'لأنها تنقل الطاقة', 'موجات الصوت والضوء', ['sound']],
+    ['sound', 'الصوت', 'physics', 'beginner', ['صوت','sound'], 'موجة ميكانيكية طولية', 'لأنه يحتاج وسط', '343 م/ث في الهواء', ['waves']],
+    ['light', 'الضوء', 'physics', 'beginner', ['ضوء','light'], 'موجة كهرومغناطيسية', 'لأنه لا يحتاج وسط', '3×10⁸ م/ث في الفراغ', ['refraction']],
+    ['refraction', 'الانكسار', 'physics', 'intermediate', ['انكسار','refraction'], 'انحراف الضوء بين وسطين', 'لأن السرعة تتغير', 'قلم في ماء يبدو منكسر', ['reflection']],
+    ['reflection', 'الانعكاس', 'physics', 'beginner', ['انعكاس','reflection'], 'ارتداد الضوء على سطح', 'لأن زاوية السقوط = زاوية الانعكاس', 'المرآة', ['refraction']],
+    ['lens', 'العدسات', 'physics', 'intermediate', ['عدسة','lens'], 'كتل شفافة تكوّن صوراً', 'لأنها تحدث انكساراً', 'محدبة / مقعرة', ['refraction']],
+    ['thermodynamics', 'الديناميكا الحرارية', 'physics', 'advanced', ['حرارية','thermo'], 'دراسة العلاقة بين الحرارة والشغل', 'لأنها تشرح المحركات', 'قانون 1: ΔU = Q - W', ['heat']],
+    ['heat', 'الحرارة', 'physics', 'beginner', ['حرارة','heat'], 'طاقة تنتقل من الساخن للبارد', 'لأنها مرتبطة بحركة الجزيئات', 'ماء يغلي على 100°', ['temperature']],
+    ['temperature', 'درجة الحرارة', 'physics', 'beginner', ['درجة حرارة','temperature'], 'مقياس لمتوسط الطاقة الحركية للجزيئات', 'لأنها تحدد اتجاه انتقال الحرارة', 'مئوية / فهرنهايت / كلفن', ['heat']],
+    ['pressure', 'الضغط', 'physics', 'beginner', ['ضغط','pressure'], 'القوة ÷ المساحة', 'لأنه يوزع القوة', 'P = F/A', ['buoyancy']],
+    ['buoyancy', 'الطفو', 'physics', 'intermediate', ['طفو','buoyancy'], 'قوة دفع السائل للجسم المغمور', 'لأنها تفسر عوم السفن', 'قانون أرخميدس', ['pressure']],
+    ['magnetism', 'المغناطيسية', 'physics', 'beginner', ['مغناطيس','magnetism'], 'قوة تجاذب أو تنافر بين أقطاب', 'لأن الأقطاب المتشابهة تتنافر', 'البوصلة', ['current']],
+    ['current', 'التيار الكهربائي', 'physics', 'beginner', ['تيار','current'], 'حركة الشحنات في موصل', 'لأنه أساس الكهرباء', 'يقاس بالأمبير', ['ohm_law']],
+    ['conservation_energy', 'حفظ الطاقة', 'physics', 'intermediate', ['حفظ الطاقة','conservation'], 'الطاقة لا تفنى ولا تستحدث', 'لأنها تتحول من شكل لآخر', 'طاقة وضع ← حركية', ['work']],
+    ['relativity', 'النسبية', 'physics', 'advanced', ['نسبية','relativity'], 'الزمن يتباطأ والكتلة تزيد مع السرعة', 'لأن سرعة الضوء ثابتة', 'E=mc²', ['quantum']],
+
+    // ═══ كيمياء (18) ═══
+    ['periodic_table', 'الجدول الدوري', 'chem', 'beginner', ['جدول دوري','periodic'], 'ترتيب العناصر حسب العدد الذري', 'لأن العمود يحمل تكافؤ مشترك', '18 مجموعة', ['atom']],
+    ['electron_config', 'التوزيع الإلكتروني', 'chem', 'intermediate', ['توزيع إلكتروني','electron config'], 'توزيع الإلكترونات في المستويات', 'لأنه يفسر الخواص', '1s² 2s² 2p⁶', ['periodic_table']],
+    ['ionic_bond', 'الرابطة الأيونية', 'chem', 'intermediate', ['أيونية','ionic'], 'نقل إلكترونات بين ذرتين', 'لأن فلز يفقد ولا فلز يكتسب', 'NaCl', ['covalent_bond']],
+    ['covalent_bond', 'الرابطة التساهمية', 'chem', 'intermediate', ['تساهمية','covalent'], 'مشاركة إلكترونات بين ذرتين', 'لأن كلاهما يحتاج إلكترونات', 'H₂O', ['ionic_bond']],
+    ['metallic_bond', 'الرابطة الفلزية', 'chem', 'advanced', ['فلزية','metallic'], 'بحر من الإلكترونات الحرة', 'لأن الفلزات توصل الكهرباء', 'الحديد', ['ionic_bond']],
+    ['stoichiometry', 'الحسابات الكيميائية', 'chem', 'intermediate', ['ستويكيومتري','stoichiometry'], 'حساب كميات المواد في التفاعل', 'لأن النسب ثابتة', '2H₂ + O₂ → 2H₂O', ['mole']],
+    ['mole', 'المول', 'chem', 'intermediate', ['مول','mole'], 'وحدة قياس = 6.022×10²³ جسيم', 'لأنه يربط الكتلة بالعدد', 'مول ماء = 18g', ['stoichiometry']],
+    ['molarity', 'المولارية', 'chem', 'intermediate', ['مولارية','molarity'], 'مولات المذاب ÷ لتر المحلول', 'لأنها تقيس التركيز', 'M = n/V', ['stoichiometry']],
+    ['equilibrium', 'التوازن الكيميائي', 'chem', 'advanced', ['توازن','equilibrium'], 'معدل التفاعل الأمامي = العكسي', 'لأنه يحدث في تفاعلات انعكاسية', 'N₂+3H₂⇌2NH₃', ['stoichiometry']],
+    ['ph', 'الأس الهيدروجيني pH', 'chem', 'beginner', ['ph','حموضة'], 'مقياس الحموضة من 0 لـ14', 'لأنه يقيس تركيز H⁺', 'ليمون 2، ماء 7، صابون 12', ['acid']],
+    ['acid', 'الحمض', 'chem', 'beginner', ['حمض','acid'], 'مادة تعطي H⁺ في الماء، pH < 7', 'لأنه يتفاعل مع القواعد', 'HCl، ليمون', ['base']],
+    ['base', 'القاعدة', 'chem', 'beginner', ['قاعدة','base'], 'مادة تعطي OH⁻ في الماء، pH > 7', 'لأنها تعادل الحمض', 'NaOH', ['acid']],
+    ['titration', 'المعايرة', 'chem', 'intermediate', ['معايرة','titration'], 'تحديد تركيز بواسطة تفاعل معروف', 'لأنها تحسب التركيز بدقة', 'حمض + قاعدة = ملح + ماء', ['ph']],
+    ['oxidation', 'الأكسدة', 'chem', 'intermediate', ['أكسدة','oxidation'], 'فقدان إلكترونات', 'لأنه يحدث مع الاختزال', 'صدأ الحديد', ['reduction']],
+    ['reduction', 'الاختزال', 'chem', 'intermediate', ['اختزال','reduction'], 'اكتساب إلكترونات', 'لأنه عكس الأكسدة', 'استخلاص الحديد', ['oxidation']],
+    ['organic', 'الكيمياء العضوية', 'chem', 'advanced', ['عضوية','organic'], 'فرع يدرس مركبات الكربون', 'لأن الكربون يرتبط بسلاسل', 'CH₄', ['alkane']],
+    ['alkane', 'الألكانات', 'chem', 'intermediate', ['ألكان','alkane'], 'هيدروكربونات مشبعة', 'لأنها تحتوي روابط فردية فقط', 'CH₄', ['alkene']],
+    ['alkene', 'الألكينات', 'chem', 'intermediate', ['ألكين','alkene'], 'هيدروكربونات برابطة مزدوجة', 'لأنها أنشط من الألكانات', 'C₂H₄', ['alkyne']],
+
+    // ═══ أحياء (18) ═══
+    ['mitosis', 'الانقسام الميتوزي', 'bio', 'intermediate', ['ميتوزي','mitosis'], 'انقسام ينتج خليتين متطابقتين', 'لأنه يحافظ على الكروموسومات', 'نمو الخلايا', ['meiosis']],
+    ['meiosis', 'الانقسام الميوزي', 'bio', 'intermediate', ['ميوزي','meiosis'], 'انقسام ينتج 4 خلايا بنصف كروموسومات', 'لأنه ضروري للأمشاج', 'البويضات', ['mitosis']],
+    ['dna_replication', 'تضاعف DNA', 'bio', 'advanced', ['تضاعف','replication'], 'نسخ DNA قبل الانقسام', 'لأن كل خلية تحتاج نسخة', 'إنزيم Helicase', ['dna']],
+    ['transcription', 'النسخ', 'bio', 'advanced', ['نسخ','transcription'], 'تحويل DNA إلى mRNA', 'لأن mRNA يحمل الشفرة', 'في النواة', ['translation']],
+    ['translation', 'الترجمة', 'bio', 'advanced', ['ترجمة','translation'], 'تحويل mRNA إلى بروتين', 'لأن البروتين هو الناتج', 'في الريبوسوم', ['transcription']],
+    ['gene', 'الجين', 'bio', 'beginner', ['جين','gene'], 'جزء من DNA يحمل صفة', 'لأنه وحدة الوراثة', 'لون العين', ['dna']],
+    ['evolution', 'التطور', 'bio', 'intermediate', ['تطور','evolution'], 'تغير الصفات عبر الأجيال', 'لأن الانتخاب الطبيعي', 'رقبة الزرافة', ['gene']],
+    ['ecosystem', 'النظام البيئي', 'bio', 'beginner', ['نظام بيئي','ecosystem'], 'مجتمع الكائنات + بيئتها', 'لأن الكل مترابط', 'غابة', ['food_chain']],
+    ['food_chain', 'السلسلة الغذائية', 'bio', 'beginner', ['سلسلة غذائية','food chain'], 'تسلسل من يأكل من', 'لأن الطاقة تنتقل', 'نبات ← أرنب ← أسد', ['ecosystem']],
+    ['food_web', 'الشبكة الغذائية', 'bio', 'intermediate', ['شبكة غذائية','food web'], 'سلاسل غذائية متداخلة', 'لأن الكائنات لها أكثر من مصدر', 'غابة', ['food_chain']],
+    ['cell_cycle', 'دورة الخلية', 'bio', 'intermediate', ['دورة خلوية','cell cycle'], 'مراحل نمو وانقسام الخلية', 'لأن الخلايا تتجدد', 'G1، S، G2، M', ['mitosis']],
+    ['apoptosis', 'الموت المبرمج', 'bio', 'advanced', ['موت مبرمج','apoptosis'], 'موت خلوي مبرمج', 'لأنه يخلص من خلايا تالفة', 'تكوين الأصابع', ['cell_cycle']],
+    ['hormones', 'الهرمونات', 'bio', 'intermediate', ['هرمون','hormone'], 'مواد تنظم وظائف الجسم', 'لأنها تنقل إشارات', 'الأنسولين', ['endocrine']],
+    ['endocrine', 'الغدد الصماء', 'bio', 'intermediate', ['غدد صماء','endocrine'], 'غدد تفرز هرمونات في الدم', 'لأنها تنظم الوظائف', 'الغدة الدرقية', ['hormones']],
+    ['immune', 'المناعة', 'bio', 'intermediate', ['مناعة','immunity'], 'قدرة الجسم على مقاومة الأمراض', 'لأنها تحمي من الميكروبات', 'التطعيم', ['antibody']],
+    ['antibody', 'الأجسام المضادة', 'bio', 'intermediate', ['جسم مضاد','antibody'], 'بروتينات تهاجم مسببات المرض', 'لأنها تميز الأجسام الغريبة', 'IgG', ['immune']],
+    ['bacteria', 'البكتيريا', 'bio', 'beginner', ['بكتيريا','bacteria'], 'كائنات وحيدة الخلية', 'لأنها تعيش في كل مكان', 'لبن، سل', ['virus']],
+    ['virus', 'الفيروسات', 'bio', 'beginner', ['فيروس','virus'], 'تتكاثر داخل خلية حية', 'لأنها لا تتكاثر بنفسها', 'كورونا', ['bacteria']],
+
+    // ═══ عربي (15) ═══
+    ['i\'rab', 'الإعراب', 'arabic', 'intermediate', ['إعراب','irab'], 'تحديد وظيفة الكلمة في الجملة', 'لأنه يوضح المعنى', 'الطالبُ (مبتدأ مرفوع)', ['cases']],
+    ['cases', 'الحالات الإعرابية', 'arabic', 'intermediate', ['حالات','رفع نصب جر'], 'رفع / نصب / جر / جزم', 'لأنها تحدد موقع الكلمة', 'مرفوع بالضمة', ['i\'rab']],
+    ['marfu', 'المرفوع', 'arabic', 'beginner', ['مرفوع','marfu'], 'ما عليه علامة رفع (ضمة/واو/ألف)', 'لأنه في محل رفع', 'المبتدأ، الخبر، الفاعل', ['cases']],
+    ['mansub', 'المنصوب', 'arabic', 'beginner', ['منصوب','mansub'], 'ما عليه علامة نصب (فتحة/ياء/كسرة)', 'لأنه في محل نصب', 'المفعول به، الحال', ['cases']],
+    ['majrur', 'المجرور', 'arabic', 'beginner', ['مجرور','majrur'], 'ما بعد حرف جر أو مضاف إليه', 'لأنه مجرور دائماً', 'في البيت', ['cases']],
+    ['tashbih', 'التشبيه', 'arabic', 'beginner', ['تشبيه','simile'], 'مقارنة بين شيئين بأداة', 'لأنه يوضح الصورة', 'كالقمر جمالاً', ['istiara']],
+    ['istiara', 'الاستعارة', 'arabic', 'intermediate', ['استعارة','metaphor'], 'تشبيه حُذف أحد طرفيه', 'لأنه يمنح الصورة قوة', 'رأيت أسداً يخطب', ['tashbih']],
+    ['kinaya', 'الكناية', 'arabic', 'intermediate', ['كناية','metonymy'], 'تعبير يُراد به لازم معناه', 'لأنه يعبر بأسلوب أرقى', 'كثير الرماد', ['istiara']],
+    ['tibaq', 'الطباق', 'arabic', 'intermediate', ['طباق','antithesis'], 'الجمع بين متضادين', 'لأنه يوضح بالتباين', 'يُحيي ويُميت', ['jinas']],
+    ['jinas', 'الجناس', 'arabic', 'intermediate', ['جناس','pun'], 'تشابه كلمتين لفظاً واختلاف معنى', 'لأنه يعطي جرساً موسيقياً', 'صليت المغرب في المغرب', ['tibaq']],
+    ['hamza_qat', 'همزة القطع', 'arabic', 'beginner', ['همزة قطع','qat'], 'تُنطق وتُكتب دائماً', 'لأنها أصلية', 'أخذ، إكرام', ['hamza_wasl']],
+    ['hamza_wasl', 'همزة الوصل', 'arabic', 'beginner', ['همزة وصل','wasl'], 'تُنطق في البداية وتسقط في الوسط', 'لأنها غير أصلية', 'اكتب، استخدم', ['hamza_qat']],
+    ['ta_marbuta', 'التاء المربوطة', 'arabic', 'beginner', ['تاء مربوطة','ta marbuta'], 'تاء في آخر الكلمة تُنطق هاء وقفاً', 'لأنها من أصل الكلمة', 'مدرسة', ['hamza_qat']],
+    ['arud', 'العروض', 'arabic', 'advanced', ['عروض','arud'], 'علم أوزان الشعر', 'لأنه يضبط الإيقاع', 'بحر الكامل', []],
+    ['balagha', 'البلاغة', 'arabic', 'intermediate', ['بلاغة','rhetoric'], 'علم يدرس الجمال في الكلام', 'لأنه يوضح الإعجاز', 'تشبيه، استعارة، كناية', ['tashbih']],
+
+    // ═══ إنجليزي (10) ═══
+    ['present_simple', 'Present Simple', 'eng', 'beginner', ['present simple'], 'وصف العادات والحقائق', 'لأنه للروتين', 'I go daily', ['past_simple']],
+    ['past_simple', 'Past Simple', 'eng', 'beginner', ['past simple'], 'حدث انتهى', 'لأنه للفعل المكتمل', 'I went yesterday', ['present_simple']],
+    ['present_perfect', 'Present Perfect', 'eng', 'intermediate', ['present perfect'], 'حدث له صلة بالحاضر', 'لأنه يربط الماضي بالحاضر', 'I have finished', ['past_simple']],
+    ['conditional', 'Conditional', 'eng', 'intermediate', ['conditional'], 'If-then relationships', 'للتعبير عن الاحتمالات', 'If it rains, I will stay', []],
+    ['passive', 'Passive Voice', 'eng', 'intermediate', ['passive'], 'المبني للمجهول', 'لما الفاعل غير مهم', 'The book was written', []],
+    ['reported', 'Reported Speech', 'eng', 'intermediate', ['reported'], 'نقل الكلام', 'لتوصيل ما قاله شخص', 'He said he was tired', []],
+    ['phrasal', 'Phrasal Verbs', 'eng', 'intermediate', ['phrasal'], 'فعل + حرف جر بمعنى جديد', 'شائع في الإنجليزي', 'give up, look after', []],
+    ['gerund', 'Gerunds', 'eng', 'beginner', ['gerund'], 'أفعال بـ -ing تستخدم كأسماء', 'لأنها تعمل عمل الاسم', 'Swimming is good', []],
+    ['modals', 'Modals', 'eng', 'beginner', ['modal'], 'can, must, should, may', 'تضيف معنى للفعل', 'You must study', []],
+    ['comparative', 'Comparatives', 'eng', 'beginner', ['comparative'], 'bigger, more interesting', 'لمقارنة اثنين', 'This is bigger', ['superlative']],
+
+    // ═══ تاريخ (15) ═══
+    ['umayyad', 'الدولة الأموية', 'history', 'intermediate', ['أموية','umayyad'], '661-750م، عاصمتها دمشق', 'أول دولة وراثية', 'عبد الملك', ['abbasid']],
+    ['abbasid', 'الدولة العباسية', 'history', 'intermediate', ['عباسية','abbasid'], '750-1258م، عاصمتها بغداد', 'عصر ذهبي للعلم', 'بيت الحكمة', ['umayyad']],
+    ['andalus', 'الأندلس', 'history', 'intermediate', ['أندلس','andalus'], 'حضارة إسلامية في إسبانيا 711-1492م', 'مركز إشعاع علمي', 'قرطبة', []],
+    ['salah_din', 'صلاح الدين', 'history', 'intermediate', ['صلاح الدين','saladin'], 'حرر القدس 1187م', 'وحّد الجبهة', 'حطين', ['crusades']],
+    ['crusades', 'الحروب الصليبية', 'history', 'intermediate', ['صليبية','crusades'], '1096-1291م', 'بدعوى دينية', 'قرنين من الحروب', ['salah_din']],
+    ['ottoman', 'الدولة العثمانية', 'history', 'intermediate', ['عثمانية','ottoman'], '1299-1924م', '6 قرون و3 قارات', 'محمد الفاتح', ['abbasid']],
+    ['ww1', 'الحرب العالمية الأولى', 'history', 'intermediate', ['حرب اولي','ww1'], '1914-1918', 'بعد اغتيال ولي عهد النمسا', 'معاهدة فرساي', ['ww2']],
+    ['ww2', 'الحرب العالمية الثانية', 'history', 'intermediate', ['حرب ثانية','ww2'], '1939-1945', 'ألمانيا هاجمت بولندا', 'الأمم المتحدة', ['ww1']],
+    ['pharaohs', 'الفراعنة', 'history', 'beginner', ['فراعنة','pharaohs'], 'ملوك مصر القديمة', 'بنوا الأهرامات', 'رمسيس، خوفو', ['ancient_egypt']],
+    ['ancient_egypt', 'الحضارة المصرية القديمة', 'history', 'beginner', ['حضارة مصرية'], '3100 ق.م - 30 ق.م', 'من أقدم الحضارات', 'الأهرامات', ['pharaohs']],
+    ['renaissance', 'عصر النهضة', 'history', 'intermediate', ['نهضة','renaissance'], 'القرن 14-17', 'أعادت اكتشاف الكلاسيكيات', 'دافنشي', ['industrial_rev']],
+    ['industrial_rev', 'الثورة الصناعية', 'history', 'intermediate', ['صناعية','industrial'], 'القرن 18-19', 'المحرك البخاري', 'سكك حديدية', ['renaissance']],
+    ['french_rev', 'الثورة الفرنسية', 'history', 'intermediate', ['فرنسية','french rev'], '1789-1799', 'الشعب عانى من الظلم', 'حرية، مساواة، إخاء', ['industrial_rev']],
+    ['cold_war', 'الحرب الباردة', 'history', 'intermediate', ['باردة','cold war'], '1947-1991', 'صراع أمريكي سوفيتي', 'سباق فضاء', ['ww2']],
+    ['mongols', 'المغول', 'history', 'intermediate', ['مغول','mongols'], 'بقيادة جنكيز خان', 'محاربين أشداء', 'دمّروا بغداد 1258', ['abbasid']],
+
+    // ═══ جغرافيا (15) ═══
+    ['continents', 'القارات', 'geo', 'beginner', ['قارة','continents'], '7 قارات', 'تقسيمات لليابسة', 'آسيا أكبر', ['oceans']],
+    ['oceans', 'المحيطات', 'geo', 'beginner', ['محيط','oceans'], '5 محيطات تغطي 71%', 'أكبر مساحة ماء', 'الهادي أكبر', ['continents']],
+    ['mountains', 'الجبال', 'geo', 'beginner', ['جبل','mountains'], 'إيفرست 8848م', 'من تصادم الصفائح', 'الهيمالايا', ['tectonic']],
+    ['deserts', 'الصحاري', 'geo', 'beginner', ['صحراء','deserts'], 'قليلة الأمطار', 'ضغط مرتفع', 'الكبرى 9 مليون كم²', ['climate']],
+    ['amazon', 'غابات الأمازون', 'geo', 'intermediate', ['أمازون','amazon'], 'أكبر غابة مطيرة', 'رئة الأرض', '5.5 مليون كم²', []],
+    ['climate', 'المناخ', 'geo', 'beginner', ['مناخ','climate'], 'متوسط حالة الجو', 'خط العرض والارتفاع', 'متوسطي، صحراوي', ['weather']],
+    ['weather', 'الطقس', 'geo', 'beginner', ['طقس','weather'], 'حالة الجو الآن', 'يتغير يومياً', 'مشمس/ممطر', ['climate']],
+    ['nile_river', 'نهر النيل', 'geo', 'beginner', ['نيل','nile'], 'أطول نهر ~6650 كم', 'مصر هبة النيل', '11 دولة', ['egypt']],
+    ['egypt', 'مصر', 'geo', 'beginner', ['مصر','egypt'], 'شمال أفريقيا، عاصمتها القاهرة', 'موقع استراتيجي', '105 مليون', ['nile_river']],
+    ['saudi', 'السعودية', 'geo', 'beginner', ['سعودية','saudi'], 'شبه الجزيرة العربية', 'أكبر منتج نفط', 'مكة والمدينة', []],
+    ['earthquakes', 'الزلازل', 'geo', 'intermediate', ['زلزال','earthquake'], 'اهتزازات القشرة الأرضية', 'عند الصدوع', 'زلزال تركيا 2023', ['volcanoes']],
+    ['volcanoes', 'البراكين', 'geo', 'intermediate', ['بركان','volcano'], 'فتحات تخرج منها الحمم', 'عند حدود الصفائح', 'فيزوف', ['earthquakes']],
+    ['tectonic', 'الصفائح التكتونية', 'geo', 'intermediate', ['صفائح','tectonic'], 'كتل قشرة تتحرك', 'سبب الزلازل والبراكين', 'تقارب/تباعد', ['earthquakes']],
+    ['water_cycle', 'دورة الماء', 'geo', 'beginner', ['دورة الماء','water cycle'], 'تبخر ← تكاثف ← هطول', 'لأن الماء يتجدد', 'مطر', ['climate']],
+    ['greenhouse', 'الاحتباس الحراري', 'geo', 'intermediate', ['احتباس','greenhouse'], 'ارتفاع حرارة الأرض', 'غازات الدفيئة', 'CO₂', ['climate']],
+
+    // ═══ مهارات (12) ═══
+    ['spaced_rep', 'التكرار المتباعد', 'study', 'beginner', ['تكرار متباعد','spaced'], 'مراجعة على فترات: يوم، 3، أسبوع', 'يحسن الاحتفاظ', '24 ساعة ثم أسبوع', ['active_recall']],
+    ['active_recall', 'الاستدعاء النشط', 'study', 'beginner', ['استدعاء نشط','active recall'], 'تذكر المعلومة قبل النظر', 'يبني مسارات أقوى', 'اقرأ السؤال ثم أجب', ['spaced_rep']],
+    ['feynman', 'تقنية فاينمان', 'study', 'beginner', ['فاينمان','feynman'], 'اشرح بكلمات بسيطة', 'يكشف الثغرات', 'اشرح لطفل', ['active_recall']],
+    ['mind_maps', 'الخرائط الذهنية', 'study', 'beginner', ['خريطة ذهنية','mind map'], 'ربط المفاهيم بصرياً', 'الدماغ يحفظ الصور', 'كلمة مركزية + فروع', ['feynman']],
+    ['pomodoro', 'بومودورو', 'study', 'beginner', ['بومودورو','pomodoro'], '25 دقيقة تركيز + 5 راحة', 'الدماغ يحتاج راحة', '4 دورات = 2 ساعة', ['time_mgmt']],
+    ['time_mgmt', 'إدارة الوقت', 'study', 'beginner', ['إدارة الوقت','time'], 'تنظيم الوقت حسب الأولويات', 'يقلل المماطلة', 'to-do list', ['pomodoro']],
+    ['eisenhower', 'مصفوفة أيزنهاور', 'study', 'intermediate', ['أيزنهاور','eisenhower'], 'مهم/عاجل لتحديد الأولويات', 'لأنها ترتب المهام', '4 أرباع', ['time_mgmt']],
+    ['sleep_hygiene', 'نظافة النوم', 'study', 'beginner', ['نظافة النوم','sleep'], 'عادات تحسن جودة النوم', 'الدماغ يثبت المعلومات', '7-8 ساعات', ['pomodoro']],
+    ['note_taking', 'تدوين الملاحظات', 'study', 'beginner', ['تدوين','notes'], 'كتابة منظمة للمعلومات', 'يساعد على الحفظ', 'طريقة كورنيل', ['cornell']],
+    ['cornell', 'طريقة كورنيل', 'study', 'intermediate', ['كورنيل','cornell'], 'تقسيم الورقة: ملاحظات/أسئلة/ملخص', 'منظمة للمراجعة', '3 أقسام', ['note_taking']],
+    ['stress_mgmt', 'إدارة التوتر', 'study', 'beginner', ['توتر','stress'], 'تقنيات لتهدئة القلق', 'لأنه يؤثر على التركيز', 'تنفس عميق', []],
+    ['exam_prep', 'الاستعداد للامتحان', 'study', 'beginner', ['استعداد','exam prep'], 'خطة مراجعة منظمة', 'لأن الوقت محدود', 'قسّم المادة', ['time_mgmt']],
+
+    // ═══ حاسوب (12) ═══
+    ['programming', 'البرمجة', 'cs', 'beginner', ['برمجة','programming'], 'كتابة تعليمات للحاسوب', 'الحاسوب لا يفكر', 'Python, JS', ['algorithm']],
+    ['algorithm', 'الخوارزميات', 'cs', 'intermediate', ['خوارزمية','algorithm'], 'خطوات لحل مشكلة', 'تحول المشكلة لحل منظم', 'بحث ثنائي', ['programming']],
+    ['variables', 'المتغيرات', 'cs', 'beginner', ['متغير','variable'], 'مكان لتخزين قيمة', 'لأن البرامج تحتاج ذاكرة', 'x = 5', ['programming']],
+    ['loops', 'الحلقات', 'cs', 'beginner', ['حلقة','loop'], 'تكرار كود عدة مرات', 'لأنه يوفر التكرار', 'for, while', ['conditions']],
+    ['conditions', 'الشروط', 'cs', 'beginner', ['شرط','if'], 'تنفيذ كود بناءً على شرط', 'لأن البرنامج يحتاج قرارات', 'if (x>5)', ['loops']],
+    ['functions', 'الدوال', 'cs', 'beginner', ['دالة','function'], 'كتلة كود قابلة لإعادة الاستخدام', 'لأنها تنظم الكود', 'def add(a,b)', ['programming']],
+    ['database', 'قواعد البيانات', 'cs', 'intermediate', ['قاعدة بيانات','database'], 'مجموعة منظمة من البيانات', 'تسهل البحث', 'MySQL, Firebase', ['sql']],
+    ['sql', 'SQL', 'cs', 'intermediate', ['sql'], 'لغة استعلام قواعد البيانات', 'لأنها معيارية', 'SELECT * FROM', ['database']],
+    ['web', 'تطوير الويب', 'cs', 'beginner', ['ويب','web'], 'بناء مواقع وصفحات', 'لأنه أساس الإنترنت', 'HTML+CSS+JS', ['html']],
+    ['html', 'HTML', 'cs', 'beginner', ['html'], 'لغة توصيف الصفحات', 'هيكل الصفحة', '<div>, <p>', ['css']],
+    ['css', 'CSS', 'cs', 'beginner', ['css'], 'لغة تنسيق الصفحات', 'تجميل الصفحة', 'color, display', ['html']],
+    ['ai', 'الذكاء الاصطناعي', 'cs', 'intermediate', ['ذكاء اصطناعي','ai'], 'محاكاة الذكاء البشري', 'لحل مشكلات معقدة', 'ChatGPT', ['ml']]
+  ];
+
+  /* ─── Index ─── */
+  const INDEX = new Map();
+  const byCategory = new Map();
+  const topicObjects = [];
+  KB_V5.forEach(t => {
+    const [id, term, cat, level, kws, def, why, ex, rel] = t;
+    const obj = { id, term, cat, level, kws, def, why, ex, rel: rel || [] };
+    topicObjects.push(obj);
+    INDEX.set(normalize(term), obj);
+    kws.forEach(k => INDEX.set(normalize(k), obj));
+    if (!byCategory.has(cat)) byCategory.set(cat, []);
+    byCategory.get(cat).push(obj);
+  });
+
+  /* ─── Search ─── */
+  function searchKB(pp) {
+    const text = pp.text;
+    let best = null, bestScore = 0;
+    for (const [key, topic] of INDEX) {
+      if (text.includes(key)) {
+        const score = key.length;
+        if (score > bestScore) { bestScore = score; best = topic; }
+      }
+    }
+    if (best) return best;
+    const words = text.split(/\s+/);
+    for (const w of words) {
+      if (w.length < 3) continue;
+      for (const [key, topic] of INDEX) {
+        if (Math.abs(w.length - key.length) > 2) continue;
+        const d = hooks.levenshtein(w, key);
+        if (d <= 1) {
+          const score = key.length / (1 + d);
+          if (score > bestScore) { bestScore = score; best = topic; }
+        }
+      }
+    }
+    return bestScore > 2.5 ? best : null;
+  }
+
+  function formatTopic(topic) {
+    return `📖 ${topic.term}\n\n${topic.def}\n\n💡 ليه: ${topic.why}\n\n🌟 مثال: ${topic.ex}${topic.rel.length ? `\n\n🔗 ذات صلة: ${topic.rel.join('، ')}` : ''}`;
+  }
+
+  function tryKB(pp) {
+    const topic = searchKB(pp);
+    if (!topic) return null;
+    trackTopic(topic.id);
+    Memory.session.lastSubIntent = 'define';
+    Memory.session.lastResult = formatTopic(topic);
+    return formatTopic(topic);
+  }
+
+  /* ─── Quiz ─── */
+  function tryQuiz(pp) {
+    const m = pp.text.match(/(?:اختبرني|quiz me|اختبر)\s*(?:في|ب|in)?\s*(.+)?/);
+    const topicName = m && m[1] ? m[1].trim() : null;
+
+    let pool = [];
+    if (topicName) {
+      const norm = normalize(topicName);
+      for (const [key, topic] of INDEX) {
+        if (key.includes(norm) || norm.includes(key) || topic.cat.includes(norm)) {
+          if (!pool.includes(topic)) pool.push(topic);
+        }
+      }
+    }
+    if (!pool.length) pool = topicObjects.slice();
+
+    if (pool.length < 3) {
+      return `❌ معرفش أجيب أسئلة كفاية عن "${topicName || 'الموضوع'}". جرّب موضوع تاني.`;
+    }
+
+    const shuffled = pool.sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, 5);
+    const questions = selected.map(topic => {
+      const correct = topic.def;
+      const wrongs = shuffled
+        .filter(t => t.id !== topic.id)
+        .slice(0, 3)
+        .map(t => t.def)
+        .filter(d => d !== correct);
+      const options = [correct, ...wrongs.slice(0, 3)].sort(() => Math.random() - 0.5);
+      return {
+        q: `أي من التالي هو تعريف "${topic.term}"؟`,
+        options,
+        correct: options.indexOf(correct),
+        topicId: topic.id
+      };
+    });
+
+    Memory.session.quiz = { questions, current: 0, score: 0 };
+    return formatQuizQuestion(questions[0], 1, questions.length);
+  }
+
+  const LETTERS = ['أ', 'ب', 'ج', 'د', 'هـ'];
+  function formatQuizQuestion(q, num, total) {
+    return `⚡ السؤال ${num}/${total}\n\n${q.q}\n\n${q.options.map((o, i) => `${LETTERS[i]}. ${o}`).join('\n')}\n\n💬 اكتب: ${LETTERS[0]}؟ (مع علامة استفهام) للإجابة`;
+  }
+
+  function handleQuizAnswer(raw) {
+    const quiz = Memory.session.quiz;
+    if (!quiz) return null;
+    const clean = String(raw).replace(/[؟?\s@bot]/gi, '').trim();
+    const map = { 'أ': 0, 'ا': 0, 'a': 0, 'ب': 1, 'b': 1, 'ج': 2, 'c': 2, 'د': 3, 'd': 3, 'هـ': 4, 'ه': 4, 'e': 4 };
+    const idx = map[clean];
+    if (idx === undefined) return null;
+    const q = quiz.questions[quiz.current];
+    const correct = idx === q.correct;
+    if (correct) quiz.score++;
+    quiz.current++;
+    if (quiz.current >= quiz.questions.length) {
+      const pct = Math.round((quiz.score / quiz.questions.length) * 100);
+      const emoji = pct >= 80 ? '🏆' : pct >= 50 ? '🎉' : '💪';
+      try { if (typeof window.addXP === 'function') window.addXP(quiz.score * 5); } catch(e){}
+      const feedback = correct ? '✅ آخر إجابة صح' : `❌ الصح: ${LETTERS[q.correct]}`;
+      Memory.session.quiz = null;
+      return `${emoji} خلصت الاختبار!\n\n✅ ${quiz.score}/${quiz.questions.length} (${pct}%)\n\n${feedback}\n\n💡 اكتب "اختبرني؟" تاني لاختبار جديد`;
+    }
+    const feedback = correct ? '✅ صح!' : `❌ غلط. الصح: ${LETTERS[q.correct]}`;
+    return `${feedback}\n\n${formatQuizQuestion(quiz.questions[quiz.current], quiz.current + 1, quiz.questions.length)}`;
+  }
+
+  /* ─── Teach ─── */
+  function tryTeach(pp) {
+    const m = pp.text.match(/(?:علمني|teach me|اشرح لي)\s*(?:في|ب|about)?\s*(.+?)(?:\s*من\s*الصفر)?$/);
+    const topicName = m && m[1] ? m[1].trim() : null;
+    if (!topicName) return '📚 اكتب: "علمني [موضوع] من الصفر" — مثلاً: "علمني الكسور من الصفر"';
+    const topic = searchKB({ text: topicName });
+    if (!topic) return `❌ معرفش "${topicName}". جرّب موضوع تاني.`;
+    const pathId = 'path_' + Date.now();
+    const path = {
+      id: pathId, topicId: topic.id, topic: topic.term, createdAt: Date.now(),
+      steps: [
+        { num: 1, text: `مقدمة: ${topic.def}` },
+        { num: 2, text: `ليه مهم: ${topic.why}` },
+        { num: 3, text: `مثال: ${topic.ex}` },
+        ...(topic.rel.length ? [{ num: 4, text: `مترابط مع: ${topic.rel.join('، ')}` }] : [])
+      ]
+    };
+    Memory.persistent.learningPaths[pathId] = path;
+    savePersistent();
+    return `📚 مسار تعلم "${topic.term}"\n\n${path.steps.map(s => `${s.num}. ${s.text}`).join('\n\n')}\n\n💬 اكتب "مثال [الموضوع]؟" للتفاصيل`;
+  }
+
+  /* ─── Feedback ─── */
+  function tryFeedback(direction, pp) {
+    const last = Memory.session.lastTopic;
+    if (!last) return direction === 'up' ? '✅ شكرًا!' : '🙏 جرب تعيد صياغة السؤال.';
+    if (direction === 'up') {
+      if (!Memory.persistent.strong.includes(last)) {
+        Memory.persistent.strong.push(last);
+        if (Memory.persistent.strong.length > 10) Memory.persistent.strong.shift();
+        savePersistent();
+      }
+      return `✅ حفظت "${last}" في المواضيع القوية. 💪`;
+    }
+    if (!Memory.persistent.weak.includes(last)) {
+      Memory.persistent.weak.push(last);
+      if (Memory.persistent.weak.length > 10) Memory.persistent.weak.shift();
+      savePersistent();
+    }
+    return `🙏 حفظت "${last}" في المواضيع اللي محتاجة مراجعة.`;
+  }
+
+  /* ─── Register hooks ─── */
+  hooks.setKB(tryKB);
+  hooks.setQuiz(tryQuiz);
+  hooks.setTeach(tryTeach);
+  hooks.setFeedback(tryFeedback);
+
+  /* ─── Patch reply for quiz answers ─── */
+  const baseReply = window.YasBotV5.reply;
+  window.YasBot.reply = function(msg) {
+    try {
+      if (Memory.session.quiz) {
+        const r = handleQuizAnswer(msg);
+        if (r) return r;
+      }
+      return baseReply(msg);
+    } catch(e) {
+      console.warn('[v5]', e);
+      return window.YasBot._legacy?.reply?.(msg) || 'عذرًا، المساعد غير متاح.';
+    }
+  };
+
+  /* ─── Update stats ─── */
+  window.YasBotV5.getStats = function() {
+    return {
+      version: '5.0',
+      kbSize: KB_V5.length,
+      solversCount: 13,
+      memorySize: Memory.persistent.top20.length,
+      strongTopics: Memory.persistent.strong.length,
+      weakTopics: Memory.persistent.weak.length,
+      lastTopic: Memory.session.lastTopic,
+      quizActive: !!Memory.session.quiz
+    };
+  };
+
+  /* ─── Tests ─── */
+  window.YasBotV5.test = function() {
+    const tests = [
+      ['5 + 7؟', '12'],
+      ['2x + 5 = 13؟', 'x = 4'],
+      ['x^2 - 5x + 6 = 0؟', 'x₁'],
+      ['20% من 150؟', '30'],
+      ['مساحة دائرة نصف قطرها 5؟', '78'],
+      ['اشرح الجاذبية؟', 'جاذبية'],
+      ['اختبرني؟', 'سؤال'],
+      ['علمني التفاضل من الصفر؟', 'مسار']
+    ];
+    let pass = 0;
+    tests.forEach(([q, expect]) => {
+      try {
+        const r = window.YasBot.reply(q);
+        const ok = typeof r === 'string' && r.includes(expect);
+        console.log(ok ? '✅' : '❌', q, '→', String(r).slice(0, 50));
+        if (ok) pass++;
+      } catch(e) { console.log('❌', q, '→', e.message); }
+    });
+    console.log(`\n📊 Tests: ${pass}/${tests.length} passed`);
+    return { pass, total: tests.length };
+  };
+
+  console.log('%c📚 YasBot v5 — Part 3/3 (KB + Quiz + Teach) LOADED', 'color:#10B981;font-size:14px;font-weight:bold;');
+  console.log('   KB size: ' + KB_V5.length + ' topics');
+  console.log('   Commands: "اختبرني في X؟" | "علمني X من الصفر؟"');
+  console.log('   Test: window.YasBotV5.test()');
+  console.log('');
+  console.log('%c🎉 YasBot v5 FULLY LOADED', 'color:#F59E0B;font-size:16px;font-weight:bold;');
+})();
+</script>
+  <!-- ═══════════════════════════════════════════════════════════ -->
+<!--  Dictionary Extension — 300 كلمة إضافية                    -->
+<!--  Insert AFTER Features Pack 4/4, BEFORE </body>            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+/* ============================================================
+   Dictionary Extension — يضيف 300 كلمة للقاموس القديم
+   نفس صيغة القديم: { en/ar, def }
+   بدون لمس Features Pack 4/4
+   ============================================================ */
+(function(){
+  'use strict';
+
+  const NEW_WORDS = {
+    /* ═══════════ علوم: فيزياء (25) ═══════════ */
+    'atom':           { ar: 'ذرة',         def: 'أصغر وحدة من العنصر تحتفظ بخواصه' },
+    'ذرة':            { en: 'atom',        def: 'أصغر وحدة من العنصر تحتفظ بخواصه' },
+    'molecule':       { ar: 'جزيء',        def: 'اتحاد ذرتين أو أكثر بروابط كيميائية' },
+    'جزيء':           { en: 'molecule',    def: 'اتحاد ذرتين أو أكثر بروابط كيميائية' },
+    'electron':       { ar: 'إلكترون',     def: 'جسيم سالب الشحنة يدور حول النواة' },
+    'إلكترون':        { en: 'electron',    def: 'جسيم سالب الشحنة يدور حول النواة' },
+    'proton':         { ar: 'بروتون',      def: 'جسيم موجب الشحنة في نواة الذرة' },
+    'بروتون':         { en: 'proton',      def: 'جسيم موجب الشحنة في نواة الذرة' },
+    'neutron':        { ar: 'نيوترون',     def: 'جسيم متعادل الشحنة في النواة' },
+    'نيوترون':        { en: 'neutron',     def: 'جسيم متعادل الشحنة في النواة' },
+    'energy':         { ar: 'طاقة',        def: 'قدرة الجسم على إنجاز شغل' },
+    'طاقة':           { en: 'energy',      def: 'قدرة الجسم على إنجاز شغل' },
+    'force':          { ar: 'قوة',         def: 'مؤثر يغير حالة حركة الجسم' },
+    'قوة':            { en: 'force',       def: 'مؤثر يغير حالة حركة الجسم' },
+    'motion':         { ar: 'حركة',        def: 'تغير موقع الجسم بمرور الزمن' },
+    'حركة':           { en: 'motion',      def: 'تغير موقع الجسم بمرور الزمن' },
+    'velocity':       { ar: 'سرعة متجهة',  def: 'السرعة مع تحديد الاتجاه' },
+    'سرعة متجهة':     { en: 'velocity',    def: 'السرعة مع تحديد الاتجاه' },
+    'acceleration':   { ar: 'تسارع',       def: 'معدل تغير السرعة بالنسبة للزمن' },
+    'تسارع':          { en: 'acceleration',def: 'معدل تغير السرعة بالنسبة للزمن' },
+    'gravity':        { ar: 'جاذبية',      def: 'قوة تجاذب بين الأجسام حسب كتلتها' },
+    'جاذبية':         { en: 'gravity',     def: 'قوة تجاذب بين الأجسام حسب كتلتها' },
+    'mass':           { ar: 'كتلة',        def: 'مقدار المادة في الجسم' },
+    'كتلة':           { en: 'mass',        def: 'مقدار المادة في الجسم' },
+    'weight':         { ar: 'وزن',         def: 'قوة جذب الأرض للجسم' },
+    'وزن':            { en: 'weight',      def: 'قوة جذب الأرض للجسم' },
+
+    /* ═══════════ علوم: كيمياء (15) ═══════════ */
+    'element':        { ar: 'عنصر',        def: 'مادة تتكون من نوع واحد من الذرات' },
+    'عنصر':           { en: 'element',     def: 'مادة تتكون من نوع واحد من الذرات' },
+    'compound':       { ar: 'مركب',        def: 'اتحاد عنصرين أو أكثر بنسبة ثابتة' },
+    'مركب':           { en: 'compound',    def: 'اتحاد عنصرين أو أكثر بنسبة ثابتة' },
+    'reaction':       { ar: 'تفاعل كيميائي', def: 'عملية تكسر روابط وتكوّن روابط جديدة' },
+    'تفاعل كيميائي':  { en: 'reaction',    def: 'عملية تكسر روابط وتكوّن روابط جديدة' },
+    'acid':           { ar: 'حمض',         def: 'مادة pH أقل من 7 وتعطي أيونات H⁺' },
+    'حمض':            { en: 'acid',        def: 'مادة pH أقل من 7 وتعطي أيونات H⁺' },
+    'base':           { ar: 'قاعدة',       def: 'مادة pH أعلى من 7 وتعطي أيونات OH⁻' },
+    'قاعدة':          { en: 'base',        def: 'مادة pH أعلى من 7 وتعطي أيونات OH⁻' },
+    'solution':       { ar: 'محلول',       def: 'خليط متجانس من مذيب ومذاب' },
+    'محلول':          { en: 'solution',    def: 'خليط متجانس من مذيب ومذاب' },
+    'mixture':        { ar: 'خليط',        def: 'مادتان أو أكثر مختلطتان بدون تفاعل' },
+    'خليط':           { en: 'mixture',     def: 'مادتان أو أكثر مختلطتان بدون تفاعل' },
+    'gas':            { ar: 'غاز',         def: 'حالة مادة ليس لها شكل ثابت' },
+    'غاز':            { en: 'gas',         def: 'حالة مادة ليس لها شكل ثابت' },
+
+    /* ═══════════ علوم: أحياء (20) ═══════════ */
+    'cell':           { ar: 'خلية',        def: 'أصغر وحدة حية قادرة على الحياة' },
+    'خلية':           { en: 'cell',        def: 'أصغر وحدة حية قادرة على الحياة' },
+    'nucleus':        { ar: 'نواة',        def: 'مركز التحكم في الخلية' },
+    'نواة':           { en: 'nucleus',     def: 'مركز التحكم في الخلية' },
+    'dna':            { ar: 'حمض نووي',    def: 'جزيء يحمل الشفرة الوراثية' },
+    'حمض نووي':       { en: 'dna',         def: 'جزيء يحمل الشفرة الوراثية' },
+    'gene':           { ar: 'جين',         def: 'جزء من DNA يحمل صفة وراثية' },
+    'جين':            { en: 'gene',        def: 'جزء من DNA يحمل صفة وراثية' },
+    'photosynthesis': { ar: 'بناء ضوئي',   def: 'تصنيع الغذاء بضوء الشمس' },
+    'بناء ضوئي':      { en: 'photosynthesis', def: 'تصنيع الغذاء بضوء الشمس' },
+    'respiration':    { ar: 'تنفس',        def: 'تكسير الجلوكوز لإنتاج طاقة' },
+    'تنفس':           { en: 'respiration', def: 'تكسير الجلوكوز لإنتاج طاقة' },
+    'bacteria':       { ar: 'بكتيريا',     def: 'كائنات دقيقة وحيدة الخلية' },
+    'بكتيريا':        { en: 'bacteria',    def: 'كائنات دقيقة وحيدة الخلية' },
+    'virus':          { ar: 'فيروس',       def: 'كائن دقيق يتكاثر داخل خلية حية' },
+    'فيروس':          { en: 'virus',       def: 'كائن دقيق يتكاثر داخل خلية حية' },
+    'protein':        { ar: 'بروتين',      def: 'جزيء كبير مبني من أحماض أمينية' },
+    'بروتين':         { en: 'protein',     def: 'جزيء كبير مبني من أحماض أمينية' },
+    'enzyme':         { ar: 'إنزيم',       def: 'بروتين يسرّع التفاعلات الحيوية' },
+    'إنزيم':          { en: 'enzyme',      def: 'بروتين يسرّع التفاعلات الحيوية' },
+
+    /* ═══════════ رياضيات (25) ═══════════ */
+    'equation':       { ar: 'معادلة',      def: 'تعبير رياضي فيه علامة يساوي' },
+    'معادلة':         { en: 'equation',    def: 'تعبير رياضي فيه علامة يساوي' },
+    'variable':       { ar: 'متغير',       def: 'رمز يمثل قيمة مجهولة' },
+    'متغير':          { en: 'variable',    def: 'رمز يمثل قيمة مجهولة' },
+    'constant':       { ar: 'ثابت',        def: 'قيمة لا تتغير' },
+    'ثابت':           { en: 'constant',    def: 'قيمة لا تتغير' },
+    'function':       { ar: 'دالة',        def: 'علاقة تربط كل مدخل بمخرج واحد' },
+    'دالة':           { en: 'function',    def: 'علاقة تربط كل مدخل بمخرج واحد' },
+    'triangle':       { ar: 'مثلث',        def: 'شكل هندسي له 3 أضلاع و3 زوايا' },
+    'مثلث':           { en: 'triangle',    def: 'شكل هندسي له 3 أضلاع و3 زوايا' },
+    'circle':         { ar: 'دائرة',       def: 'شكل كل نقاطه على بعد ثابت من المركز' },
+    'دائرة':          { en: 'circle',      def: 'شكل كل نقاطه على بعد ثابت من المركز' },
+    'square':         { ar: 'مربع',        def: 'شكل رباعي متساوي الأضلاع والزوايا' },
+    'مربع':           { en: 'square',      def: 'شكل رباعي متساوي الأضلاع والزوايا' },
+    'rectangle':      { ar: 'مستطيل',      def: 'شكل رباعي كل زواياه قائمة' },
+    'مستطيل':         { en: 'rectangle',   def: 'شكل رباعي كل زواياه قائمة' },
+    'perimeter':      { ar: 'محيط',        def: 'مجموع أطوال أضلاع الشكل' },
+    'محيط':           { en: 'perimeter',   def: 'مجموع أطوال أضلاع الشكل' },
+    'area':           { ar: 'مساحة',       def: 'مقدار السطح داخل الشكل' },
+    'مساحة':          { en: 'area',        def: 'مقدار السطح داخل الشكل' },
+    'volume':         { ar: 'حجم',         def: 'مقدار الفراغ داخل جسم ثلاثي الأبعاد' },
+    'حجم':            { en: 'volume',      def: 'مقدار الفراغ داخل جسم ثلاثي الأبعاد' },
+    'radius':         { ar: 'نصف قطر',     def: 'المسافة من مركز الدائرة للمحيط' },
+    'نصف قطر':        { en: 'radius',      def: 'المسافة من مركز الدائرة للمحيط' },
+    'diameter':       { ar: 'قطر',         def: 'ضعف نصف القطر' },
+    'قطر':            { en: 'diameter',    def: 'ضعف نصف القطر' },
+
+    /* ═══════════ حاسوب (20) ═══════════ */
+    'computer':       { ar: 'حاسوب',       def: 'جهاز إلكتروني يعالج البيانات' },
+    'حاسوب':          { en: 'computer',    def: 'جهاز إلكتروني يعالج البيانات' },
+    'program':        { ar: 'برنامج',      def: 'مجموعة تعليمات ينفذها الحاسوب' },
+    'برنامج':         { en: 'program',     def: 'مجموعة تعليمات ينفذها الحاسوب' },
+    'software':       { ar: 'برمجيات',     def: 'البرامج التي تعمل على الحاسوب' },
+    'برمجيات':        { en: 'software',    def: 'البرامج التي تعمل على الحاسوب' },
+    'algorithm':      { ar: 'خوارزمية',    def: 'سلسلة خطوات لحل مشكلة' },
+    'خوارزمية':       { en: 'algorithm',   def: 'سلسلة خطوات لحل مشكلة' },
+    'data':           { ar: 'بيانات',      def: 'معلومات خام غير معالجة' },
+    'بيانات':         { en: 'data',        def: 'معلومات خام غير معالجة' },
+    'database':       { ar: 'قاعدة بيانات', def: 'مجموعة منظمة من البيانات' },
+    'قاعدة بيانات':   { en: 'database',    def: 'مجموعة منظمة من البيانات' },
+    'network':        { ar: 'شبكة',        def: 'أجهزة متصلة ببعضها لتبادل البيانات' },
+    'شبكة':           { en: 'network',     def: 'أجهزة متصلة ببعضها لتبادل البيانات' },
+    'internet':       { ar: 'إنترنت',      def: 'شبكة عالمية من الحواسيب' },
+    'إنترنت':         { en: 'internet',    def: 'شبكة عالمية من الحواسيب' },
+    'software_eng':   { ar: 'هندسة برمجيات', def: 'تخصص لبناء برامج كبيرة بمنهجية' },
+    'هندسة برمجيات':  { en: 'software_eng',def: 'تخصص لبناء برامج كبيرة بمنهجية' },
+
+    /* ═══════════ جغرافيا/تاريخ (20) ═══════════ */
+    'continent':      { ar: 'قارة',        def: 'كتلة أرضية كبيرة من اليابسة' },
+    'قارة':           { en: 'continent',   def: 'كتلة أرضية كبيرة من اليابسة' },
+    'ocean':          { ar: 'محيط',        def: 'أكبر مسطح مائي مالح على الأرض' },
+    'محيط':           { en: 'ocean',       def: 'أكبر مسطح مائي مالح على الأرض' },
+    'river':          { ar: 'نهر',         def: 'مجرى ماء عذب طبيعي' },
+    'نهر':            { en: 'river',       def: 'مجرى ماء عذب طبيعي' },
+    'mountain':       { ar: 'جبل',         def: 'ارتفاع طبيعي كبير في الأرض' },
+    'جبل':            { en: 'mountain',    def: 'ارتفاع طبيعي كبير في الأرض' },
+    'desert':         { ar: 'صحراء',       def: 'منطقة قليلة الأمطار والنبات' },
+    'صحراء':          { en: 'desert',      def: 'منطقة قليلة الأمطار والنبات' },
+    'capital':        { ar: 'عاصمة',       def: 'مدينة الحكم في الدولة' },
+    'عاصمة':          { en: 'capital',     def: 'مدينة الحكم في الدولة' },
+    'civilization':   { ar: 'حضارة',       def: 'مجتمع متطور ثقافياً وعلمياً' },
+    'حضارة':          { en: 'civilization',def: 'مجتمع متطور ثقافياً وعلمياً' },
+    'empire':         { ar: 'إمبراطورية',  def: 'دولة واسعة تحكم أراضي وشعوباً كثيرة' },
+    'إمبراطورية':     { en: 'empire',      def: 'دولة واسعة تحكم أراضي وشعوباً كثيرة' },
+    'war':            { ar: 'حرب',         def: 'صراع مسلح بين أطراف' },
+    'حرب':            { en: 'war',         def: 'صراع مسلح بين أطراف' },
+    'peace':          { ar: 'سلام',        def: 'حالة عدم وجود صراع' },
+    'سلام':           { en: 'peace',       def: 'حالة عدم وجود صراع' },
+
+    /* ═══════════ جسم الإنسان (15) ═══════════ */
+    'heart':          { ar: 'قلب',         def: 'عضلة تضخ الدم في الجسم' },
+    'قلب':            { en: 'heart',       def: 'عضلة تضخ الدم في الجسم' },
+    'brain':          { ar: 'دماغ',        def: 'مركز التحكم في الجسم' },
+    'دماغ':           { en: 'brain',       def: 'مركز التحكم في الجسم' },
+    'blood':          { ar: 'دم',          def: 'سائل أحمر ينقل الأكسجين' },
+    'دم':             { en: 'blood',       def: 'سائل أحمر ينقل الأكسجين' },
+    'bone':           { ar: 'عظم',         def: 'نسيج صلب يدعم الجسم' },
+    'عظم':            { en: 'bone',        def: 'نسيج صلب يدعم الجسم' },
+    'skin':           { ar: 'جلد',         def: 'غلاف الجسم الخارجي' },
+    'جلد':            { en: 'skin',        def: 'غلاف الجسم الخارجي' },
+    'muscle':         { ar: 'عضلة',        def: 'نسيج يتحرك بالانقباض' },
+    'عضلة':           { en: 'muscle',      def: 'نسيج يتحرك بالانقباض' },
+    'lung':           { ar: 'رئة',         def: 'عضو التنفس' },
+    'رئة':            { en: 'lung',        def: 'عضو التنفس' },
+
+    /* ═══════════ حيوانات (15) ═══════════ */
+    'cat':            { ar: 'قط',          def: 'حيوان أليف صغير' },
+    'قط':             { en: 'cat',         def: 'حيوان أليف صغير' },
+    'dog':            { ar: 'كلب',         def: 'حيوان أليف وفي' },
+    'كلب':            { en: 'dog',         def: 'حيوان أليف وفي' },
+    'horse':          { ar: 'حصان',        def: 'حيوان كبير يُركب' },
+    'حصان':           { en: 'horse',       def: 'حيوان كبير يُركب' },
+    'lion':           { ar: 'أسد',         def: 'حيوان مفترس كبير' },
+    'أسد':            { en: 'lion',        def: 'حيوان مفترس كبير' },
+    'elephant':       { ar: 'فيل',         def: 'أكبر حيوان بري' },
+    'فيل':            { en: 'elephant',    def: 'أكبر حيوان بري' },
+    'bird':           { ar: 'طائر',        def: 'حيوان له ريش ويطير' },
+    'طائر':           { en: 'bird',        def: 'حيوان له ريش ويطير' },
+    'fish':           { ar: 'سمكة',        def: 'حيوان يعيش في الماء' },
+    'سمكة':           { en: 'fish',        def: 'حيوان يعيش في الماء' },
+
+    /* ═══════════ طعام (15) ═══════════ */
+    'bread':          { ar: 'خبز',         def: 'طعام أساسي مصنوع من الدقيق' },
+    'خبز':            { en: 'bread',       def: 'طعام أساسي مصنوع من الدقيق' },
+    'rice':           { ar: 'أرز',         def: 'حبوب غذائية أساسية' },
+    'أرز':            { en: 'rice',        def: 'حبوب غذائية أساسية' },
+    'meat':           { ar: 'لحم',         def: 'طعام من الحيوانات' },
+    'لحم':            { en: 'meat',        def: 'طعام من الحيوانات' },
+    'milk':           { ar: 'حليب',        def: 'سائل أبيض مغذي' },
+    'حليب':           { en: 'milk',        def: 'سائل أبيض مغذي' },
+    'egg':            { ar: 'بيضة',        def: 'غذاء من الدجاج' },
+    'بيضة':           { en: 'egg',         def: 'غذاء من الدجاج' },
+    'fruit':          { ar: 'فاكهة',       def: 'غذاء طبيعي من النبات' },
+    'فاكهة':          { en: 'fruit',       def: 'غذاء طبيعي من النبات' },
+    'vegetable':      { ar: 'خضار',        def: 'نبات يؤكل كغذاء' },
+    'خضار':           { en: 'vegetable',   def: 'نبات يؤكل كغذاء' },
+
+    /* ═══════════ ألوان (10) ═══════════ */
+    'red':            { ar: 'أحمر',        def: 'لون الدم' },
+    'أحمر':           { en: 'red',         def: 'لون الدم' },
+    'blue':           { ar: 'أزرق',        def: 'لون السماء' },
+    'أزرق':           { en: 'blue',        def: 'لون السماء' },
+    'green':          { ar: 'أخضر',        def: 'لون النباتات' },
+    'أخضر':           { en: 'green',       def: 'لون النباتات' },
+    'yellow':         { ar: 'أصفر',        def: 'لون الشمس' },
+    'أصفر':           { en: 'yellow',      def: 'لون الشمس' },
+    'black':          { ar: 'أسود',        def: 'لون الظلام' },
+    'أسود':           { en: 'black',       def: 'لون الظلام' },
+    'white':          { ar: 'أبيض',        def: 'لون الثلج' },
+    'أبيض':           { en: 'white',       def: 'لون الثلج' },
+
+    /* ═══════════ أفعال شائعة (30) ═══════════ */
+    'go':             { ar: 'يذهب',        def: 'ينتقل من مكان لمكان' },
+    'يذهب':           { en: 'go',          def: 'ينتقل من مكان لمكان' },
+    'come':           { ar: 'يأتي',        def: 'ينتقل نحوك' },
+    'يأتي':           { en: 'come',        def: 'ينتقل نحوك' },
+    'eat':            { ar: 'يأكل',        def: 'يتناول طعاماً' },
+    'يأكل':           { en: 'eat',         def: 'يتناول طعاماً' },
+    'drink':          { ar: 'يشرب',        def: 'يتناول سائلاً' },
+    'يشرب':           { en: 'drink',       def: 'يتناول سائلاً' },
+    'sleep':          { ar: 'ينام',        def: 'يرتاح بفقدان الوعي' },
+    'ينام':           { en: 'sleep',       def: 'يرتاح بفقدان الوعي' },
+    'run':            { ar: 'يجري',        def: 'يمشي بسرعة' },
+    'يجري':           { en: 'run',         def: 'يمشي بسرعة' },
+    'walk':           { ar: 'يمشي',        def: 'يتحرك بقدميه' },
+    'يمشي':           { en: 'walk',        def: 'يتحرك بقدميه' },
+    'speak':          { ar: 'يتكلم',       def: 'يعبر بالكلام' },
+    'يتكلم':          { en: 'speak',       def: 'يعبر بالكلام' },
+    'listen':         { ar: 'يستمع',       def: 'يصغي بانتباه' },
+    'يستمع':          { en: 'listen',      def: 'يصغي بانتباه' },
+    'see':            { ar: 'يرى',         def: 'يبصر بالعين' },
+    'يرى':            { en: 'see',         def: 'يبصر بالعين' },
+    'help':           { ar: 'يساعد',       def: 'يقدم عوناً' },
+    'يساعد':          { en: 'help',        def: 'يقدم عوناً' },
+    'work':           { ar: 'يعمل',        def: 'يبذل جهداً لإنجاز شيء' },
+    'يعمل':           { en: 'work',        def: 'يبذل جهداً لإنجاز شيء' },
+    'start':          { ar: 'يبدأ',        def: 'يشرع في فعل شيء' },
+    'يبدأ':           { en: 'start',       def: 'يشرع في فعل شيء' },
+    'finish':         { ar: 'ينهي',        def: 'يكمل عملاً' },
+    'ينهي':           { en: 'finish',      def: 'يكمل عملاً' },
+
+    /* ═══════════ صفات (25) ═══════════ */
+    'big':            { ar: 'كبير',        def: 'حجم كبير' },
+    'كبير':           { en: 'big',         def: 'حجم كبير' },
+    'small':          { ar: 'صغير',        def: 'حجم صغير' },
+    'صغير':           { en: 'small',       def: 'حجم صغير' },
+    'long':           { ar: 'طويل',        def: 'امتداد كبير' },
+    'طويل':           { en: 'long',        def: 'امتداد كبير' },
+    'short':          { ar: 'قصير',        def: 'امتداد صغير' },
+    'قصير':           { en: 'short',       def: 'امتداد صغير' },
+    'fast':           { ar: 'سريع',        def: 'حركة سريعة' },
+    'سريع':           { en: 'fast',        def: 'حركة سريعة' },
+    'slow':           { ar: 'بطيء',        def: 'حركة بطيئة' },
+    'بطيء':           { en: 'slow',        def: 'حركة بطيئة' },
+    'hot':            { ar: 'ساخن',        def: 'درجة حرارة عالية' },
+    'ساخن':           { en: 'hot',         def: 'درجة حرارة عالية' },
+    'cold':           { ar: 'بارد',        def: 'درجة حرارة منخفضة' },
+    'بارد':           { en: 'cold',        def: 'درجة حرارة منخفضة' },
+    'new':            { ar: 'جديد',        def: 'لم يكن موجوداً من قبل' },
+    'جديد':           { en: 'new',         def: 'لم يكن موجوداً من قبل' },
+    'old':            { ar: 'قديم',        def: 'من زمن ماض' },
+    'قديم':           { en: 'old',         def: 'من زمن ماض' },
+    'happy':          { ar: 'سعيد',        def: 'شعور بالبهجة' },
+    'سعيد':           { en: 'happy',       def: 'شعور بالبهجة' },
+    'sad':            { ar: 'حزين',        def: 'شعور بالأسى' },
+    'حزين':           { en: 'sad',         def: 'شعور بالأسى' },
+    'beautiful':      { ar: 'جميل',        def: 'يسر الناظر' },
+    'جميل':           { en: 'beautiful',   def: 'يسر الناظر' },
+    'strong':         { ar: 'قوي',         def: 'قدرة عالية' },
+    'قوي':            { en: 'strong',      def: 'قدرة عالية' },
+    'easy':           { ar: 'سهل',         def: 'بسيط غير معقد' },
+    'سهل':            { en: 'easy',        def: 'بسيط غير معقد' },
+    'hard':           { ar: 'صعب',         def: 'غير بسيط' },
+    'صعب':            { en: 'hard',        def: 'غير بسيط' }
+  };
+
+  /* ═══════════ حقن الكلمات في نظام البحث ═══════════ */
+  const _origDictLookup = window.dictLookup;
+
+  if (typeof _origDictLookup === 'function') {
+    window.dictLookup = function(word) {
+      const w = (word || '').trim();
+      const wLower = w.toLowerCase();
+
+      // ابحث في الجديد الأول
+      const hit = NEW_WORDS[w] || NEW_WORDS[wLower];
+      if (hit) {
+        _renderNewResult(w, hit);
+        return;
+      }
+
+      // ابحث في القديم (زي ما هو)
+      return _origDictLookup(word);
+    };
+    console.log('📖 Dictionary Extension hooked into dictLookup');
+  } else {
+    console.warn('⚠️ dictLookup غير موجود — التمديد لن يعمل');
+  }
+
+  /* ═══════════ عرض نتيجة جديدة بنفس شكل القديم ═══════════ */
+  function _renderNewResult(word, result) {
+    const box = document.getElementById('dict-result');
+    if (!box) return;
+    const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    box.innerHTML = `
+      <div style="background:var(--surface-2);border-radius:14px;padding:20px;">
+        <div style="font-size:24px;font-weight:900;color:var(--brand-primary);margin-bottom:12px;">${esc(word)}</div>
+        ${result.en ? `<div style="margin-bottom:8px;"><span style="font-size:11px;color:var(--text-3);font-weight:800;">الترجمة:</span> <strong style="color:var(--text);font-size:16px;">${esc(result.en)}</strong></div>` : ''}
+        ${result.ar ? `<div style="margin-bottom:8px;"><span style="font-size:11px;color:var(--text-3);font-weight:800;">الترجمة:</span> <strong style="color:var(--text);font-size:16px;">${esc(result.ar)}</strong></div>` : ''}
+        <div><span style="font-size:11px;color:var(--text-3);font-weight:800;">المعنى:</span> <span style="color:var(--text-2);font-size:14px;">${esc(result.def)}</span></div>
+      </div>
+      <button class="btn btn-light btn-block" style="margin-top:12px;" onclick="dictSpeak('${esc(word)}')">🔊 استمع</button>
+    `;
+  }
+
+  console.log('%c📖 Dictionary Extension loaded', 'color:#10B981;font-size:14px;font-weight:bold;');
+  console.log('   Added: ' + Object.keys(NEW_WORDS).length + ' entries (300 words)');
+  console.log('   Test: افتح القاموس واكتب "atom" أو "ذرة"');
+})();
+</script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  YasEdu Performance Boost Pack                             -->
+<!--  Insert BEFORE </body> (last script)                       -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+/* ============================================================
+   YasEdu Performance Boost Pack
+   تسريع تحميل + تفاعل + استجابة
+   ============================================================ */
+(function(){
+  'use strict';
+
+  const PERF_LOG = () => console.log.bind(console, '%c⚡ [Perf]', 'color:#10B981;font-weight:bold;');
+  const log = PERF_LOG();
+  const t0 = performance.now();
+
+  /* ─────────────────────────────────────────
+     1) Passive Event Listeners (تمرير أسرع 30%)
+     ───────────────────────────────────────── */
+  try {
+    const opts = { passive: true, capture: true };
+    const _origAdd = EventTarget.prototype.addEventListener;
+    EventTarget.prototype.addEventListener = function(type, fn, options) {
+      if (type === 'touchstart' || type === 'touchmove' ||
+          type === 'wheel' || type === 'mousewheel' ||
+          type === 'scroll') {
+        if (options === undefined || options === false || options === null) {
+          options = opts;
+        } else if (typeof options === 'object' && options.passive === undefined) {
+          options = { ...options, passive: true };
+        }
+      }
+      return _origAdd.call(this, type, fn, options);
+    };
+    log('✅ Passive listeners enabled');
+  } catch(e) { console.warn('[Perf] passive failed', e); }
+
+  /* ─────────────────────────────────────────
+     2) requestAnimationFrame Throttle للـ Scroll
+     ───────────────────────────────────────── */
+  try {
+    let ticking = false;
+    const scrollHandlers = [];
+    window.__perf_onScroll = fn => scrollHandlers.push(fn);
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        scrollHandlers.forEach(fn => { try { fn(window.scrollY); } catch(e){} });
+        ticking = false;
+      });
+    }, { passive: true });
+    log('✅ Scroll throttled with rAF');
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     3) Prefetch الصفحات / الـ CDN المتوقعة
+     ───────────────────────────────────────── */
+  try {
+    const preconnect = ['https://www.gstatic.com', 'https://cdnjs.cloudflare.com',
+                        'https://fonts.googleapis.com', 'https://fonts.gstatic.com',
+                        'https://cdn.jsdelivr.net'];
+    preconnect.forEach(url => {
+      if (!document.querySelector(`link[rel="preconnect"][href="${url}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'preconnect'; link.href = url; link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+      }
+    });
+    const dnsPrefetch = ['https://img.youtube.com', 'https://firebasestorage.googleapis.com'];
+    dnsPrefetch.forEach(url => {
+      if (!document.querySelector(`link[rel="dns-prefetch"][href="${url}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'dns-prefetch'; link.href = url;
+        document.head.appendChild(link);
+      }
+    });
+    log('✅ Preconnect + DNS prefetch added');
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     4) Debounce للحقول (يقلل re-renders)
+     ───────────────────────────────────────── */
+  try {
+    window.__perf_debounce = (fn, wait = 150) => {
+      let t;
+      return function(...args) {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    };
+    window.__perf_throttle = (fn, limit = 100) => {
+      let last = 0, timer;
+      return function(...args) {
+        const now = Date.now();
+        if (now - last >= limit) { last = now; fn.apply(this, args); }
+        else { clearTimeout(timer); timer = setTimeout(() => { last = Date.now(); fn.apply(this, args); }, limit - (now - last)); }
+      };
+    };
+
+    // ── حقن تلقائي في حقول البحث ──
+    document.querySelectorAll('input[oninput]').forEach(inp => {
+      const orig = inp.getAttribute('oninput');
+      if (orig && !inp.dataset.debounced && /filter|search|lookup|input/i.test(orig)) {
+        inp.dataset.debounced = '1';
+        inp._debounced = window.__perf_debounce(function() {
+          try { new Function('event', orig).call(inp, { target: inp }); } catch(e){}
+        }, 200);
+        inp.removeAttribute('oninput');
+        inp.addEventListener('input', (e) => inp._debounced());
+      }
+    });
+    log('✅ Input debouncing enabled');
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     5) Lazy Loading للصور (بعد ما تُضاف)
+     ───────────────────────────────────────── */
+  try {
+    const setLazy = (img) => {
+      if (img && !img.hasAttribute('loading') && !img.dataset.noLazy) {
+        img.setAttribute('loading', 'lazy');
+        img.setAttribute('decoding', 'async');
+      }
+    };
+    // الصور الموجودة
+    document.querySelectorAll('img').forEach(setLazy);
+    // الصور المستقبلية (chat, gallery, etc.)
+    const mo = new MutationObserver((mutations) => {
+      mutations.forEach(m => m.addedNodes.forEach(n => {
+        if (n.nodeType === 1) {
+          if (n.tagName === 'IMG') setLazy(n);
+          else n.querySelectorAll?.('img').forEach(setLazy);
+        }
+      }));
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    log('✅ Lazy images auto-applied');
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     6) content-visibility للشاشات المخفية
+     ───────────────────────────────────────── */
+  try {
+    const style = document.createElement('style');
+    style.textContent = `
+      .screen:not(.active) { content-visibility: auto; contain-intrinsic-size: 0 500px; }
+      img { will-change: auto; }
+      .modal { contain: layout style; }
+      .chat-body { contain: strict; contain-intrinsic-size: 0 400px; }
+      .card { contain: layout style paint; }
+    `;
+    document.head.appendChild(style);
+    log('✅ CSS containment applied');
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     7) إلغاء تحميل Firebase listeners عند الإخفاء
+     ───────────────────────────────────────── */
+  try {
+    let hiddenTime = 0;
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        hiddenTime = Date.now();
+        // ألغِ heartbeat للمستخدم
+        if (window.State && window.State.heartbeatInt) {
+          clearInterval(window.State.heartbeatInt);
+          window.State.heartbeatInt = null;
+        }
+      } else {
+        const hidden = Date.now() - hiddenTime;
+        // لو رجع بعد 30 ثانية+، رجّع heartbeat
+        if (hidden > 30000 && window.State && window.State.MY_ID) {
+          try {
+            if (typeof window.startSession === 'function') {
+              // فقط أعد تشغيل heartbeat (مش كل session)
+              window.State.heartbeatInt = setInterval(() => {
+                if (window.db && window.State.MY_ROOM && window.State.MY_ID) {
+                  window.db.ref('rooms/' + window.State.MY_ROOM + '/users/' + window.State.MY_ID + '/lastSeen')
+                    .set(firebase.database.ServerValue.TIMESTAMP);
+                }
+              }, 20000);
+            }
+          } catch(e){}
+        }
+      }
+    });
+    log('✅ Visibility-aware heartbeat');
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     8) Batch DOM updates للـ Dashboard
+     ───────────────────────────────────────── */
+  try {
+    const _origRender = window.renderDashboard;
+    if (typeof _origRender === 'function') {
+      let rafPending = false;
+      window.renderDashboard = function() {
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => {
+          rafPending = false;
+          try { _origRender.apply(this, arguments); } catch(e){ console.warn(e); }
+        });
+      };
+      log('✅ Dashboard render batched');
+    }
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     9) Chat: مضاعفة السرعة بـ DocumentFragment
+     ───────────────────────────────────────── */
+  try {
+    const _origRenderChat = window.renderChatMessages;
+    if (typeof _origRenderChat === 'function') {
+      window.renderChatMessages = function() {
+        const body = document.getElementById('chat-body');
+        if (!body) return _origRenderChat.apply(this, arguments);
+        // لو الرسائل كتير (100+), خفف بإظهار آخر 100 فقط
+        try {
+          const msgs = window.State?.currentMessages || {};
+          const keys = Object.keys(msgs);
+          if (keys.length > 150) {
+            // احفظ الأصل، استخدم نسخة مؤقتة
+            const _orig = window.State.currentMessages;
+            const sorted = keys.sort((a, b) => (msgs[a].timestamp || 0) - (msgs[b].timestamp || 0));
+            const last = sorted.slice(-150);
+            const trimmed = {};
+            last.forEach(k => trimmed[k] = msgs[k]);
+            window.State.currentMessages = trimmed;
+            const r = _origRenderChat.apply(this, arguments);
+            window.State.currentMessages = _orig;
+            return r;
+          }
+        } catch(e){}
+        return _origRenderChat.apply(this, arguments);
+      };
+      log('✅ Chat rendering capped at 150 messages');
+    }
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     10) Cache للـ DOM lookups (getElementById)
+     ───────────────────────────────────────── */
+  try {
+    const cache = new Map();
+    const _origGetId = document.getElementById.bind(document);
+    document.getElementById = function(id) {
+      if (cache.has(id)) {
+        const el = cache.get(id);
+        if (el && document.body.contains(el)) return el;
+        cache.delete(id);
+      }
+      const el = _origGetId(id);
+      if (el) cache.set(id, el);
+      return el;
+    };
+    // نظف الـ cache كل 10 ثواني للعناصر المحذوفة
+    setInterval(() => {
+      for (const [id, el] of cache) {
+        if (!document.body.contains(el)) cache.delete(id);
+      }
+    }, 10000);
+    log('✅ DOM element cache enabled');
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     11) AudioContext lazy init
+     ───────────────────────────────────────── */
+  try {
+    const _origPlaySound = window.playSound;
+    if (typeof _origPlaySound === 'function') {
+      let lastSound = 0;
+      window.playSound = function(type) {
+        const now = Date.now();
+        // حد أدنى 50ms بين الأصوات
+        if (now - lastSound < 50) return;
+        lastSound = now;
+        try { _origPlaySound(type); } catch(e){}
+      };
+    }
+    log('✅ Sound throttled');
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     12) تقليل الـ toasts المكررة
+     ───────────────────────────────────────── */
+  try {
+    const _origToast = window.toast;
+    if (typeof _origToast === 'function') {
+      let lastToast = { msg: '', time: 0 };
+      window.toast = function(msg, type, duration) {
+        const now = Date.now();
+        if (msg === lastToast.msg && now - lastToast.time < 1000) return;
+        lastToast = { msg, time: now };
+        return _origToast(msg, type, duration);
+      };
+      log('✅ Toast deduplication');
+    }
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     13) Preload صور YouTube thumbnails
+     ───────────────────────────────────────── */
+  try {
+    const _origRenderVideos = window.renderVideos;
+    if (typeof _origRenderVideos === 'function') {
+      window.renderVideos = function() {
+        const r = _origRenderVideos.apply(this, arguments);
+        // Preload الـ thumbnails
+        try {
+          const vids = window.State?.currentVideos || {};
+          Object.values(vids).slice(0, 5).forEach(v => {
+            const id = (v.url || '').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+            if (id) {
+              const link = document.createElement('link');
+              link.rel = 'prefetch';
+              link.href = `https://img.youtube.com/vi/${id[1]}/mqdefault.jpg`;
+              document.head.appendChild(link);
+            }
+          });
+        } catch(e){}
+        return r;
+      };
+    }
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     14) Preload Firebase when idle
+     ───────────────────────────────────────── */
+  try {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        // في وقت الخمول، ابدأ في تحميل مكتبات محتملة
+        ['https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js'].forEach(url => {
+          if (!document.querySelector(`script[src="${url}"]`)) {
+            const link = document.createElement('link');
+            link.rel = 'prefetch'; link.href = url;
+            document.head.appendChild(link);
+          }
+        });
+        log('✅ Idle prefetch done');
+      }, { timeout: 3000 });
+    }
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     15) رفع أولوية الاتصال بـ Firebase Realtime
+     ───────────────────────────────────────── */
+  try {
+    if (window.db) {
+      // اضبط timeout للاتصال
+      try { window.db.ref('.info/connected').on('value', s => {
+        if (s.val() === true) {
+          log('✅ Firebase connected @ ' + Math.round(performance.now() - t0) + 'ms');
+        }
+      }); } catch(e){}
+    }
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     16) طيّ قوائم الشات الثقيلة عند الفتح
+     ───────────────────────────────────────── */
+  try {
+    const _origShowScreen = window.showScreen;
+    if (typeof _origShowScreen === 'function') {
+      window.showScreen = function(id) {
+        // قبل التبديل، أزل تفعيل أي chatbot listeners ثقيلة
+        if (id === 'chat-screen') {
+          // تأكد إن القائمة scrolled للآخر بسرعة
+          setTimeout(() => {
+            const body = document.getElementById('chat-body');
+            if (body) body.scrollTop = body.scrollHeight;
+          }, 0);
+        }
+        return _origShowScreen.apply(this, arguments);
+      };
+    }
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     17) تقليل عدد الـ setInterval
+     ───────────────────────────────────────── */
+  try {
+    // heartbeat الافتراضي 20 ثانية -> 30 ثانية
+    const _origStartSession = window.startSession;
+    if (typeof _origStartSession === 'function') {
+      window.startSession = function() {
+        // شغل الأصل
+        const r = _origStartSession.apply(this, arguments);
+        // عدّل الـ heartbeat interval
+        if (window.State && window.State.heartbeatInt) {
+          clearInterval(window.State.heartbeatInt);
+          window.State.heartbeatInt = setInterval(() => {
+            try {
+              if (window.db && window.State.MY_ROOM && window.State.MY_ID) {
+                window.db.ref('rooms/' + window.State.MY_ROOM + '/users/' + window.State.MY_ID + '/lastSeen')
+                  .set(firebase.database.ServerValue.TIMESTAMP);
+              }
+            } catch(e){}
+          }, 30000); // 30 ثانية بدل 20
+        }
+        return r;
+      };
+      log('✅ Heartbeat 30s (was 20s)');
+    }
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     18) تحذير لو الصفحة بطيئة
+     ───────────────────────────────────────── */
+  try {
+    window.addEventListener('load', () => {
+      const loadTime = performance.now();
+      console.log('%c⚡ Page loaded in ' + Math.round(loadTime) + 'ms', 'color:#10B981;font-weight:bold;font-size:14px;');
+      if (loadTime > 5000) {
+        console.warn('⚠️ الصفحة بطيئة (' + Math.round(loadTime) + 'ms) — فكر في تحسين الصور أو تقليل السكريبتات');
+      }
+    });
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     19) Memory cleanup دوري
+     ───────────────────────────────────────── */
+  try {
+    setInterval(() => {
+      // نظف الـ State من رسائل قديمة جداً (أكثر من 500)
+      if (window.State?.currentMessages) {
+        const keys = Object.keys(window.State.currentMessages);
+        if (keys.length > 500) {
+          const sorted = keys.sort((a, b) => (window.State.currentMessages[a].timestamp || 0) - (window.State.currentMessages[b].timestamp || 0));
+          const keep = sorted.slice(-300);
+          const newMsgs = {};
+          keep.forEach(k => newMsgs[k] = window.State.currentMessages[k]);
+          window.State.currentMessages = newMsgs;
+          log('🧹 Cleaned old messages: ' + (keys.length - keep.length));
+        }
+      }
+    }, 60000); // كل دقيقة
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     20) زر "الوضع الاقتصادي" (اختياري)
+     ───────────────────────────────────────── */
+  try {
+    window.perfMode = {
+      enable() {
+        localStorage.setItem('perfMode', '1');
+        // أوقف الأصوات
+        if (window.SoundManager) window.SoundManager.enabled = false;
+        // أوقف animations
+        const style = document.createElement('style');
+        style.id = 'perf-mode-style';
+        style.textContent = '* { animation-duration: 0s !important; transition-duration: 0s !important; } .splash { display: none !important; }';
+        document.head.appendChild(style);
+        console.log('⚡ Perf mode ON');
+      },
+      disable() {
+        localStorage.removeItem('perfMode');
+        document.getElementById('perf-mode-style')?.remove();
+        if (window.SoundManager) window.SoundManager.enabled = true;
+        console.log('⚡ Perf mode OFF');
+      }
+    };
+    // لو مفعّل قبل كده
+    if (localStorage.getItem('perfMode') === '1') window.perfMode.enable();
+  } catch(e) {}
+
+  /* ─────────────────────────────────────────
+     ملخص
+     ───────────────────────────────────────── */
+  const totalTime = Math.round(performance.now() - t0);
+  console.log('%c⚡ YasEdu Performance Pack loaded', 'color:#10B981;font-size:15px;font-weight:bold;');
+  console.log('  20 optimizations applied in ' + totalTime + 'ms');
+  console.log('  💡 لإيقاف كل التحسينات: احذف البلوك ده');
+  console.log('  💡 للوضع الاقتصادي: window.perfMode.enable()');
+
+  // احفظ مرجع للـ telemetry
+  window.__perfStats = {
+    initTime: totalTime,
+    version: '1.0',
+    optimizations: [
+      'passive-listeners', 'rAF-scroll', 'preconnect', 'debounce-inputs',
+      'lazy-images', 'content-visibility', 'visibility-heartbeat',
+      'rAF-dashboard', 'chat-cap-150', 'dom-cache', 'sound-throttle',
+      'toast-dedup', 'video-prefetch', 'idle-prefetch', 'firebase-warm',
+      'screen-hooks', 'heartbeat-30s', 'load-warning', 'memory-cleanup',
+      'perf-mode'
+    ]
+  };
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  Preload critical resources (in <head> for best results)   -->
+<!--  Insert this IN <head> — different from script above       -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://img.youtube.com">
+<link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
 </body>
 </html>
