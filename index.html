@@ -10099,5 +10099,1225 @@ body.dark .app-header {
   console.log('   ✓ Zero intervals | Passive listeners | Auto-detects weak devices');
 })();
 </script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  YasEdu Admin Panel v2 — لوحة تحكم شاملة                   -->
+<!--  Insert BEFORE </body>                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+/* ============================================================
+   Admin Panel v2 — لوحة تحكم شاملة
+   - 7 tabs: Dashboard, Users, Rooms, Messages, Broadcast, Codes, Danger
+   - Real-time stats
+   - Full CRUD
+   - Search & filter
+   - Export CSV/JSON
+   ============================================================ */
+(function(){
+  'use strict';
+
+  /* ═══════════════════════════════════════════════════════
+     1) CHECK ADMIN
+     ═══════════════════════════════════════════════════════ */
+  function isAdmin() {
+    if (!window.State || !window.State.session) return false;
+    const s = window.State.session;
+    return s.role === 'developer' || s.name === 'admin' || (s.uid || '').startsWith('admin_');
+  }
+
+  function requireAdmin() {
+    if (!isAdmin()) {
+      if (window.toast) window.toast('❌ للأدمن فقط', 'error');
+      return false;
+    }
+    return true;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     2) ADMIN CSS
+     ═══════════════════════════════════════════════════════ */
+  const ADMIN_CSS = `
+    .admin-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-height: 85vh;
+    }
+
+    .admin-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--card-2);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+
+    .admin-tabs::-webkit-scrollbar { display: none; }
+
+    .admin-tab {
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .admin-tab.active {
+      background: var(--card);
+      color: var(--brand);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .admin-tab:hover:not(.active) {
+      background: var(--card-3);
+    }
+
+    .admin-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px;
+      min-height: 300px;
+    }
+
+    .admin-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .admin-stat {
+      background: var(--card-2);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .admin-stat-num {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--brand);
+      line-height: 1.2;
+    }
+
+    .admin-stat-label {
+      font-size: 10px;
+      color: var(--text-2);
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .admin-list-item {
+      background: var(--card-2);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .admin-list-item:hover {
+      border-color: var(--brand-light);
+      background: var(--card);
+    }
+
+    .admin-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--grad);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .admin-info { flex: 1; min-width: 0; }
+
+    .admin-name {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .admin-meta {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 2px;
+    }
+
+    .admin-badge {
+      font-size: 8px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .admin-badge.dev { background: #F59E0B; color: #78350F; }
+    .admin-badge.admin { background: #EF4444; color: white; }
+    .admin-badge.guest { background: #64748B; color: white; }
+    .admin-badge.banned { background: #991B1B; color: white; }
+    .admin-badge.active { background: #10B981; color: white; }
+
+    .admin-actions {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .admin-action-btn {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: none;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .admin-action-btn:hover { transform: translateY(-1px); }
+
+    .admin-action-btn.danger { background: var(--danger); color: white; }
+    .admin-action-btn.warning { background: var(--warning); color: #78350F; }
+    .admin-action-btn.success { background: var(--success); color: white; }
+    .admin-action-btn.info { background: var(--info); color: white; }
+    .admin-action-btn.light { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+
+    .admin-search {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: var(--card-2);
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .admin-search:focus {
+      outline: none;
+      border-color: var(--brand);
+      background: var(--card);
+    }
+
+    .admin-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-3);
+    }
+
+    .admin-empty-icon {
+      font-size: 48px;
+      opacity: 0.4;
+      margin-bottom: 12px;
+    }
+
+    .admin-danger-zone {
+      background: var(--danger-bg);
+      border: 2px solid var(--danger);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .admin-danger-title {
+      color: #991B1B;
+      font-weight: 900;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .admin-btn-danger {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 8px;
+      transition: all 0.15s;
+    }
+
+    .admin-btn-danger:hover {
+      background: #DC2626;
+      transform: translateY(-1px);
+    }
+
+    .admin-btn-danger:last-child { margin-bottom: 0; }
+
+    .admin-fab {
+      position: fixed;
+      bottom: 150px;
+      right: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #F59E0B, #FCD34D);
+      color: #78350F;
+      border: none;
+      font-size: 26px;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.5);
+      transition: transform 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .admin-fab:hover {
+      transform: scale(1.1) rotate(10deg);
+    }
+
+    .admin-fab:active {
+      transform: scale(0.95);
+    }
+
+    .admin-chart-bar {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 120px;
+      padding: 0 4px;
+      margin: 12px 0;
+    }
+
+    .admin-chart-bar > div {
+      flex: 1;
+      background: var(--grad);
+      border-radius: 4px 4px 0 0;
+      min-height: 4px;
+      transition: height 0.3s;
+      position: relative;
+    }
+
+    .admin-chart-bar > div::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: var(--text-3);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 640px) {
+      .admin-tabs {
+        flex-wrap: nowrap;
+      }
+      .admin-tab {
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+      .admin-stat-num {
+        font-size: 20px;
+      }
+    }
+  `;
+
+  function injectCSS() {
+    if (document.getElementById('admin-v2-css')) return;
+    const style = document.createElement('style');
+    style.id = 'admin-v2-css';
+    style.textContent = ADMIN_CSS;
+    document.head.appendChild(style);
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     3) MAIN PANEL
+     ═══════════════════════════════════════════════════════ */
+  window.showAdminPanel = function() {
+    if (!requireAdmin()) return;
+
+    // Remove old
+    document.getElementById('admin-v2-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'admin-v2-modal';
+    modal.className = 'modal show';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:800px;padding:20px;">
+        <div class="modal-header">
+          <div class="modal-title">👑 لوحة التحكم</div>
+          <button class="modal-close" onclick="document.getElementById('admin-v2-modal').remove()">✕</button>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-tabs">
+            <button class="admin-tab active" onclick="adminTab('dashboard', this)">📊 إحصائيات</button>
+            <button class="admin-tab" onclick="adminTab('users', this)">👥 المستخدمون</button>
+            <button class="admin-tab" onclick="adminTab('rooms', this)">🏘️ الغرف</button>
+            <button class="admin-tab" onclick="adminTab('messages', this)">💬 الرسائل</button>
+            <button class="admin-tab" onclick="adminTab('broadcast', this)">📢 بث</button>
+            <button class="admin-tab" onclick="adminTab('codes', this)">🔑 أكواد</button>
+            <button class="admin-tab" onclick="adminTab('danger', this)">⚠️ خطر</button>
+          </div>
+
+          <div class="admin-body" id="admin-body">
+            <div style="text-align:center;padding:40px;">⏳ جاري التحميل...</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+
+    // Load dashboard by default
+    adminTab('dashboard', modal.querySelector('.admin-tab'));
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     4) TAB SWITCHER
+     ═══════════════════════════════════════════════════════ */
+  window.adminTab = function(tab, btn) {
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+
+    body.innerHTML = '<div style="text-align:center;padding:40px;">⏳ جاري التحميل...</div>';
+
+    switch(tab) {
+      case 'dashboard': loadDashboard(); break;
+      case 'users': loadUsers(); break;
+      case 'rooms': loadRooms(); break;
+      case 'messages': loadMessagesTab(); break;
+      case 'broadcast': loadBroadcast(); break;
+      case 'codes': loadCodes(); break;
+      case 'danger': loadDanger(); break;
+    }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     5) DASHBOARD TAB
+     ═══════════════════════════════════════════════════════ */
+  async function loadDashboard() {
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+
+    try {
+      const [uSnap, rSnap, rmSnap] = await Promise.all([
+        db.ref('users').once('value'),
+        db.ref('roomsMeta').once('value'),
+        db.ref('rooms').once('value')
+      ]);
+
+      const users = uSnap.val() || {};
+      const roomsMeta = rSnap.val() || {};
+      const rooms = rmSnap.val() || {};
+
+      let totalMessages = 0, totalOnline = 0;
+      Object.values(rooms).forEach(r => {
+        if (r.messages) totalMessages += Object.keys(r.messages).length;
+        if (r.users) totalOnline += Object.keys(r.users).length;
+      });
+
+      const devs = Object.values(users).filter(u => u.role === 'developer').length;
+      const guests = Object.keys(users).filter(uid => uid.startsWith('guest')).length;
+      const members = Object.keys(users).length - devs - guests;
+
+      // آخر 7 أيام
+      const last7 = [];
+      const now = Date.now();
+      for (let i = 6; i >= 0; i--) {
+        const dayStart = now - i * 24 * 3600 * 1000;
+        const dayEnd = dayStart + 24 * 3600 * 1000;
+        const count = Object.values(users).filter(u => (u.createdAt || 0) >= dayStart && (u.createdAt || 0) < dayEnd).length;
+        last7.push({
+          label: ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'][new Date(dayStart).getDay()],
+          count
+        });
+      }
+      const maxCount = Math.max(...last7.map(d => d.count), 1);
+
+      body.innerHTML = `
+        <div class="admin-stat-grid">
+          <div class="admin-stat">
+            <div class="admin-stat-num">${Object.keys(users).length}</div>
+            <div class="admin-stat-label">المستخدمون</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-num" style="color:var(--success);">${totalOnline}</div>
+            <div class="admin-stat-label">متصل الآن</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-num">${Object.keys(roomsMeta).length}</div>
+            <div class="admin-stat-label">الغرف</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-num">${totalMessages}</div>
+            <div class="admin-stat-label">الرسائل</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-num" style="color:#F59E0B;">${devs}</div>
+            <div class="admin-stat-label">مطورون</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-num" style="color:var(--text-3);">${guests}</div>
+            <div class="admin-stat-label">ضيوف</div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div style="font-weight:900;font-size:14px;margin-bottom:12px;">📊 المستخدمون الجدد (7 أيام)</div>
+          <div class="admin-chart-bar">
+            ${last7.map(d => `
+              <div style="height:${Math.max(4, (d.count / maxCount) * 100)}px;"
+                   data-label="${d.label}"></div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:900;font-size:14px;margin-bottom:12px;">⚡ إجراءات سريعة</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button class="btn btn-light btn-sm" onclick="adminTab('users', document.querySelectorAll('.admin-tab')[1])">
+              👥 إدارة المستخدمين
+            </button>
+            <button class="btn btn-light btn-sm" onclick="adminTab('rooms', document.querySelectorAll('.admin-tab')[2])">
+              🏘️ إدارة الغرف
+            </button>
+            <button class="btn btn-light btn-sm" onclick="adminTab('broadcast', document.querySelectorAll('.admin-tab')[4])">
+              📢 إرسال إشعار
+            </button>
+            <button class="btn btn-light btn-sm" onclick="loadDashboard()">
+              🔄 تحديث
+            </button>
+          </div>
+        </div>
+      `;
+    } catch(e) {
+      body.innerHTML = `<div class="admin-empty"><div class="admin-empty-icon">❌</div><div>فشل التحميل: ${escapeHtml(e.message)}</div></div>`;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     6) USERS TAB
+     ═══════════════════════════════════════════════════════ */
+  let _allUsers = [];
+
+  async function loadUsers() {
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+
+    try {
+      const snap = await db.ref('users').once('value');
+      const users = snap.val() || {};
+      _allUsers = Object.entries(users).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+
+      body.innerHTML = `
+        <input class="admin-search" id="admin-user-search"
+               placeholder="🔍 بحث بالاسم أو البريد..."
+               oninput="filterUsers(this.value)">
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">
+          إجمالي: ${_allUsers.length} مستخدم
+        </div>
+        <div id="admin-users-list">
+          ${renderUserList(_allUsers)}
+        </div>
+      `;
+    } catch(e) {
+      body.innerHTML = `<div class="admin-empty"><div class="admin-empty-icon">❌</div><div>${escapeHtml(e.message)}</div></div>`;
+    }
+  }
+
+  function renderUserList(users) {
+    if (!users.length) {
+      return `<div class="admin-empty"><div class="admin-empty-icon">👥</div><div>لا مستخدمين</div></div>`;
+    }
+
+    return users.map(([uid, u]) => {
+      const isDev = u.role === 'developer';
+      const isGuest = uid.startsWith('guest');
+      const isBanned = u.banned === true;
+
+      return `
+        <div class="admin-list-item admin-user-item"
+             data-search="${escapeHtml((u.name||'').toLowerCase())} ${escapeHtml((u.email||'').toLowerCase())}">
+          <div class="admin-avatar" style="${isDev ? 'background:linear-gradient(135deg,#F59E0B,#FCD34D);color:#78350F;' : ''}">
+            ${u.avatar || '👤'}
+          </div>
+          <div class="admin-info">
+            <div class="admin-name">
+              ${escapeHtml(u.name || 'مجهول')}
+              ${isDev ? '<span class="admin-badge dev">DEV</span>' : ''}
+              ${isGuest ? '<span class="admin-badge guest">GUEST</span>' : ''}
+              ${isBanned ? '<span class="admin-badge banned">BANNED</span>' : ''}
+            </div>
+            <div class="admin-meta">
+              ${escapeHtml(u.email || 'لا بريد')} • Lv.${u.level || 1} • ${u.xp || 0} XP
+            </div>
+          </div>
+          <div class="admin-actions">
+            ${!isDev ? `<button class="admin-action-btn info" onclick="adminPromote('${uid}')" title="ترقية">⬆️</button>` : ''}
+            ${isDev ? `<button class="admin-action-btn warning" onclick="adminDemote('${uid}')" title="تخفيض">⬇️</button>` : ''}
+            ${isBanned
+              ? `<button class="admin-action-btn success" onclick="adminUnban('${uid}')" title="فك حظر">✅</button>`
+              : `<button class="admin-action-btn warning" onclick="adminBan('${uid}')" title="حظر">🚫</button>`}
+            <button class="admin-action-btn danger" onclick="adminDeleteUser('${uid}','${escapeHtml(u.name||'')}')" title="حذف">🗑</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.filterUsers = function(q) {
+    const list = document.getElementById('admin-users-list');
+    if (!list) return;
+    const query = q.trim().toLowerCase();
+    if (!query) {
+      list.innerHTML = renderUserList(_allUsers);
+      return;
+    }
+    const filtered = _allUsers.filter(([uid, u]) =>
+      (u.name || '').toLowerCase().includes(query) ||
+      (u.email || '').toLowerCase().includes(query)
+    );
+    list.innerHTML = renderUserList(filtered);
+  };
+
+  window.adminPromote = async function(uid) {
+    if (!requireAdmin()) return;
+    if (!confirm('ترقية المستخدم لمطور؟')) return;
+    try {
+      await db.ref('users/' + uid).update({ role: 'developer' });
+      if (window.toast) window.toast('✅ تمت الترقية', 'success');
+      loadUsers();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.adminDemote = async function(uid) {
+    if (!requireAdmin()) return;
+    if (!confirm('تخفيض المستخدم لعضو؟')) return;
+    try {
+      await db.ref('users/' + uid).update({ role: 'member' });
+      if (window.toast) window.toast('✅ تم التخفيض', 'success');
+      loadUsers();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.adminBan = async function(uid) {
+    if (!requireAdmin()) return;
+    if (!confirm('حظر المستخدم؟')) return;
+    try {
+      await db.ref('users/' + uid).update({ banned: true, bannedAt: Date.now() });
+      if (window.toast) window.toast('✅ تم الحظر', 'success');
+      loadUsers();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.adminUnban = async function(uid) {
+    if (!requireAdmin()) return;
+    try {
+      await db.ref('users/' + uid).update({ banned: false });
+      if (window.toast) window.toast('✅ تم فك الحظر', 'success');
+      loadUsers();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.adminDeleteUser = async function(uid, name) {
+    if (!requireAdmin()) return;
+    if (!confirm(`حذف المستخدم "${name}" نهائياً؟`)) return;
+    if (!confirm('متأكد 100%؟')) return;
+    try {
+      await db.ref('users/' + uid).remove();
+      if (window.toast) window.toast('✅ تم الحذف', 'success');
+      loadUsers();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     7) ROOMS TAB
+     ═══════════════════════════════════════════════════════ */
+  async function loadRooms() {
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+
+    try {
+      const [metaSnap, roomsSnap] = await Promise.all([
+        db.ref('roomsMeta').once('value'),
+        db.ref('rooms').once('value')
+      ]);
+      const meta = metaSnap.val() || {};
+      const roomsData = roomsSnap.val() || {};
+
+      const codes = Object.keys(meta);
+
+      if (!codes.length) {
+        body.innerHTML = `<div class="admin-empty"><div class="admin-empty-icon">🏘️</div><div>لا غرف</div></div>`;
+        return;
+      }
+
+      body.innerHTML = `
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">
+          إجمالي: ${codes.length} غرفة
+        </div>
+        ${codes.map(code => {
+          const room = meta[code] || {};
+          const data = roomsData[code] || {};
+          const msgs = data.messages ? Object.keys(data.messages).length : 0;
+          const users = data.users ? Object.keys(data.users).length : 0;
+          const isLocked = !!room.password;
+
+          return `
+            <div class="admin-list-item" style="flex-direction:column;align-items:stretch;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:var(--grad);
+                            display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+                  ${room.emoji || '🏠'}
+                </div>
+                <div class="admin-info">
+                  <div class="admin-name">
+                    ${escapeHtml(room.name || code)}
+                    ${isLocked ? '🔒' : '🌍'}
+                  </div>
+                  <div class="admin-meta">
+                    <span style="background:var(--card-3);padding:2px 6px;border-radius:4px;font-family:monospace;">
+                      ${escapeHtml(code)}
+                    </span>
+                    💬 ${msgs} • 👥 ${users}
+                  </div>
+                </div>
+              </div>
+              <div class="admin-actions" style="margin-top:8px;">
+                <button class="admin-action-btn info" style="flex:1;justify-content:center;"
+                        onclick="adminEnterRoom('${code}')">
+                  🚪 دخول
+                </button>
+                <button class="admin-action-btn warning" style="flex:1;justify-content:center;"
+                        onclick="adminClearRoomMessages('${code}')">
+                  🧹 مسح رسائل
+                </button>
+                <button class="admin-action-btn danger" style="flex:1;justify-content:center;"
+                        onclick="adminDeleteRoomFull('${code}','${escapeHtml(room.name || code)}')">
+                  🗑 حذف
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    } catch(e) {
+      body.innerHTML = `<div class="admin-empty"><div class="admin-empty-icon">❌</div><div>${escapeHtml(e.message)}</div></div>`;
+    }
+  }
+
+  window.adminEnterRoom = function(code) {
+    document.getElementById('admin-v2-modal')?.remove();
+    if (window.joinRoom) window.joinRoom(code);
+  };
+
+  window.adminClearRoomMessages = async function(code) {
+    if (!requireAdmin()) return;
+    if (!confirm(`مسح كل رسائل الغرفة ${code}؟`)) return;
+    try {
+      await db.ref('rooms/' + code + '/messages').remove();
+      if (window.toast) window.toast('✅ تم مسح الرسائل', 'success');
+      loadRooms();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.adminDeleteRoomFull = async function(code, name) {
+    if (!requireAdmin()) return;
+    if (!confirm(`حذف الغرفة "${name}" بالكامل؟`)) return;
+    if (!confirm('متأكد؟ كل الرسائل والأعضاء سيتم حذفهم!')) return;
+    try {
+      await Promise.all([
+        db.ref('rooms/' + code).remove(),
+        db.ref('roomsMeta/' + code).remove()
+      ]);
+      if (window.toast) window.toast('✅ تم الحذف', 'success');
+      loadRooms();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     8) MESSAGES TAB
+     ═══════════════════════════════════════════════════════ */
+  async function loadMessagesTab() {
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+
+    try {
+      const snap = await db.ref('roomsMeta').once('value');
+      const meta = snap.val() || {};
+      const codes = Object.keys(meta);
+
+      if (!codes.length) {
+        body.innerHTML = `<div class="admin-empty"><div class="admin-empty-icon">💬</div><div>لا غرف</div></div>`;
+        return;
+      }
+
+      body.innerHTML = `
+        <div class="field" style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:800;color:var(--text-2);">اختر غرفة</label>
+          <select class="select" id="admin-msg-room" onchange="loadRoomMessages(this.value)"
+                  style="width:100%;margin-top:6px;">
+            <option value="">-- اختر غرفة --</option>
+            ${codes.map(code => {
+              const r = meta[code] || {};
+              return `<option value="${escapeHtml(code)}">${r.emoji || '🏠'} ${escapeHtml(r.name || code)}</option>`;
+            }).join('')}
+          </select>
+        </div>
+        <div id="admin-msg-content" style="background:var(--card-2);border-radius:10px;padding:12px;min-height:200px;">
+          <div style="text-align:center;padding:40px;color:var(--text-3);">اختر غرفة لعرض الرسائل</div>
+        </div>
+      `;
+    } catch(e) {
+      body.innerHTML = `<div class="admin-empty"><div class="admin-empty-icon">❌</div><div>${escapeHtml(e.message)}</div></div>`;
+    }
+  }
+
+  window.loadRoomMessages = async function(code) {
+    const content = document.getElementById('admin-msg-content');
+    if (!content || !code) return;
+
+    content.innerHTML = '<div style="text-align:center;padding:20px;">⏳ جاري التحميل...</div>';
+
+    try {
+      const snap = await db.ref('rooms/' + code + '/messages').limitToLast(100).once('value');
+      const msgs = snap.val() || {};
+      const keys = Object.keys(msgs).sort((a, b) => (msgs[a].timestamp || 0) - (msgs[b].timestamp || 0));
+
+      if (!keys.length) {
+        content.innerHTML = `<div class="admin-empty"><div class="admin-empty-icon">💬</div><div>لا رسائل</div></div>`;
+        return;
+      }
+
+      content.innerHTML = `
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">
+          ${keys.length} رسالة (آخر 100)
+        </div>
+        ${keys.map(id => {
+          const m = msgs[id];
+          const text = m.type === 'image' ? '📷 صورة' :
+                       m.type === 'audio' ? '🎤 صوت' :
+                       m.type === 'file' ? '📎 ملف' :
+                       (m.text || '').slice(0, 100);
+          const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
+
+          return `
+            <div style="padding:8px;background:var(--card);border-radius:8px;margin-bottom:6px;
+                        display:flex;gap:8px;align-items:flex-start;font-size:12px;">
+              <div style="font-size:18px;flex-shrink:0;">${m.avatar || '👤'}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:11px;">
+                  ${escapeHtml(m.name || 'مجهول')}
+                  <span style="color:var(--text-3);font-weight:600;">${time}</span>
+                </div>
+                <div style="color:var(--text-2);margin-top:2px;word-break:break-word;">
+                  ${escapeHtml(text)}
+                </div>
+              </div>
+              <button onclick="adminDeleteMessage('${code}','${id}')"
+                      style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;">
+                🗑
+              </button>
+            </div>
+          `;
+        }).join('')}
+        <button onclick="adminClearRoomMessages('${code}')"
+                style="width:100%;margin-top:12px;padding:10px;background:var(--danger);
+                       color:white;border:none;border-radius:8px;font-weight:800;cursor:pointer;">
+          🗑 مسح كل الرسائل
+        </button>
+      `;
+    } catch(e) {
+      content.innerHTML = `<div style="color:var(--danger);padding:20px;">خطأ: ${escapeHtml(e.message)}</div>`;
+    }
+  };
+
+  window.adminDeleteMessage = async function(room, id) {
+    if (!requireAdmin()) return;
+    if (!confirm('حذف الرسالة؟')) return;
+    try {
+      await db.ref('rooms/' + room + '/messages/' + id).remove();
+      if (window.toast) window.toast('✅ تم الحذف', 'success');
+      loadRoomMessages(room);
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     9) BROADCAST TAB
+     ═══════════════════════════════════════════════════════ */
+  function loadBroadcast() {
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+
+    body.innerHTML = `
+      <div class="field">
+        <label style="font-size:12px;font-weight:800;color:var(--text-2);">العنوان</label>
+        <input class="input" id="bc-title" placeholder="مثال: تحديث جديد" style="margin-top:6px;">
+      </div>
+      <div class="field">
+        <label style="font-size:12px;font-weight:800;color:var(--text-2);">الرسالة</label>
+        <textarea class="textarea" id="bc-body" placeholder="نص الإشعار..." rows="3" style="margin-top:6px;"></textarea>
+      </div>
+      <div class="field">
+        <label style="font-size:12px;font-weight:800;color:var(--text-2);">الأيقونة</label>
+        <select class="select" id="bc-icon" style="margin-top:6px;">
+          <option value="📢">📢 إشعار</option>
+          <option value="🎉">🎉 احتفال</option>
+          <option value="⚠️">⚠️ تحذير</option>
+          <option value="🔔">🔔 تنبيه</option>
+          <option value="🎁">🎁 هدية</option>
+        </select>
+      </div>
+      <button class="btn btn-block" onclick="adminSendBroadcast()">📤 إرسال للجميع</button>
+    `;
+  }
+
+  window.adminSendBroadcast = async function() {
+    if (!requireAdmin()) return;
+    const title = document.getElementById('bc-title')?.value.trim();
+    const body = document.getElementById('bc-body')?.value.trim();
+    const icon = document.getElementById('bc-icon')?.value || '📢';
+
+    if (!title || !body) {
+      if (window.toast) window.toast('املأ كل الحقول', 'error');
+      return;
+    }
+
+    if (!confirm('إرسال الإشعار لكل المستخدمين؟')) return;
+
+    try {
+      await db.ref('broadcast').set({
+        title, body, icon,
+        from: window.State.session.name || 'Admin',
+        timestamp: Date.now()
+      });
+      if (window.toast) window.toast('✅ تم الإرسال', 'success');
+      document.getElementById('bc-title').value = '';
+      document.getElementById('bc-body').value = '';
+    } catch(e) {
+      if (window.toast) window.toast('خطأ: ' + e.message, 'error');
+    }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     10) CODES TAB
+     ═══════════════════════════════════════════════════════ */
+  async function loadCodes() {
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+
+    try {
+      const snap = await db.ref('devCodes').once('value');
+      const codes = snap.val() || {};
+      const entries = Object.entries(codes);
+      const now = Date.now();
+
+      body.innerHTML = `
+        <button class="btn btn-block mb-3" onclick="adminGenCode()" style="margin-bottom:12px;">
+          ➕ توليد كود جديد
+        </button>
+        ${entries.length ? entries.map(([code, c]) => {
+          const used = !!c.usedBy;
+          const expired = c.expiresAt && now > c.expiresAt;
+          const active = c.active && !used && !expired;
+          const status = active ? '🟢 متاح' : used ? '✅ مستخدم' : expired ? '⏰ منتهي' : '🚫 معطل';
+          const color = active ? 'var(--success)' : used ? 'var(--text-3)' : 'var(--danger)';
+
+          return `
+            <div class="admin-list-item">
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:monospace;font-weight:900;font-size:12px;letter-spacing:1px;">
+                  ${escapeHtml(code)}
+                </div>
+                <div style="font-size:10px;color:${color};font-weight:800;margin-top:2px;">
+                  ${status}
+                </div>
+              </div>
+              ${active ? `
+                <button class="admin-action-btn info" onclick="navigator.clipboard.writeText('${escapeHtml(code)}');if(window.toast)window.toast('✅ تم النسخ','success')">📋</button>
+                <button class="admin-action-btn danger" onclick="adminDeleteCode('${escapeHtml(code)}')">🗑</button>
+              ` : ''}
+            </div>
+          `;
+        }).join('') : '<div class="admin-empty"><div class="admin-empty-icon">🔑</div><div>لا أكواد</div></div>'}
+      `;
+    } catch(e) {
+      body.innerHTML = `<div class="admin-empty"><div class="admin-empty-icon">❌</div><div>${escapeHtml(e.message)}</div></div>`;
+    }
+  }
+
+  window.adminGenCode = async function() {
+    if (!requireAdmin()) return;
+    const code = 'DEV-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+
+    try {
+      await db.ref('devCodes/' + code).set({
+        active: true,
+        createdAt: Date.now(),
+        createdBy: window.State.session.uid,
+        createdByName: window.State.session.name,
+        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
+      });
+
+      try { await navigator.clipboard.writeText(code); } catch(e) {}
+      if (window.toast) window.toast('✅ الكود: ' + code + ' (تم النسخ)', 'success', 5000);
+      loadCodes();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.adminDeleteCode = async function(code) {
+    if (!requireAdmin()) return;
+    if (!confirm('حذف الكود؟')) return;
+    try {
+      await db.ref('devCodes/' + code).remove();
+      if (window.toast) window.toast('✅ تم الحذف', 'success');
+      loadCodes();
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     11) DANGER TAB
+     ═══════════════════════════════════════════════════════ */
+  function loadDanger() {
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+
+    body.innerHTML = `
+      <div class="admin-danger-zone">
+        <div class="admin-danger-title">⚠️ منطقة الخطر — عمليات نهائية</div>
+        <div style="font-size:12px;color:#991B1B;margin-bottom:12px;">
+          هذه العمليات لا يمكن التراجع عنها. تأكد قبل التنفيذ!
+        </div>
+
+        <button class="admin-btn-danger" onclick="dangerClearAllMessages()">
+          🗑 مسح رسائل جميع الغرف
+        </button>
+
+        <button class="admin-btn-danger" onclick="dangerClearAllRooms()">
+          🏘️ مسح جميع الغرف (ما عدا GENERAL)
+        </button>
+
+        <button class="admin-btn-danger" onclick="dangerClearGuests()">
+          👤 مسح كل حسابات الضيوف
+        </button>
+
+        <button class="admin-btn-danger" onclick="dangerResetXP()">
+          🔄 تصفير XP والمستويات لكل المستخدمين
+        </button>
+
+        <button class="admin-btn-danger" onclick="dangerExportAll()" style="background:var(--info);">
+          📥 تصدير كل البيانات (JSON)
+        </button>
+
+        <button class="admin-btn-danger" onclick="dangerResetAll()" style="background:#7F1D1D;margin-top:16px;">
+          💣 تصفير المنصة بالكامل
+        </button>
+      </div>
+    `;
+  }
+
+  window.dangerClearAllMessages = async function() {
+    if (!requireAdmin()) return;
+    if (!confirm('مسح رسائل كل الغرف؟')) return;
+    if (!confirm('متأكد 100%؟')) return;
+
+    try {
+      const snap = await db.ref('rooms').once('value');
+      const rooms = snap.val() || {};
+      let count = 0;
+      for (const code of Object.keys(rooms)) {
+        if (rooms[code]?.messages) {
+          await db.ref('rooms/' + code + '/messages').remove();
+          count++;
+        }
+      }
+      if (window.toast) window.toast(`✅ تم مسح رسائل ${count} غرفة`, 'success');
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.dangerClearAllRooms = async function() {
+    if (!requireAdmin()) return;
+    if (!confirm('مسح كل الغرف ما عدا GENERAL؟')) return;
+    if (!confirm('متأكد؟')) return;
+
+    try {
+      const snap = await db.ref('roomsMeta').once('value');
+      const meta = snap.val() || {};
+      let count = 0;
+      for (const code of Object.keys(meta)) {
+        if (code === 'GENERAL') continue;
+        await Promise.all([
+          db.ref('rooms/' + code).remove(),
+          db.ref('roomsMeta/' + code).remove()
+        ]);
+        count++;
+      }
+      if (window.toast) window.toast(`✅ تم مسح ${count} غرفة`, 'success');
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.dangerClearGuests = async function() {
+    if (!requireAdmin()) return;
+    if (!confirm('مسح كل حسابات الضيوف؟')) return;
+
+    try {
+      const snap = await db.ref('users').once('value');
+      const users = snap.val() || {};
+      let count = 0;
+      for (const uid of Object.keys(users)) {
+        if (uid.startsWith('guest')) {
+          await db.ref('users/' + uid).remove();
+          count++;
+        }
+      }
+      if (window.toast) window.toast(`✅ تم مسح ${count} ضيف`, 'success');
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.dangerResetXP = async function() {
+    if (!requireAdmin()) return;
+    if (!confirm('تصفير XP والمستويات لكل المستخدمين؟')) return;
+
+    try {
+      const snap = await db.ref('users').once('value');
+      const users = snap.val() || {};
+      for (const uid of Object.keys(users)) {
+        await db.ref('users/' + uid).update({ xp: 0, level: 1 });
+      }
+      if (window.toast) window.toast('✅ تم التصفير', 'success');
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.dangerExportAll = async function() {
+    if (!requireAdmin()) return;
+
+    try {
+      const [users, rooms, roomsMeta, devCodes] = await Promise.all([
+        db.ref('users').once('value'),
+        db.ref('rooms').once('value'),
+        db.ref('roomsMeta').once('value'),
+        db.ref('devCodes').once('value')
+      ]);
+
+      const dump = {
+        exportedAt: new Date().toISOString(),
+        exportedBy: window.State.session.name,
+        version: '5.0',
+        users: users.val() || {},
+        rooms: rooms.val() || {},
+        roomsMeta: roomsMeta.val() || {},
+        devCodes: devCodes.val() || {}
+      };
+
+      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'yasedu-backup-' + Date.now() + '.json';
+      a.click();
+      if (window.toast) window.toast('✅ تم التصدير', 'success');
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  window.dangerResetAll = async function() {
+    if (!requireAdmin()) return;
+    if (!confirm('⚠️ تصفير المنصة بالكامل (ما عدا admin)؟')) return;
+    if (!confirm('هتتمسح كل الغرف والرسائل والمستخدمين!')) return;
+    if (!confirm('آخر تأكيد — متأكد 100%؟')) return;
+
+    try {
+      const usersSnap = await db.ref('users').once('value');
+      const users = usersSnap.val() || {};
+      for (const uid of Object.keys(users)) {
+        if (users[uid].name === 'admin') continue;
+        await db.ref('users/' + uid).remove();
+      }
+      await db.ref('rooms').remove();
+      await db.ref('roomsMeta').remove();
+      if (window.toast) window.toast('✅ تم التصفير', 'success');
+      setTimeout(() => location.reload(), 1500);
+    } catch(e) { if (window.toast) window.toast('خطأ: ' + e.message, 'error'); }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     12) HELPERS
+     ═══════════════════════════════════════════════════════ */
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = String(s || '');
+    return d.innerHTML;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     13) ADMIN FAB
+     ═══════════════════════════════════════════════════════ */
+  function injectAdminFab() {
+    if (!isAdmin()) return;
+    if (document.getElementById('admin-fab')) return;
+
+    const fab = document.createElement('button');
+    fab.id = 'admin-fab';
+    fab.className = 'admin-fab';
+    fab.innerHTML = '👑';
+    fab.title = 'لوحة التحكم';
+    fab.onclick = window.showAdminPanel;
+    document.body.appendChild(fab);
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     14) INIT
+     ═══════════════════════════════════════════════════════ */
+  injectCSS();
+
+  // Inject FAB after login
+  setTimeout(injectAdminFab, 2000);
+
+  // Re-check on screen change
+  const _origEnterApp = window.enterApp;
+  if (typeof _origEnterApp === 'function') {
+    window.enterApp = function() {
+      const r = _origEnterApp.apply(this, arguments);
+      setTimeout(injectAdminFab, 500);
+      return r;
+    };
+  }
+
+  console.log('%c👑 Admin Panel v2 LOADED', 'color:#F59E0B;font-size:15px;font-weight:bold;');
+  console.log('   ✓ 7 tabs: Dashboard, Users, Rooms, Messages, Broadcast, Codes, Danger');
+  console.log('   ✓ Search & filter | Real-time stats | Export JSON');
+  console.log('   👤 admin | 🔑 Admin@2025');
+})();
+</script>
 </body>
 </html>
