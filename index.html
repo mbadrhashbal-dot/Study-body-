@@ -3811,6 +3811,108 @@ console.log('%c✅ Tools + Admin + Sidebar Loaded (5/5)', 'color:#10B981;font-we
 
 })();
 </script>
+<style>
+/* ═══════════════════════════════════════════════════════
+   Desktop Layout Fix — v6
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+  /* 1) Sidebar يظهر */
+  .sidebar {
+    display: block !important;
+    width: 280px !important;
+    padding: 24px 20px !important;
+  }
 
+  /* 2) المحتوى ياخد مساحة الـ sidebar */
+  .app-main {
+    margin-right: 280px !important;
+    margin-left: 0 !important;
+    max-width: none !important;
+    width: calc(100% - 280px) !important;
+    padding: 32px 40px !important;
+    padding-bottom: 32px !important;
+  }
+
+  /* 3) نخفي الأشياء بتاعة الموبايل */
+  .bottom-nav {
+    display: none !important;
+  }
+
+  /* 4) الـ header يفضل ظاهر (لأن فيه الأزرار) */
+  .app-header {
+    display: flex !important;
+  }
+
+  /* 5) Cards في صفوف */
+  .grid-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr) !important; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr) !important; }
+
+  /* 6) الشات أعرض */
+  .chat-container {
+    max-width: 100% !important;
+    height: calc(100dvh - 180px) !important;
+  }
+
+  /* 7) الملف الشخصي - توسيط */
+  .app-main > div[style*="text-align:center"] {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* 8) الـ Auth شاشة */
+  .auth-screen {
+    padding: 60px 40px !important;
+  }
+  .auth-card {
+    max-width: 480px !important;
+  }
+
+  /* 9) الـ Modals */
+  .modal-content {
+    max-width: 600px !important;
+    padding: 32px !important;
+  }
+
+  /* 10) Admin FAB */
+  #admin-fab {
+    right: 300px !important;
+    bottom: 24px !important;
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 30px !important;
+  }
+
+  /* 11) زرار الـ theme في الهيدر */
+  .header-actions .btn-icon {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 20px !important;
+  }
+
+  /* 12) الكارد hover أحلى */
+  .card-hover:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 20px 40px rgba(15,23,42,.15) !important;
+  }
+}
+
+/* شاشات أكبر */
+@media (min-width: 1440px) {
+  .app-main {
+    padding: 40px 60px !important;
+  }
+}
+
+/* شاشات صغيرة (تابلت) */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .app-main {
+    padding: 24px !important;
+  }
+}
+</style>
 </body>
 </html>
