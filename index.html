@@ -3914,5 +3914,370 @@ console.log('%c✅ Tools + Admin + Sidebar Loaded (5/5)', 'color:#10B981;font-we
   }
 }
 </style>
+  <!-- ═══════════════════════════════════════════════════════
+     YasEdu — FINAL Navigation Fix (No Duplicates)
+     ═══════════════════════════════════════════════════════ -->
+<style id="final-nav-css">
+/* ═══════════════════════════════════════════════════════
+   Desktop Sidebar Layout
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+  body.has-sidebar .app-main {
+    margin-right: 260px !important;
+    width: calc(100% - 260px) !important;
+    max-width: calc(100% - 260px) !important;
+    padding: 24px 32px !important;
+  }
+
+  body.has-sidebar .app-header {
+    margin-right: 260px !important;
+    width: calc(100% - 260px) !important;
+  }
+
+  body.has-sidebar .bottom-nav {
+    display: none !important;
+  }
+
+  body.has-sidebar #admin-fab {
+    right: 280px !important;
+  }
+
+  body.has-sidebar .grid-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  body.has-sidebar .grid-3 { grid-template-columns: repeat(3, 1fr) !important; }
+  body.has-sidebar .grid-4 { grid-template-columns: repeat(4, 1fr) !important; }
+}
+
+/* Sidebar */
+#yas-sidebar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  #yas-sidebar {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 260px;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    padding: 20px 14px;
+    z-index: 999;
+    overflow-y: auto;
+  }
+}
+</style>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   FINAL Navigation — Clean, No Duplicates
+   ═══════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  console.log('%c🎯 Final Nav — Starting...', 'color:#F59E0B;font-weight:bold;');
+
+  let lastScreen = null;
+  let isRebuilding = false;
+
+  // ═══════════════════════════════════════════════════════
+  // 1) بناء الـ Sidebar
+  // ═══════════════════════════════════════════════════════
+  function buildSidebar() {
+    if (!window.Core || !window.Core.state) return null;
+    if (!window.Core.session || !window.Core.session.isLoggedIn || !window.Core.session.isLoggedIn()) return null;
+
+    const S = window.Core.state;
+    const U = window.Core.utils;
+    const current = window.Core.router.current() || 'home';
+    const userName = S.get('session.name') || 'مستخدم';
+    const userAvatar = S.get('session.avatar') || '👤';
+    const userLevel = S.get('stats.level') || 1;
+    const isAdmin = window.Core.session.isAdmin && window.Core.session.isAdmin();
+
+    const items = [
+      { screen: 'home',     icon: '🏠', label: 'الرئيسية' },
+      { screen: 'chat',     icon: '💬', label: 'الدردشة' },
+      { screen: 'rooms',    icon: '🏘️', label: 'الغرف' },
+      { screen: 'quiz',     icon: '📄', label: 'الاختبارات' },
+      { screen: 'cards',    icon: '🃏', label: 'البطاقات' },
+      { screen: 'bot',      icon: '🤖', label: 'المساعد' },
+      { screen: 'tools',    icon: '🛠️', label: 'الأدوات' },
+      { screen: 'profile',  icon: '👤', label: 'الملف' },
+      { screen: 'settings', icon: '⚙️', label: 'الإعدادات' }
+    ];
+
+    if (isAdmin) items.push({ screen: 'admin', icon: '👑', label: 'لوحة التحكم' });
+
+    const sidebar = document.createElement('aside');
+    sidebar.id = 'yas-sidebar';
+
+    sidebar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:0 8px 16px;border-bottom:1px solid var(--border);margin-bottom:16px;">
+        <div style="width:44px;height:44px;background:var(--grad);border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:18px;flex-shrink:0;">YS</div>
+        <div style="min-width:0;">
+          <div style="font-size:16px;font-weight:900;">YasEdu</div>
+          <div style="font-size:10px;color:var(--text-3);font-weight:800;">v6</div>
+        </div>
+      </div>
+
+      <div class="sb-profile" style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--card-2);border-radius:12px;margin-bottom:16px;cursor:pointer;">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--grad);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${U.esc(userAvatar)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${U.esc(userName)}</div>
+          <div style="font-size:11px;color:var(--text-3);font-weight:700;">Lv.${userLevel}</div>
+        </div>
+      </div>
+
+      <nav style="display:flex;flex-direction:column;gap:4px;">
+        ${items.map(item => `
+          <button class="sb-item" data-screen="${item.screen}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;font-size:14px;font-weight:800;color:${current === item.screen ? 'white' : 'var(--text-2)'};background:${current === item.screen ? 'var(--grad)' : 'transparent'};border:none;text-align:right;width:100%;cursor:pointer;font-family:inherit;transition:background .15s;">
+            <span style="font-size:18px;flex-shrink:0;">${item.icon}</span>
+            <span>${item.label}</span>
+          </button>
+        `).join('')}
+      </nav>
+
+      <div style="position:absolute;bottom:16px;left:16px;right:16px;text-align:center;font-size:10px;color:var(--text-3);font-weight:700;line-height:1.6;">
+        © 2025 Yas Studio<br>v6.0
+      </div>
+    `;
+
+    // ربط الأزرار
+    sidebar.querySelectorAll('.sb-item').forEach(btn => {
+      btn.onclick = function() {
+        window.Core.router.go(this.dataset.screen);
+      };
+      btn.onmouseenter = function() {
+        if (!this.style.background.includes('grad')) {
+          this.style.background = 'var(--card-2)';
+        }
+      };
+      btn.onmouseleave = function() {
+        if (!this.style.background.includes('grad')) {
+          this.style.background = 'transparent';
+        }
+      };
+    });
+
+    // زر البروفايل
+    const profileBtn = sidebar.querySelector('.sb-profile');
+    if (profileBtn) {
+      profileBtn.onclick = () => window.Core.router.go('profile');
+    }
+
+    return sidebar;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // 2) مزامنة الـ Sidebar (مرة واحدة بس)
+  // ═══════════════════════════════════════════════════════
+  function syncSidebar() {
+    if (isRebuilding) return;
+
+    const existing = document.getElementById('yas-sidebar');
+    const isDesktop = window.innerWidth >= 1024;
+    const isLoggedIn = window.Core && window.Core.session && window.Core.session.isLoggedIn && window.Core.session.isLoggedIn();
+
+    // لو مش مسجل أو مش ديسكتوب — شيل الـ sidebar
+    if (!isDesktop || !isLoggedIn) {
+      if (existing) existing.remove();
+      document.body.classList.remove('has-sidebar');
+      return;
+    }
+
+    // لو الـ sidebar موجود بالفعل — حدّث الـ active state بس
+    if (existing) {
+      updateActiveState(existing);
+      document.body.classList.add('has-sidebar');
+      return;
+    }
+
+    // ابني جديد
+    const newSidebar = buildSidebar();
+    if (newSidebar) {
+      document.body.appendChild(newSidebar);
+      document.body.classList.add('has-sidebar');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // 3) تحديث الـ active state
+  // ═══════════════════════════════════════════════════════
+  function updateActiveState(sidebar) {
+    const current = window.Core.router.current() || 'home';
+    sidebar.querySelectorAll('.sb-item').forEach(btn => {
+      const isActive = btn.dataset.screen === current;
+      btn.style.background = isActive ? 'var(--grad)' : 'transparent';
+      btn.style.color = isActive ? 'white' : 'var(--text-2)';
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // 4) Quick Actions — إضافة مرة واحدة بس
+  // ═══════════════════════════════════════════════════════
+  function patchQuickActions() {
+    if (!window.Core || !window.Core.router) return;
+    if (window.Core.router.current() !== 'home') return;
+
+    const appRoot = document.getElementById('app-root');
+    if (!appRoot) return;
+
+    // دور على الـ grid اللي فيه Quick Actions
+    const grids = appRoot.querySelectorAll('.grid-2');
+    let targetGrid = null;
+
+    for (const grid of grids) {
+      if (grid.querySelector('[onclick*="quiz"]') && grid.querySelector('[onclick*="chat"]')) {
+        targetGrid = grid;
+        break;
+      }
+    }
+
+    if (!targetGrid) return;
+
+    // ✅ تحقق: لو الغرف موجودة بالفعل، مفيش داعي
+    if (targetGrid.querySelector('[onclick*="rooms"]')) {
+      return;
+    }
+
+    // أضف الغرف والأدوات
+    const newCards = `
+      <div class="card card-hover" style="display:flex;gap:12px;align-items:center;cursor:pointer;" onclick="Core.router.go('rooms')">
+        <div style="width:44px;height:44px;background:var(--grad);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🏘️</div>
+        <div>
+          <div style="font-weight:800;font-size:13px;">الغرف</div>
+          <div style="font-size:11px;color:var(--text-2);">غرف عامة وخاصة</div>
+        </div>
+      </div>
+      <div class="card card-hover" style="display:flex;gap:12px;align-items:center;cursor:pointer;" onclick="Core.router.go('tools')">
+        <div style="width:44px;height:44px;background:var(--grad);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🛠️</div>
+        <div>
+          <div style="font-weight:800;font-size:13px;">الأدوات</div>
+          <div style="font-size:11px;color:var(--text-2);">بومودورو • مهام</div>
+        </div>
+      </div>
+    `;
+
+    targetGrid.insertAdjacentHTML('beforeend', newCards);
+    console.log('%c✅ Quick Actions patched', 'color:#10B981;font-weight:bold;');
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // 5) مراقبة الشاشة (مرة واحدة بس عند التغيير)
+  // ═══════════════════════════════════════════════════════
+  function watchScreen() {
+    const current = window.Core && window.Core.router && window.Core.router.current();
+
+    if (current === lastScreen) return;
+    lastScreen = current;
+
+    // حدّث Sidebar (active state)
+    const sidebar = document.getElementById('yas-sidebar');
+    if (sidebar) {
+      updateActiveState(sidebar);
+    }
+
+    // لو الرئيسية، أضف Quick Actions
+    if (current === 'home') {
+      setTimeout(patchQuickActions, 150);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // 6) Init
+  // ═══════════════════════════════════════════════════════
+  function init() {
+    if (!window.Core) {
+      setTimeout(init, 200);
+      return;
+    }
+
+    console.log('%c🚀 Final Nav — Core ready', 'color:#10B981;font-weight:bold;');
+
+    // 1) اعمل sync أول مرة
+    setTimeout(syncSidebar, 400);
+    setTimeout(patchQuickActions, 700);
+
+    // 2) راقب تغيير الشاشة (عن طريق مراقبة الـ app-root)
+    const appRoot = document.getElementById('app-root');
+    if (appRoot) {
+      const observer = new MutationObserver(() => {
+        watchScreen();
+      });
+      observer.observe(appRoot, { childList: true, subtree: false });
+    }
+
+    // 3) راقب الـ router
+    if (window.Core.router && window.Core.router.go) {
+      const originalGo = window.Core.router.go;
+      window.Core.router.go = function() {
+        const result = originalGo.apply(this, arguments);
+        setTimeout(watchScreen, 100);
+        return result;
+      };
+    }
+
+    // 4) استنى التغييرات في الـ login/logout
+    let lastLoginState = window.Core.session && window.Core.session.isLoggedIn && window.Core.session.isLoggedIn();
+    setInterval(() => {
+      const nowLoggedIn = window.Core.session && window.Core.session.isLoggedIn && window.Core.session.isLoggedIn();
+      if (nowLoggedIn !== lastLoginState) {
+        lastLoginState = nowLoggedIn;
+        syncSidebar();
+      }
+    }, 1000);
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // 7) Resize — مرة واحدة بس عند التغيير
+  // ═══════════════════════════════════════════════════════
+  let lastWidth = window.innerWidth;
+  window.addEventListener('resize', () => {
+    const isDesktopChange = (lastWidth >= 1024) !== (window.innerWidth >= 1024);
+    lastWidth = window.innerWidth;
+
+    if (isDesktopChange) {
+      syncSidebar();
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // 8) API
+  // ═══════════════════════════════════════════════════════
+  window.finalNav = {
+    sync: syncSidebar,
+    rebuild: function() {
+      isRebuilding = true;
+      const old = document.getElementById('yas-sidebar');
+      if (old) old.remove();
+      document.body.classList.remove('has-sidebar');
+      isRebuilding = false;
+      syncSidebar();
+    },
+    patch: patchQuickActions,
+    clean: function() {
+      // امسح كل الـ sidebars المكررة
+      document.querySelectorAll('#yas-sidebar, .sidebar').forEach(el => el.remove());
+      document.body.classList.remove('has-sidebar');
+      console.log('🧹 Cleaned all sidebars');
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 9) ابدأ
+  // ═══════════════════════════════════════════════════════
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  console.log('%c✅ Final Nav — Loaded', 'color:#10B981;font-weight:bold;');
+  console.log('   window.finalNav.clean() — تنظيف الـ sidebars المكررة');
+  console.log('   window.finalNav.rebuild() — إعادة بناء');
+})();
+</script>
 </body>
 </html>
