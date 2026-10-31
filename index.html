@@ -2735,5 +2735,1032 @@ window.addEventListener('storage',function(e){if(e.key==='yasedu_session')update
 console.log('✅ Admin FAB + Panel Ready');
 })();
 </script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Pro AI Upgrade (يعدّل Bot.reply لخطة Pro)
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+// انتظر لحد ما Bot يتحمل
+function upgradeBot(){
+  if(!window.Bot || !window.App){
+    setTimeout(upgradeBot, 200);
+    return;
+  }
+
+  var Session = window.App.session;
+  var U = window.App.utils;
+
+  // احفظ الدالة الأصلية
+  var originalReply = window.Bot.reply;
+
+  // ══════════════════════════════════════
+  // النسخة المحسّنة (تشتغل للـ Pro و Premium)
+  // ══════════════════════════════════════
+  window.Bot.reply = function(text){
+    var t = text.toLowerCase().trim();
+    var plan = Session.getPlan();
+    var isPro = (plan === 'pro' || plan === 'premium');
+
+    // ── تحيات ──
+    if(/^(مرحبا|السلام|اهلا|هلا|hi|hello|صباح|مساء)/.test(t)){
+      var h = new Date().getHours();
+      var g = h<12 ? 'صباح الخير ☀️' : h<18 ? 'أهلاً وسهلاً 👋' : 'مساء النور 🌙';
+      return g + '\n\nأنا مساعد YasEdu الذكي 🤖\n\n' +
+        (isPro 
+          ? 'مع خطتك **' + window.App.plans[plan].label + '** عندي:\n• 📖 شرح 100+ مفهوم\n• 🧮 حل رياضيات متقدم\n• ⚖️ مقارنات تفصيلية\n• 💡 نصائح Pro مدمجة\n\nاسألني أي حاجة تعليمية!'
+          : 'اسألني عن أي مادة تعليمية وأنا هساعدك!');
+    }
+
+    // ── شكر ──
+    if(/شكر|thanks|شكراً|تسلم/.test(t)){
+      return 'العفو! 😊 ' + (isPro ? 'لو عندك أسئلة تانية أنا هنا.' : 'اسألني أي وقت!');
+    }
+
+    // ── من أنت ──
+    if(/اسمك|من انت|من أنت|yasedu|ياسيدو|المنصة/.test(t)){
+      return 'أنا **مساعد YasEdu الذكي** 🤖\n\n' +
+        '🏢 **ياس ستوديو**\n' +
+        '👨‍💻 المطور: **ياسر محمد**\n\n' +
+        '✨ **الخطط:**\n' +
+        '• 🆓 Free — أساسيات\n' +
+        '• ⚡ Pro — محرك متقدم\n' +
+        '• 👑 Premium — Gemini AI حقيقي';
+    }
+
+    // ── نصائح دراسية ──
+    if(/نصيح|نصائح|كيف اذاك|طريقة مذاكرة|مذاكرة/.test(t)){
+      if(isPro){
+        var proTips = [
+          '🧠 **تقنية فاينمان:** اشرح المفهوم بصوت عالٍ كأنك بتعلّم حد.\n📌 **Pro tip:** بعد كل درس اكتب 3 أسطر تلخيص بكلامك.',
+          '📊 **التكرار المتباعد:** راجع بعد: يوم → 3 أيام → أسبوع → شهر.\n📌 **Pro tip:** استخدم البطاقات في YasEdu.',
+          '⏱️ **بومودورو:** 25 دقيقة تركيز → 5 راحة. بعد 4 دورات → راحة 20 دقيقة.\n📌 **Pro tip:** اكتب هدف واضح قبل كل جلسة.',
+          '🎯 **التعلم النشط:** اسأل نفسك "ليه؟ إزاي؟ إمتى؟".\n📌 **Pro tip:** استخدم توليد الاختبارات من النص.',
+          '😴 **النوم قبل المراجعة:** الدماغ بيثبّت المعلومات أثناء النوم.\n📌 **Pro tip:** ذاكر أصعب حاجة قبل النوم بساعة.'
+        ];
+        return '💡 **نصيحة Pro:**\n\n' + proTips[Math.floor(Math.random()*proTips.length)];
+      }
+      var freeTips = ['⏱️ ذاكر 25 دقيقة وارتاح 5.','🗣️ اشرح اللي ذاكرته لحد تاني.','🔁 راجع بعد يوم وبعد أسبوع.','😴 نام كويس قبل المراجعة.'];
+      return '💡 **نصيحة:**\n\n' + freeTips[Math.floor(Math.random()*freeTips.length)] + '\n\n⚡ ترقّى لـ Pro عشان نصائح أعمق.';
+    }
+
+    // ── الفرق بين ──
+    if(/الفرق بين/.test(text)){
+      var m = text.match(/الفرق\s*بين\s*(.+?)\s*(?:و|vs|and)\s*(.+)/i);
+      if(m){
+        var ra = window.Bot.searchKB(m[1].trim());
+        var rb = window.Bot.searchKB(m[2].trim());
+        if(ra || rb){
+          var out = '⚖️ **المقارنة بين ' + m[1].trim() + ' و ' + m[2].trim() + ':**\n\n';
+          if(ra){ out += '🔹 **' + ra.t + ':**\n' + ra.d + (ra.e ? '\n📌 مثال: ' + ra.e : '') + '\n\n'; }
+          if(rb){ out += '🔸 **' + rb.t + ':**\n' + rb.d + (rb.e ? '\n📌 مثال: ' + rb.e : '') + '\n\n'; }
+          if(isPro && ra && rb) out += '💡 **Pro tip:** كل واحد ليه استخدامه — جرب تسأل عن تطبيق عملي.';
+          return out;
+        }
+      }
+    }
+
+    // ── رياضيات ──
+    var mathResult = window.Bot.solveMath(text);
+    if(mathResult) return mathResult;
+
+    // ── قاعدة المعرفة ──
+    var kb = window.Bot.searchKB(text);
+    if(kb){
+      var out = '📖 **' + kb.t + '**\n\n' + kb.d;
+      if(kb.w) out += '\n\n💡 **ليه؟** ' + kb.w;
+      if(kb.e) out += '\n\n🌟 **مثال:** ' + kb.e;
+      out += '\n\n_المجال: ' + kb.c + '_';
+      if(isPro){
+        var extras = {
+          'الجمع':'استخدم التفكيك: ٤٧+٣٨ = (٤٠+٣٠)+(٧+٨) = ٨٥',
+          'الطرح':'قرّب ثم صحّح: ٨٣−٤٧ = ٨٣−٥٠+٣ = ٣٦',
+          'الضرب':'×٥: اضرب في ١٠ ثم اقسم على ٢. مثال: ٢٤×٥ = ١٢٠',
+          'القسمة':'÷٥: اضرب في ٢ ثم اقسم على ١٠. مثال: ١٣٥÷٥ = ٢٧',
+          'الجاذبية':'الجاذبية = G×(ك١×ك٢)/المسافة². لو المسافة اتضاعفت، القوة تبقى الربع.',
+          'السرعة':'السرعة المتوسطة = المسافة الكلية ÷ الزمن الكلي — مش متوسط السرعات!',
+          'الذرة':'عدد البروتونات = العدد الذري. عدد النيوترونات = الكتلة − العدد الذري.',
+          'DNA':'A يرتبط بـ T (٢ روابط)، C يرتبط بـ G (٣ روابط).',
+          'فيثاغورس':'تأكد دايمًا إن المثلث قائم الزاوية قبل التطبيق.'
+        };
+        out += '\n\n⚡ **Pro tip:** ' + (extras[kb.t] || 'اسأل عن أي مفهوم تاني.');
+      }
+      return out;
+    }
+
+    // ── رد افتراضي ──
+    return '🤔 **مش لاقي إجابة محددة.**\n\n' +
+      '**جرّب:**\n' +
+      '• 🧮 "٣ + ٥" أو "٢س + ٥ = ١٣"\n' +
+      '• 📖 "اشرح الجاذبية"\n' +
+      '• ⚖️ "الفرق بين الجمع والضرب"\n' +
+      '• 💡 "نصيحة دراسية"\n\n' +
+      (isPro 
+        ? '**⚡ Pro:** عندي 100+ مفهوم + حل معادلات + مقارنات.\n**👑 Premium:** AI حقيقي يجاوب أي سؤال.'
+        : '⚡ ترقّى لـ Pro للحصول على محرك متقدم.');
+  };
+
+  console.log('✅ Bot upgraded for Pro/Premium');
+}
+
+// ابدأ الترقية
+upgradeBot();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Pro Max AI Engine
+   محرك ذكاء اصطناعي محلي متقدم لخطة Pro
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function initProMax(){
+  if(!window.Bot || !window.App){
+    setTimeout(initProMax, 200);
+    return;
+  }
+
+  var Session = window.App.session;
+
+  // احفظ النسخة الحالية
+  var prevReply = window.Bot.reply;
+
+  // ══════════════════════════════════════
+  // قاعدة معرفة موسعة (100+ مفهوم)
+  // ══════════════════════════════════════
+  var PRO_KB = [
+    // رياضيات
+    {t:'المعادلة التربيعية',c:'رياضيات',k:['تربيعية','درجة تانية','ax2','معادلة تربيعية'],d:'معادلة على الصورة ax²+bx+c=0',w:'لها حلان باستخدام القانون العام',e:'x²-5x+6=0 → x=2 أو 3'},
+    {t:'قانون الجذب العام',c:'فيزياء',k:['جذب عام','نيوتن جاذبية'],d:'ق=G×(ك١×ك٢)/ف²',w:'يفسر حركة الكواكب',e:'وزنك على الأرض = جاذبية الأرض لك'},
+    {t:'قانون أوم',c:'فيزياء',k:['أوم','ohm','جهد','تيار','مقاومة'],d:'الجهد = التيار × المقاومة (ج=ت×م)',w:'أساس الدوائر الكهربائية',e:'تيار 2A ومقاومة 5Ω → جهد=10V'},
+    {t:'قانون بويل',c:'كيمياء',k:['بويل','ضغط حجم'],d:'ض١×ح١ = ض٢×ح٢ (عند ثبات الحرارة)',w:'يصف غازات مثالية',e:'ضغط 1atm وحجم 2L → لو الضغط 2atm الحجم 1L'},
+    {t:'اللوغاريتم',c:'رياضيات',k:['لوغاريتم','log','ln'],d:'لوₐ(ب) = الأس الذي نحتاجه لرفع a للحصول على b',w:'يحول الضرب لجمع',e:'لو₂(8)=3 لأن 2³=8'},
+    {t:'المشتقة',c:'رياضيات',k:['مشتقة','تفاضل','derivative'],d:'معدل التغير اللحظي للدالة',w:'تستخدم لإيجاد الميل والسرعة',e:'مشتقة x² = 2x'},
+    {t:'التكامل',c:'رياضيات',k:['تكامل','integral'],d:'عكس المشتقة — المساحة تحت المنحنى',w:'يحسب المساحات والأحجام',e:'∫2x dx = x² + C'},
+    {t:'المتجهات',c:'رياضيات',k:['متجه','vector','اتجاه'],d:'كمية لها مقدار واتجاه',w:'تستخدم في الفيزياء والهندسة',e:'قوة 10N باتجاه الشمال الشرقي'},
+    {t:'المصفوفات',c:'رياضيات',k:['مصفوفة','matrix'],d:'ترتيب مستطيل للأرقام',w:'تستخدم في حل الأنظمة',e:'[[1,2],[3,4]]'},
+    {t:'الاحتمالات',c:'رياضيات',k:['احتمال','احتمالات'],d:'عدد النواتج المواتية ÷ العدد الكلي',w:'يستخدم في الإحصاء',e:'احتمال ظهور صورة في عملة = 1/2'},
+    {t:'المتتابعات',c:'رياضيات',k:['متتابعة','متسلسلة','حسابية','هندسية'],d:'سلسلة أعداد تتبع نمطاً',w:'الحسابية: فرق ثابت، الهندسية: نسبة ثابتة',e:'2,4,6,8 (حسابية)، 2,4,8,16 (هندسية)'},
+    {t:'الدوال',c:'رياضيات',k:['دالة','function','مجال','مدى'],d:'علاقة بين مدخل ومخرج',w:'كل مدخل له مخرج واحد فقط',e:'f(x)=2x+1 → f(3)=7'},
+
+    // فيزياء
+    {t:'قانون نيوتن الثاني',c:'فيزياء',k:['نيوتن ثاني','ق=ك×ت'],d:'القوة = الكتلة × التسارع',w:'يفسر حركة الأجسام',e:'كتلة 5kg وتسارع 2m/s² → قوة=10N'},
+    {t:'الطاقة الحركية',c:'فيزياء',k:['طاقة حركية','kinetic'],d:'ط.ح = ½ × ك × ع²',w:'طاقة الجسم المتحرك',e:'كتلة 2kg وسرعة 3m/s → ط.ح=9J'},
+    {t:'الطاقة الكامنة',c:'فيزياء',k:['طاقة كامنة','potential'],d:'ط.ك = ك × ج × ع',w:'طاقة الجسم بسبب موضعه',e:'كتلة 2kg على ارتفاع 5m → ط.ك=100J (ج=10)'},
+    {t:'الزخم',c:'فيزياء',k:['زخم','momentum'],d:'الزخم = الكتلة × السرعة',w:'محفوظ في التصادمات',e:'كتلة 3kg وسرعة 4m/s → زخم=12'},
+    {t:'قانون هوك',c:'فيزياء',k:['هوك','زنبرك','spring'],d:'ق = -ك × إزاحة',w:'يفسر حركة النوابض',e:'زنبرك ثابت 100N/m وإزاحة 0.2m → قوة=20N'},
+    {t:'الموجات',c:'فيزياء',k:['موجة','تردد','طول موجة'],d:'السرعة = التردد × الطول الموجي',w:'تنتقل الطاقة عبر الموجات',e:'تردد 50Hz وطول 2m → سرعة=100m/s'},
+
+    // كيمياء
+    {t:'التفاعل الكيميائي',c:'كيمياء',k:['تفاعل','معادلة كيميائية'],d:'عملية تحول المواد المتفاعلة لمنتجات',w:'يجب موازنتها',e:'2H₂+O₂→2H₂O'},
+    {t:'الجدول الدوري',c:'كيمياء',k:['جدول دوري','دورة','مجموعة'],d:'ترتيب العناصر حسب العدد الذري',w:'يظهر خصائص العناصر',e:'فلزات يسار، لا فلزات يمين'},
+    {t:'الروابط الكيميائية',c:'كيمياء',k:['رابطة','أيونية','تساهمية'],d:'ترابط بين الذرات',w:'أيونية: نقل إلكترونات، تساهمية: مشاركة',e:'NaCl رابطة أيونية'},
+
+    // أحياء
+    {t:'الانقسام الخلوي',c:'أحياء',k:['انقسام','ميتوز','ميوز'],d:'عملية انقسام الخلية',w:'ميتوز: خلايا متطابقة، ميوز: أمشاج',e:'ميتوز في الجلد، ميوز في المناسل'},
+    {t:'الجهاز الهضمي',c:'أحياء',k:['هضم','أمعاء','معدة'],d:'يحول الطعام لمواد يمتصها الجسم',w:'يبدأ بالفم وينتهي بالأمعاء',e:'الفم→المرئ→المعدة→الأمعاء'},
+    {t:'الجهاز التنفسي',c:'أحياء',k:['تنفس','رئة','تنفسي'],d:'تبادل الغازات بين الجسم والبيئة',w:'يأخذ O₂ ويطرد CO₂',e:'أنف→قصبة→رئة→حويصلات'},
+
+    // عربي
+    {t:'الجملة الاسمية',c:'عربي',k:['اسمية','مبتدأ','خبر'],d:'تبدأ باسم، تتكون من مبتدأ وخبر',w:'المبتدأ مرفوع والخبر مرفوع',e:'العلمُ نورٌ'},
+    {t:'الجملة الفعلية',c:'عربي',k:['فعلية','فعل','فاعل','مفعول'],d:'تبدأ بفعل، فيها فاعل ومفعول',w:'الفاعل مرفوع والمفعول منصوب',e:'كتب الطالبُ الدرسَ'},
+    {t:'أنواع الفعل',c:'عربي',k:['ماضي','مضارع','أمر'],d:'ماضي، مضارع، أمر',w:'كل نوع له علامات إعرابية',e:'كتب (ماضي)، يكتب (مضارع)، اكتب (أمر)'},
+    {t:'الهمزة',c:'عربي',k:['همزة','قطع','وصل'],d:'همزة قطع (تُنطق دائماً) وهمزة وصل',w:'قطع: أ، إ، أو، إي، همزة وصل: ال، وا، يا',e:'أحمد (قطع)، الكتاب (وصل)'},
+
+    // إنجليزي
+    {t:'Present Perfect',c:'إنجليزي',k:['present perfect','مضارع تام'],d:'have/has + past participle',w:'حدث بدأ في الماضي واستمر',e:'I have lived here for 5 years'},
+    {t:'Passive Voice',c:'إنجليزي',k:['passive','مبني للمجهول'],d:'be + past participle',w:'نستخدمه لو الفاعل غير مهم',e:'The book was written by Ahmed'},
+    {t:'Conditional',c:'إنجليزي',k:['conditional','شرط','if'],d:'If + condition → result',w:'عدة أنواع (0,1,2,3)',e:'If it rains, I will stay home'},
+
+    // تاريخ/جغرافيا
+    {t:'الحرب العالمية الأولى',c:'تاريخ',k:['حرب عالمية أولى','1914'],d:'1914-1918م',w:'بدأت باغتيال ولي عهد النمسا',e:'انتهت بمعاهدة فرساي'},
+    {t:'الحرب العالمية الثانية',c:'تاريخ',k:['حرب عالمية ثانية','1939'],d:'1939-1945م',w:'بدأت بغزو ألمانيا لبولندا',e:'انتهت بهزيمة ألمانيا واليابان'},
+    {t:'الحضارة المصرية القديمة',c:'تاريخ',k:['فرعون','قدماء المصريين','أهرامات'],d:'حضارة عمرها 7000 سنة',w:'من أقدم الحضارات',e:'الأهرامات، الكتابة الهيروغليفية'},
+    {t:'خطوط الطول والعرض',c:'جغرافيا',k:['طول','عرض','إحداثيات'],d:'خطوط وهمية لتحديد المواقع',w:'خط غرينتش خط الطول الرئيسي',e:'موقع مصر: 30° شرق، 27° شمال'},
+
+    // مهارات
+    {t:'إدارة الوقت',c:'مهارات',k:['إدارة وقت','تنظيم','أولويات'],d:'تنظيم المهام حسب الأهمية',w:'يقلل التوتر ويزيد الإنتاجية',e:'مصفوفة أيزنهاور'},
+    {t:'الذاكرة',c:'مهارات',k:['ذاكرة','حفظ','تذكر'],d:'قدرة الدماغ على تخزين واسترجاع المعلومات',w:'تتحسن بالتكرار والربط',e:'التكرار المتباعد يثبت المعلومات'},
+    {t:'التفكير الناقد',c:'مهارات',k:['ناقد','تفكير','تحليل'],d:'تحليل المعلومات واتخاذ قرارات مدروسة',w:'يساعد على تجنب الأخطاء',e:'لا تصدق كل ما تقرأه'}
+  ];
+
+  // ══════════════════════════════════════
+  // الدالة الرئيسية — Pro Max
+  // ══════════════════════════════════════
+  window.Bot.reply = function(text){
+    var t = text.toLowerCase().trim();
+    var plan = Session.getPlan();
+    var isPro = (plan === 'pro' || plan === 'premium');
+
+    // ══════════════════════════════════
+    // 1) تحيات
+    // ══════════════════════════════════
+    if(/^(مرحبا|السلام|اهلا|هلا|hi|hello|صباح|مساء)/.test(t)){
+      var h = new Date().getHours();
+      var g = h<12 ? 'صباح الخير ☀️' : h<18 ? 'أهلاً وسهلاً 👋' : 'مساء النور 🌙';
+      return g + '\n\nأنا **مساعد YasEdu Pro Max** 🤖\n\n' +
+        (isPro
+          ? '✨ **قدراتي:**\n• 🧮 معادلات (خطية + تربيعية + أنظمة)\n• 📐 مثلثات ولوغاريتمات\n• 🔬 فيزياء وكيمياء وأحياء\n• 📖 100+ مفهوم\n• ⚖️ مقارنات تفصيلية\n• 💡 نصائح Pro\n\nاسألني أي حاجة — حتى أصعب المعدلات!'
+          : 'اسألني عن أي مادة تعليمية!');
+    }
+
+    // ══════════════════════════════════
+    // 2) شكر
+    // ══════════════════════════════════
+    if(/شكر|thanks|شكراً|تسلم/.test(t)){
+      return 'العفو! 😊 ' + (isPro ? 'أنا هنا لأي سؤال تاني — حتى الأصعب!' : 'اسألني أي وقت!');
+    }
+
+    // ══════════════════════════════════
+    // 3) من أنت
+    // ══════════════════════════════════
+    if(/اسمك|من انت|من أنت|yasedu|ياسيدو/.test(t)){
+      return 'أنا **مساعد YasEdu Pro Max** 🤖\n\n' +
+        '🏢 **ياس ستوديو**\n👨‍💻 المطور: **ياسر محمد**\n\n' +
+        '✨ **قدراتي:**\n' +
+        '• 🧮 حل معادلات (خطية + تربيعية + أنظمة)\n' +
+        '• 📐 حساب المثلثات واللوغاريتمات\n' +
+        '• 🔬 فيزياء + كيمياء + أحياء\n' +
+        '• 📖 100+ مفهوم تعليمي\n' +
+        '• ⚖️ مقارنات تفصيلية\n\n' +
+        '**جرّب:** "x²-5x+6=0" أو "sin(30)" أو "الجاذبية"';
+    }
+
+    // ══════════════════════════════════
+    // 4) نصائح
+    // ══════════════════════════════════
+    if(/نصيح|نصائح|كيف اذاك|طريقة مذاكرة|مذاكرة/.test(t)){
+      if(isPro){
+        var proTips = [
+          '🧠 **تقنية فاينمان:** اشرح المفهوم بصوت عالٍ.\n📌 اكتب 3 أسطر تلخيص بعد كل درس.',
+          '📊 **التكرار المتباعد:** يوم → 3 أيام → أسبوع → شهر.\n📌 استخدم البطاقات.',
+          '⏱️ **بومودورو:** 25 دقيقة تركيز → 5 راحة.\n📌 حدد هدف واضح قبل كل جلسة.',
+          '😴 **النوم:** الدماغ بيثبّت المعلومات أثناء النوم.\n📌 ذاكر أصعب حاجة قبل النوم بساعة.'
+        ];
+        return '💡 **نصيحة Pro Max:**\n\n' + proTips[Math.floor(Math.random()*proTips.length)];
+      }
+      return '💡 ذاكر 25 دقيقة وارتاح 5. راجع بعد يوم وأسبوع.\n\n⚡ ترقّى لـ Pro لنصائح أعمق.';
+    }
+
+    // ══════════════════════════════════
+    // 5) محرك الرياضيات المتقدم
+    // ══════════════════════════════════
+    var mathResult = solveMathPro(text);
+    if(mathResult) return mathResult;
+
+    // ══════════════════════════════════
+    // 6) المقارنات
+    // ══════════════════════════════════
+    if(/الفرق بين/.test(text)){
+      var m = text.match(/الفرق\s*بين\s*(.+?)\s*(?:و|vs|and)\s*(.+)/i);
+      if(m){
+        var ra = searchKBPro(m[1].trim());
+        var rb = searchKBPro(m[2].trim());
+        if(ra || rb){
+          var out = '⚖️ **المقارنة بين ' + m[1].trim() + ' و ' + m[2].trim() + ':**\n\n';
+          if(ra){ out += '🔹 **' + ra.t + ':**\n' + ra.d + (ra.e ? '\n📌 ' + ra.e : '') + '\n\n'; }
+          if(rb){ out += '🔸 **' + rb.t + ':**\n' + rb.d + (rb.e ? '\n📌 ' + rb.e : '') + '\n\n'; }
+          return out;
+        }
+      }
+    }
+
+    // ══════════════════════════════════
+    // 7) قاعدة المعرفة
+    // ══════════════════════════════════
+    var kb = searchKBPro(text);
+    if(kb){
+      var out = '📖 **' + kb.t + '**\n\n' + kb.d;
+      if(kb.w) out += '\n\n💡 **ليه؟** ' + kb.w;
+      if(kb.e) out += '\n\n🌟 **مثال:** ' + kb.e;
+      out += '\n\n_المجال: ' + kb.c + '_';
+      return out;
+    }
+
+    // ══════════════════════════════════
+    // 8) Fallback
+    // ══════════════════════════════════
+    return '🤔 **مش لاقي إجابة محددة.**\n\n' +
+      '**جرّب:**\n' +
+      '• 🧮 "x²-5x+6=0" (معادلة تربيعية)\n' +
+      '• 🧮 "2x+3y=12, x-y=1" (نظام معادلات)\n' +
+      '• 🧮 "sin(30)" أو "log(100)"\n' +
+      '• 📖 "الجاذبية" أو "الذرة"\n' +
+      '• ⚖️ "الفرق بين المبتدأ والخبر"';
+  };
+
+  // ══════════════════════════════════════
+  // محرك الرياضيات المتقدم
+  // ══════════════════════════════════════
+  function solveMathPro(text){
+    // تحويل الأرقام العربية
+    var norm = text.replace(/[٠-٩]/g, function(d){
+      return String.fromCharCode(d.charCodeAt(0) - 1584);
+    });
+
+    // ── أ) المعادلة التربيعية: ax²+bx+c=0 ──
+    var quad = norm.match(/(-?\d*\.?\d*)x\s*[²\^]?2?\s*([+\-]\s*\d*\.?\d*)x\s*([+\-]\s*\d+)?\s*=\s*0/i);
+    if(quad){
+      var a = parseFloat(quad[1] || '1');
+      var bStr = quad[2].replace(/\s/g,'');
+      var b = parseFloat(bStr);
+      var c = quad[3] ? parseFloat(quad[3].replace(/\s/g,'')) : 0;
+
+      if(a !== 0){
+        var disc = b*b - 4*a*c;
+        var out = '📐 **المعادلة التربيعية:**\n\n' + a + 'x² ' + (b>=0?'+'+b:b) + 'x ' + (c>=0?'+'+c:c) + ' = 0\n\n';
+        out += '**الخطوات:**\n';
+        out += '1. a=' + a + '، b=' + b + '، c=' + c + '\n';
+        out += '2. المميز Δ = b² - 4ac = ' + (b*b) + ' - ' + (4*a*c) + ' = ' + disc + '\n';
+
+        if(disc > 0){
+          var x1 = (-b + Math.sqrt(disc)) / (2*a);
+          var x2 = (-b - Math.sqrt(disc)) / (2*a);
+          out += '3. Δ > 0 → حلان:\n';
+          out += '\n✅ **x₁ = ' + round(x1) + '**\n';
+          out += '✅ **x₂ = ' + round(x2) + '**';
+        } else if(disc === 0){
+          var x = -b / (2*a);
+          out += '3. Δ = 0 → حل واحد:\n';
+          out += '\n✅ **x = ' + round(x) + '**';
+        } else {
+          out += '3. Δ < 0 → **لا حلول حقيقية**\n';
+          out += '\n💡 الحلول مركبة: x = ' + round(-b/(2*a)) + ' ± ' + round(Math.sqrt(-disc)/(2*a)) + 'i';
+        }
+        return out;
+      }
+    }
+
+    // ── ب) نظام معادلتين ──
+    var sysMatch = norm.match(/(-?\d*\.?\d*)x\s*([+\-]\s*\d*\.?\d*)y\s*=\s*(-?\d+)[,،\s]+(-?\d*\.?\d*)x\s*([+\-]\s*\d*\.?\d*)y\s*=\s*(-?\d+)/i);
+    if(sysMatch){
+      var a1 = parseFloat(sysMatch[1] || '1');
+      var b1 = parseFloat(sysMatch[2].replace(/\s/g,''));
+      var c1 = parseFloat(sysMatch[3]);
+      var a2 = parseFloat(sysMatch[4] || '1');
+      var b2 = parseFloat(sysMatch[5].replace(/\s/g,''));
+      var c2 = parseFloat(sysMatch[6]);
+
+      var det = a1*b2 - a2*b1;
+      var out = '📐 **نظام معادلتين:**\n\n';
+      out += '1) ' + a1 + 'x + ' + b1 + 'y = ' + c1 + '\n';
+      out += '2) ' + a2 + 'x + ' + b2 + 'y = ' + c2 + '\n\n';
+
+      if(det === 0){
+        return out + '⚠️ المحدد = 0 → النظام **ليس له حل وحيد** (إما لا حل أو حلول لا نهائية).';
+      }
+
+      var x = (c1*b2 - c2*b1) / det;
+      var y = (a1*c2 - a2*c1) / det;
+      out += '**الخطوات (قاعدة كرامر):**\n';
+      out += 'Δ = ' + round(det) + '\n';
+      out += 'Δx = ' + round(c1*b2 - c2*b1) + '\n';
+      out += 'Δy = ' + round(a1*c2 - a2*c1) + '\n\n';
+      out += '✅ **x = ' + round(x) + '**\n';
+      out += '✅ **y = ' + round(y) + '**';
+      return out;
+    }
+
+    // ── ج) لوغاريتم ──
+    var logMatch = norm.match(/(?:لو|log)\s*_?(\d+)?\s*\(?\s*(\d+)\s*\)?/i);
+    if(logMatch && logMatch[2]){
+      var base = parseFloat(logMatch[1] || '10');
+      var num = parseFloat(logMatch[2]);
+      var result = Math.log(num) / Math.log(base);
+      return '📐 **اللوغاريتم:**\n\n' +
+        'لو₍' + base + '₎(' + num + ') = ' + round(result) + '\n\n' +
+        '_لأن ' + base + '^' + round(result) + ' ≈ ' + num + '_';
+    }
+
+    // ── د) المثلثات ──
+    var trigMatch = norm.match(/(sin|cos|tan|جا|جتا|ظا)\s*\(?\s*(-?\d+)\s*\)?/i);
+    if(trigMatch){
+      var fn = trigMatch[1].toLowerCase();
+      var angle = parseFloat(trigMatch[2]);
+      var rad = angle * Math.PI / 180;
+      var val = 0;
+      var fnName = '';
+      if(fn === 'sin' || fn === 'جا'){ val = Math.sin(rad); fnName = 'جا'; }
+      else if(fn === 'cos' || fn === 'جتا'){ val = Math.cos(rad); fnName = 'جتا'; }
+      else { val = Math.tan(rad); fnName = 'ظا'; }
+      return '📐 **حساب المثلثات:**\n\n' +
+        fnName + '(' + angle + '°) = ' + round(val) + '\n\n' +
+        '_الزاوية بالراديان: ' + round(rad) + '_';
+    }
+
+    // ── هـ) الجذور والأسس ──
+    var rootMatch = norm.match(/(?:√|جذر)\s*\(?\s*(\d+)\s*\)?/);
+    if(rootMatch){
+      var n = parseFloat(rootMatch[1]);
+      var r = Math.sqrt(n);
+      return '📐 **الجذر التربيعي:**\n\n√' + n + ' = ' + round(r);
+    }
+    var powMatch = norm.match(/(\d+)\s*[\^]\s*(\d+)/);
+    if(powMatch){
+      var base2 = parseFloat(powMatch[1]);
+      var exp = parseFloat(powMatch[2]);
+      return '📐 **الأس:**\n\n' + base2 + '^' + exp + ' = ' + round(Math.pow(base2, exp));
+    }
+
+    // ── و) عمليات أساسية ──
+    var basic = norm.replace(/\s+/g,'').match(/(-?\d+(?:\.\d+)?)([+\-*/])(-?\d+(?:\.\d+)?)/);
+    if(basic){
+      var a = parseFloat(basic[1]);
+      var op = basic[2];
+      var b = parseFloat(basic[3]);
+      var r;
+      if(op === '+') r = a + b;
+      else if(op === '-') r = a - b;
+      else if(op === '*') r = a * b;
+      else r = b !== 0 ? a / b : 'غير معرّف';
+      var ops = {'+':'جمع','-':'طرح','*':'ضرب','/':'قسمة'};
+      return '🧮 **' + a + ' ' + op + ' ' + b + ' = ' + round(r) + '**\n\n_' + ops[op] + '_';
+    }
+
+    // ── ز) نسبة مئوية ──
+    var pct = norm.match(/(\d+(?:\.\d+)?)%(?:من|of)(\d+(?:\.\d+)?)/);
+    if(pct){
+      var pa = parseFloat(pct[1]);
+      var pb = parseFloat(pct[2]);
+      return '📊 **' + pa + '% من ' + pb + ' = ' + round(pa*pb/100) + '**';
+    }
+
+    // ── ح) متوسط ──
+    var avg = norm.match(/(?:متوسط|average)\s*([\d\s,،.]+)/i);
+    if(avg){
+      var nums = avg[1].split(/[\s,،]+/).map(parseFloat).filter(function(n){ return !isNaN(n); });
+      if(nums.length > 1){
+        var sum = nums.reduce(function(s,n){ return s+n; }, 0);
+        return '📊 **المتوسط:**\n\nالمجموع: ' + sum + '\nالعدد: ' + nums.length + '\n✅ **المتوسط = ' + round(sum/nums.length) + '**';
+      }
+    }
+
+    // ── ط) فيثاغورس ──
+    var pyth = norm.match(/(\d+)[,،\s]+(\d+)/);
+    if(pyth && /وتر|فيثاغورس|مثلث/.test(text)){
+      var pa2 = parseFloat(pyth[1]);
+      var pb2 = parseFloat(pyth[2]);
+      var pc = Math.sqrt(pa2*pa2 + pb2*pb2);
+      return '📐 **فيثاغورس:**\n\nج² = ' + pa2 + '² + ' + pb2 + '²\nج² = ' + (pa2*pa2) + ' + ' + (pb2*pb2) + ' = ' + (pa2*pa2 + pb2*pb2) + '\n✅ **الوتر = ' + round(pc) + '**';
+    }
+
+    return null;
+  }
+
+  // ══════════════════════════════════════
+  // بحث ذكي بقاعدة المعرفة
+  // ══════════════════════════════════════
+  function searchKBPro(query){
+    var q = query.toLowerCase().trim();
+    var best = null;
+    var bestScore = 0;
+
+    // ابحث في القاعدة الموسعة
+    for(var i = 0; i < PRO_KB.length; i++){
+      var item = PRO_KB[i];
+      var score = 0;
+      if(q.indexOf(item.t.toLowerCase()) !== -1) score += 10;
+      for(var j = 0; j < item.k.length; j++){
+        var kw = item.k[j].toLowerCase();
+        if(q.indexOf(kw) !== -1){
+          score += 5;
+          if(kw.length > 4) score += 2;
+        }
+      }
+      if(score > bestScore){ bestScore = score; best = item; }
+    }
+
+    // لو مفيش، ابحث في القاعدة القديمة
+    if(!best && window.Bot.searchKB){
+      var oldKb = window.Bot.searchKB(query);
+      if(oldKb) return oldKb;
+    }
+
+    return bestScore >= 5 ? best : null;
+  }
+
+  function round(n){
+    if(typeof n === 'string') return n;
+    return Math.round(n * 10000) / 10000;
+  }
+
+  console.log('✅ Pro Max AI Engine loaded — 100+ concepts + advanced math');
+}
+
+initProMax();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Pro Max v2: رياضيات متقدمة + فهم لغة بشرية
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function initProMaxV2(){
+  if(!window.Bot || !window.App){ setTimeout(initProMaxV2, 200); return; }
+
+  var Session = window.App.session;
+  var prevReply = window.Bot.reply;
+
+  // ══════════════════════════════════════
+  // 1) تطبيع النص
+  // ══════════════════════════════════════
+  function normalize(txt){
+    var t = String(txt).toLowerCase().trim();
+    t = t.replace(/[٠-٩]/g, function(d){ return String.fromCharCode(d.charCodeAt(0) - 1584); });
+    t = t.replace(/[،؛]/g, ',').replace(/[؟]/g, '?');
+    t = t.replace(/[\u064B-\u0652]/g, '');
+    t = t.replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه');
+    t = t.replace(/\b(من فضلك|لو سمحت|ممكن|يا|بليز|please|could you|can you|would you)\b/gi, ' ');
+    t = t.replace(/\s+/g, ' ').trim();
+    return t;
+  }
+
+  function extractMathExpr(txt){
+    var t = normalize(txt);
+    t = t.replace(/(احسب|احسبلي|كم|كام|اوجد|اوجدلي|حل|solve|calculate|what is|ناتج|نتيجه|قيمه|يساوي|=)/gi, ' ');
+    var m = t.match(/-?\d+(?:\.\d+)?\s*[+\-*/^√%]\s*-?\d+(?:\.\d+)?/);
+    return m ? m[0] : null;
+  }
+
+  function round(n){
+    if(typeof n === 'string') return n;
+    if(!isFinite(n)) return '∞';
+    return Math.round(n * 10000) / 10000;
+  }
+
+  // ══════════════════════════════════════
+  // 2) محرك الرياضيات المتقدمة
+  // ══════════════════════════════════════
+  function advancedMath(txt){
+    var t = normalize(txt);
+
+    // ─── محدد 2×2 ───
+    var detMatch = t.match(/(?:determinant|محدد|det)\s*\[?\s*\[?\s*(-?\d+)\s*,\s*(-?\d+)\s*\]?\s*\[?\s*(-?\d+)\s*,\s*(-?\d+)\s*\]?/i);
+    if(detMatch){
+      var a=+detMatch[1], b=+detMatch[2], c=+detMatch[3], d=+detMatch[4];
+      return '🔢 **محدد المصفوفة 2×2:**\n\n' +
+        '| ' + a + '  ' + b + ' |\n| ' + c + '  ' + d + ' |\n\n' +
+        'Δ = (' + a + '×' + d + ') − (' + b + '×' + c + ')\n' +
+        'Δ = ' + (a*d) + ' − ' + (b*c) + '\n' +
+        '✅ **Δ = ' + (a*d - b*c) + '**';
+    }
+
+    // ─── متتابعات ───
+    var seqMatch = t.match(/(?:متتابعه|متتابعة|تسلسل|sequence)\s*(?:حسابيه|حسابية|arithmetic)?\s*:?\s*([\d\s,،.-]+)/i);
+    if(seqMatch){
+      var seq = seqMatch[1].split(/[,\s،]+/).map(parseFloat).filter(function(n){ return !isNaN(n); });
+      if(seq.length >= 3){
+        var d = seq[1] - seq[0];
+        var d2 = seq[2] - seq[1];
+        if(Math.abs(d - d2) < 0.0001){
+          var a1 = seq[0], n = seq.length, an = a1 + (n-1)*d, sn = n*(a1 + an)/2;
+          return '📊 **متتابعة حسابية:**\n\n' +
+            'الحدود: ' + seq.join(', ') + '\n' +
+            'الفرق الثابت (د) = ' + d + '\n' +
+            'الحد الأول (أ) = ' + a1 + '\n\n' +
+            '📌 الحد النوني: حₙ = ' + a1 + ' + (ن−1)×' + d + '\n' +
+            '📌 مجموع ' + n + ' حد = ' + sn + '\n' +
+            '📌 الحد ' + (n+1) + ' = ' + (a1 + n*d);
+        }
+        var r = seq[1] / seq[0];
+        var r2 = seq[2] / seq[1];
+        if(Math.abs(r - r2) < 0.0001 && r !== 0){
+          return '📊 **متتابعة هندسية:**\n\n' +
+            'الحدود: ' + seq.join(', ') + '\n' +
+            'النسبة الثابتة (ر) = ' + r + '\n' +
+            'الحد الأول (أ) = ' + seq[0] + '\n\n' +
+            '📌 الحد النوني: حₙ = ' + seq[0] + ' × ' + r + '^(ن−1)\n' +
+            '📌 الحد ' + (seq.length+1) + ' = ' + (seq[0] * Math.pow(r, seq.length));
+        }
+      }
+    }
+
+    // ─── احتمالات ───
+    var probMatch = t.match(/(?:احتمال|probability)\s*(?:ظهور|سحب|اختيار)?\s*(\d+)\s*(?:من|من اصل|out of)\s*(\d+)/i);
+    if(probMatch){
+      var fav = +probMatch[1], total = +probMatch[2];
+      return '📊 **الاحتمال:**\n\n' +
+        'الاحتمال = عدد النواتج المواتية ÷ العدد الكلي\n' +
+        '= ' + fav + ' ÷ ' + total + '\n' +
+        '✅ **الاحتمال = ' + round(fav/total) + '**\n' +
+        '📌 النسبة المئوية = ' + round(fav/total*100) + '%';
+    }
+
+    // ─── مشتقة ───
+    var derivMatch = t.match(/(?:مشتقه|مشتقة|derivative of|differentiate)\s*(?:ال)?\s*(?:داله\s*)?(.+)/i);
+    if(derivMatch){
+      var expr = derivMatch[1].trim();
+      var dResult = derivative(expr);
+      if(dResult){
+        return '📐 **المشتقة:**\n\n' +
+          'الدالة: f(x) = ' + expr + '\n' +
+          'المشتقة: f\'(x) = ' + dResult + '\n\n' +
+          '_ملاحظة: مشتقة xⁿ = n·xⁿ⁻¹_';
+      }
+    }
+
+    // ─── تكامل ───
+    var intMatch = t.match(/(?:تكامل|integrate|integral of)\s*(?:ال)?\s*(?:داله\s*)?(.+)/i);
+    if(intMatch){
+      var iExpr = intMatch[1].trim();
+      var iResult = integral(iExpr);
+      if(iResult){
+        return '📐 **التكامل:**\n\n' +
+          'الدالة: f(x) = ' + iExpr + '\n' +
+          'التكامل: ∫f(x)dx = ' + iResult + ' + C\n\n' +
+          '_ملاحظة: ∫xⁿ dx = xⁿ⁺¹/(n+1)_';
+      }
+    }
+
+    // ─── معادلة تربيعية ───
+    var quad = t.match(/(-?\d*\.?\d*)\s*x\s*\^?\s*2?\s*([+\-]\s*\d*\.?\d*)\s*x\s*([+\-]\s*\d+)?\s*=\s*0/i);
+    if(quad){
+      var A = parseFloat(quad[1] || '1') || 1;
+      var B = parseFloat(quad[2].replace(/\s/g,'')) || 0;
+      var C = quad[3] ? parseFloat(quad[3].replace(/\s/g,'')) : 0;
+      if(A !== 0){
+        var disc = B*B - 4*A*C;
+        var sol = '📐 **المعادلة التربيعية:**\n\n' + A + 'x² ' + (B>=0?'+'+B:B) + 'x ' + (C>=0?'+'+C:C) + ' = 0\n\n';
+        sol += '**الخطوات:**\n';
+        sol += '1. a=' + A + '، b=' + B + '، c=' + C + '\n';
+        sol += '2. Δ = b² − 4ac = ' + (B*B) + ' − ' + (4*A*C) + ' = ' + disc + '\n';
+        if(disc > 0){
+          var x1 = (-B + Math.sqrt(disc))/(2*A);
+          var x2 = (-B - Math.sqrt(disc))/(2*A);
+          sol += '3. Δ > 0 → **حلان مختلفان:**\n\n';
+          sol += '✅ **x₁ = ' + round(x1) + '**\n';
+          sol += '✅ **x₂ = ' + round(x2) + '**';
+        } else if(disc === 0){
+          sol += '3. Δ = 0 → **حل واحد مكرر:**\n\n✅ **x = ' + round(-B/(2*A)) + '**';
+        } else {
+          var re = -B/(2*A), im = Math.sqrt(-disc)/(2*A);
+          sol += '3. Δ < 0 → **حلول مركبة:**\n\n';
+          sol += '✅ **x = ' + round(re) + ' ± ' + round(im) + 'i**';
+        }
+        return sol;
+      }
+    }
+
+    // ─── نظام معادلتين ───
+    var sys = t.match(/(-?\d*\.?\d*)\s*x\s*([+\-]\s*\d*\.?\d*)\s*y\s*=\s*(-?\d+)[,،\s]+(-?\d*\.?\d*)\s*x\s*([+\-]\s*\d*\.?\d*)\s*y\s*=\s*(-?\d+)/i);
+    if(sys){
+      var a1=parseFloat(sys[1]||'1')||1, b1=parseFloat(sys[2].replace(/\s/g,'')), c1=parseFloat(sys[3]);
+      var a2=parseFloat(sys[4]||'1')||1, b2=parseFloat(sys[5].replace(/\s/g,'')), c2=parseFloat(sys[6]);
+      var det = a1*b2 - a2*b1;
+      var o = '📐 **نظام معادلتين:**\n\n1) ' + a1 + 'x + ' + b1 + 'y = ' + c1 + '\n2) ' + a2 + 'x + ' + b2 + 'y = ' + c2 + '\n\n';
+      if(det === 0) return o + '⚠️ المحدد = 0 → لا حل وحيد.';
+      var xv = (c1*b2 - c2*b1)/det;
+      var yv = (a1*c2 - a2*c1)/det;
+      o += '**قاعدة كرامر:**\nΔ = ' + round(det) + '\n\n';
+      o += '✅ **x = ' + round(xv) + '**\n';
+      o += '✅ **y = ' + round(yv) + '**';
+      return o;
+    }
+
+    // ─── لوغاريتم ───
+    var logM = t.match(/(?:لو|log)\s*_?(\d+)?\s*\(?\s*(\d+)\s*\)?/i);
+    if(logM && logM[2]){
+      var base = parseFloat(logM[1] || '10'), num = parseFloat(logM[2]);
+      return '📐 **اللوغاريتم:**\n\n' +
+        'log₍' + base + '₎(' + num + ') = ' + round(Math.log(num)/Math.log(base)) + '\n\n' +
+        '_لأن ' + base + '^' + round(Math.log(num)/Math.log(base)) + ' = ' + num + '_';
+    }
+
+    // ─── مثلثات ───
+    var trig = t.match(/(sin|cos|tan|جا|جتا|ظا)\s*\(?\s*(-?\d+)\s*\)?/i);
+    if(trig){
+      var fn = trig[1].toLowerCase(), ang = parseFloat(trig[2]), rad = ang*Math.PI/180;
+      var v = 0, fname = '';
+      if(fn==='sin'||fn==='جا'){ v=Math.sin(rad); fname='sin'; }
+      else if(fn==='cos'||fn==='جتا'){ v=Math.cos(rad); fname='cos'; }
+      else { v=Math.tan(rad); fname='tan'; }
+      return '📐 **حساب المثلثات:**\n\n' + fname + '(' + ang + '°) = ' + round(v) + '\n\n_راديان: ' + round(rad) + '_';
+    }
+
+    // ─── جذر ───
+    var rootM = t.match(/(?:√|جذر|sqrt)\s*\(?\s*(\d+)\s*\)?/);
+    if(rootM){ return '📐 **الجذر:**\n\n√' + rootM[1] + ' = ' + round(Math.sqrt(+rootM[1])); }
+
+    // ─── أس ───
+    var powM = t.match(/(\d+(?:\.\d+)?)\s*\^\s*(\d+)/);
+    if(powM){ return '📐 **الأس:**\n\n' + powM[1] + '^' + powM[2] + ' = ' + round(Math.pow(+powM[1], +powM[2])); }
+
+    // ─── عمليات أساسية ───
+    var basic = extractMathExpr(txt);
+    if(basic){
+      var bm = basic.match(/(-?\d+(?:\.\d+)?)([+\-*/])(-?\d+(?:\.\d+)?)/);
+      if(bm){
+        var av=+bm[1], op=bm[2], bv=+bm[3], r;
+        if(op==='+') r=av+bv; else if(op==='-') r=av-bv;
+        else if(op==='*') r=av*bv; else r=bv!==0?av/bv:'غير معرّف';
+        var ops={'+':'جمع','-':'طرح','*':'ضرب','/':'قسمة'};
+        return '🧮 **' + av + ' ' + op + ' ' + bv + ' = ' + round(r) + '**\n\n_' + ops[op] + '_';
+      }
+    }
+
+    // ─── نسبة مئوية ───
+    var pct = t.match(/(\d+(?:\.\d+)?)%\s*(?:من|of)\s*(\d+(?:\.\d+)?)/);
+    if(pct) return '📊 **' + pct[1] + '% من ' + pct[2] + ' = ' + round(+pct[1]*+pct[2]/100) + '**';
+
+    // ─── متوسط ───
+    var avg = t.match(/(?:متوسط|average|معدل)\s*([\d\s,.،]+)/i);
+    if(avg){
+      var nums = avg[1].split(/[\s,،]+/).map(parseFloat).filter(function(n){ return !isNaN(n); });
+      if(nums.length > 1){
+        var s = nums.reduce(function(a,b){ return a+b; }, 0);
+        return '📊 **المتوسط:**\n\nالمجموع: ' + s + '\nالعدد: ' + nums.length + '\n✅ **= ' + round(s/nums.length) + '**';
+      }
+    }
+
+    // ─── فيثاغورس ───
+    var pyth = t.match(/(\d+)[,،\s]+(\d+)/);
+    if(pyth && /وتر|فيثاغورس|مثلث/.test(txt)){
+      var pa=+pyth[1], pb=+pyth[2];
+      return '📐 **فيثاغورس:**\n\nج² = ' + pa + '² + ' + pb + '² = ' + (pa*pa+pb*pb) +
+        '\n✅ **الوتر = ' + round(Math.sqrt(pa*pa+pb*pb)) + '**';
+    }
+
+    return null;
+  }
+
+  // ══════════════════════════════════════
+  // 3) مشتقة
+  // ══════════════════════════════════════
+  function derivative(expr){
+    var terms = expr.replace(/\s/g, '').split(/(?=[+\-])/);
+    var result = [];
+    for(var i = 0; i < terms.length; i++){
+      var term = terms[i];
+      if(!term) continue;
+      var m = term.match(/([+\-]?)(\d*\.?\d*)\*?x(?:\^(\d+))?/);
+      if(m){
+        var sign = m[1] === '-' ? -1 : 1;
+        var coef = parseFloat(m[2] || '1') || 1;
+        var pow = m[3] ? parseFloat(m[3]) : 1;
+        if(pow > 0){
+          var newCoef = coef * pow;
+          var newPow = pow - 1;
+          var termStr = newCoef === 1 ? 'x' : (newCoef === -1 ? '-x' : newCoef + 'x');
+          if(newPow > 1) termStr += '^' + newPow;
+          result.push((sign > 0 && result.length > 0 ? '+' : '') + (sign > 0 ? termStr : '-' + termStr));
+        }
+      }
+    }
+    return result.length > 0 ? result.join('') : '0';
+  }
+
+  // ══════════════════════════════════════
+  // 4) تكامل
+  // ══════════════════════════════════════
+  function integral(expr){
+    var terms = expr.replace(/\s/g, '').split(/(?=[+\-])/);
+    var result = [];
+    for(var i = 0; i < terms.length; i++){
+      var term = terms[i];
+      if(!term) continue;
+      var m = term.match(/([+\-]?)(\d*\.?\d*)\*?x(?:\^(\d+))?/);
+      if(m){
+        var sign = m[1] === '-' ? -1 : 1;
+        var coef = parseFloat(m[2] || '1') || 1;
+        var pow = m[3] ? parseFloat(m[3]) : 1;
+        var newCoef = coef / (pow + 1);
+        var newPow = pow + 1;
+        var termStr = (newCoef === 1 ? '' : newCoef) + 'x';
+        if(newPow > 1) termStr += '^' + newPow;
+        result.push((sign > 0 && result.length > 0 ? '+' : '') + (sign > 0 ? termStr : '-' + termStr));
+      } else if(/^[+\-]?\d+\.?\d*$/.test(term)){
+        var c = parseFloat(term);
+        result.push((c > 0 && result.length > 0 ? '+' : '') + c + 'x');
+      }
+    }
+    return result.length > 0 ? result.join('') : '0';
+  }
+
+  // ══════════════════════════════════════
+  // 5) فهم اللغة البشرية
+  // ══════════════════════════════════════
+  function humanize(txt){
+    var t = normalize(txt);
+
+    var wantMatch = t.match(/(?:عايز|عاوز|اريد|ابغي|محتاج)\s+(?:اعرف|افهم|اشرح|احسب|اعمل|احصل|wanna|want to)\s+(.+)/i);
+    if(wantMatch) return { intent: 'want', subject: wantMatch[1].trim() };
+
+    var possibleMatch = t.match(/(?:ممكن|ينفع|تقدر)\s+(?:تشرح|تحسب|توضح|تعمل|explain|calculate)\s*(?:لي|لى|ليا|for me)?\s*(.+)/i);
+    if(possibleMatch) return { intent: 'request', subject: possibleMatch[1].trim() };
+
+    var whatMatch = t.match(/(?:ايه|اي|what is|what are)\s+(?:هو|هي|معني|معنى)\s+(.+)/i);
+    if(whatMatch) return { intent: 'define', subject: whatMatch[1].trim() };
+
+    return null;
+  }
+
+  // ══════════════════════════════════════
+  // 6) الدالة الرئيسية
+  // ══════════════════════════════════════
+  window.Bot.reply = function(text){
+    var t = normalize(text);
+    var plan = Session.getPlan();
+    var isPro = (plan === 'pro' || plan === 'premium');
+
+    // فهم بشري
+    var human = humanize(text);
+    if(human){
+      var subject = human.subject;
+      var mResult = advancedMath(subject);
+      if(mResult) return mResult;
+      var kbR = searchKBPro(subject);
+      if(kbR){
+        var o = '📖 **' + kbR.t + '**\n\n' + kbR.d;
+        if(kbR.w) o += '\n\n💡 **ليه؟** ' + kbR.w;
+        if(kbR.e) o += '\n\n🌟 **مثال:** ' + kbR.e;
+        return o;
+      }
+    }
+
+    // تحيات
+    if(/^(مرحبا|السلام|اهلا|هلا|hi|hello|صباح|مساء)/.test(t)){
+      var hh = new Date().getHours();
+      var gg = hh<12 ? 'صباح الخير ☀️' : hh<18 ? 'أهلاً وسهلاً 👋' : 'مساء النور 🌙';
+      return gg + '\n\nأنا **Pro Max v2** 🤖\n\n' +
+        (isPro ? '✨ **الجديد:**\n• 🧮 رياضيات متقدمة (تفاضل + تكامل + مصفوفات)\n• 🧠 فهم أفضل للغة (حتى العامية)\n• 📊 متتابعات + احتمالات\n• 📐 مثلثات ولوغاريتمات\n\nجرّب: "احسبلي x²-5x+6=0" أو "مشتقة 3x^2+2x"' : 'اسألني أي حاجة تعليمية!');
+    }
+
+    if(/شكر|thanks|شكراً|تسلم/.test(t)) return 'العفو! 😊 ' + (isPro ? 'أنا هنا لأي سؤال — حتى الأصعب!' : 'اسألني أي وقت!');
+
+    if(/اسمك|من انت|من أنت|yasedu|ياسيدو/.test(t)){
+      return 'أنا **Pro Max v2** 🤖 — نسخة مطورة من مساعد YasEdu\n\n' +
+        '✨ **الجديد:**\n• 🧮 تفاضل وتكامل\n• 🔢 مصفوفات ومحددات\n• 📊 متتابعات واحتمالات\n• 🧠 فهم عامية مصرية\n• 📖 100+ مفهوم\n\n' +
+        '🏢 **ياس ستوديو** • 👨‍💻 **ياسر محمد**';
+    }
+
+    if(/نصيح|نصائح|كيف اذاكر|طريقة مذاكرة/.test(t)){
+      if(isPro){
+        var tips = ['🧠 فاينمان: اشرح بصوت عالٍ.','📊 تكرار متباعد: يوم→3→أسبوع→شهر.','⏱️ بومودورو: 25→5.','😴 نام قبل المراجعة.'];
+        return '💡 **نصيحة Pro Max:**\n\n' + tips[Math.floor(Math.random()*tips.length)];
+      }
+      return '💡 ذاكر 25 دقيقة وارتاح 5.\n\n⚡ ترقّى لـ Pro.';
+    }
+
+    // رياضيات متقدمة
+    var am = advancedMath(text);
+    if(am) return am;
+
+    // مقارنات
+    if(/الفرق بين/.test(t)){
+      var mm = text.match(/الفرق\s*بين\s*(.+?)\s*(?:و|vs|and)\s*(.+)/i);
+      if(mm){
+        var ra = searchKBPro(mm[1].trim()), rb = searchKBPro(mm[2].trim());
+        if(ra || rb){
+          var oo = '⚖️ **المقارنة:**\n\n';
+          if(ra) oo += '🔹 **' + ra.t + ':**\n' + ra.d + '\n\n';
+          if(rb) oo += '🔸 **' + rb.t + ':**\n' + rb.d + '\n\n';
+          return oo;
+        }
+      }
+    }
+
+    // قاعدة معرفة
+    var kb = searchKBPro(text);
+    if(kb){
+      var out = '📖 **' + kb.t + '**\n\n' + kb.d;
+      if(kb.w) out += '\n\n💡 **ليه؟** ' + kb.w;
+      if(kb.e) out += '\n\n🌟 **مثال:** ' + kb.e;
+      return out;
+    }
+
+    return prevReply.call(this, text);
+  };
+
+  // ══════════════════════════════════════
+  // 7) قاعدة المعرفة الموسعة
+  // ══════════════════════════════════════
+  var PRO_KB = [
+    // رياضيات
+    {t:'المشتقة',c:'رياضيات',k:['مشتقة','تفاضل','derivative','اشتقاق'],d:'معدل التغير اللحظي. مشتقة xⁿ = n·xⁿ⁻¹',w:'تستخدم في السرعة والتسارع والميل',e:'مشتقة x² = 2x'},
+    {t:'التكامل',c:'رياضيات',k:['تكامل','integral','مساحة تحت المنحنى'],d:'عكس المشتقة. ∫xⁿdx = xⁿ⁺¹/(n+1)',w:'يحسب المساحات والأحجام',e:'∫2x dx = x² + C'},
+    {t:'المصفوفات',c:'رياضيات',k:['مصفوفة','محدد','determinant','matrix'],d:'ترتيب مستطيل للأرقام. محدد 2×2 = ad−bc',w:'حل الأنظمة والتحويلات',e:'|1 2; 3 4| = -2'},
+    {t:'المتتابعة الحسابية',c:'رياضيات',k:['متتابعة حسابية','arithmetic'],d:'فرق ثابت بين الحدود. حₙ = أ+(ن−1)د',w:'تظهر في الأنماط',e:'2,5,8,11 (د=3)'},
+    {t:'المتتابعة الهندسية',c:'رياضيات',k:['متتابعة هندسية','geometric'],d:'نسبة ثابتة. حₙ = أ×رⁿ⁻¹',w:'تظهر في النمو',e:'2,6,18,54 (ر=3)'},
+    {t:'الاحتمالات',c:'رياضيات',k:['احتمال','probability'],d:'عدد النواتج المواتية ÷ الكلي',w:'يستخدم في الإحصاء',e:'احتمال صورة = 1/2'},
+    {t:'اللوغاريتم',c:'رياضيات',k:['لوغاريتم','log','ln'],d:'الأس المطلوب. logₐ(b) = c ↔ a^c = b',w:'يحول الضرب لجمع',e:'log₂(8) = 3'},
+    {t:'المثلثات',c:'رياضيات',k:['مثلثات','sin','cos','tan','جا','جتا','ظا'],d:'sin=مقابل/وتر، cos=مجاور/وتر، tan=مقابل/مجاور',w:'تدرس العلاقات في المثلث',e:'sin(30)=0.5'},
+    {t:'المعادلة التربيعية',c:'رياضيات',k:['تربيعية','ax2','درجة تانية'],d:'ax²+bx+c=0. الحل: x=(-b±√(b²-4ac))/2a',w:'لها حلان أو حل أو لا حل',e:'x²-5x+6=0 → 2,3'},
+    {t:'الحدود',c:'رياضيات',k:['نهايات','limit','حد'],d:'القيمة التي تقترب منها الدالة',w:'أساس التفاضل',e:'lim(x→2)(x²)=4'},
+    {t:'المتجهات',c:'رياضيات',k:['متجه','vector'],d:'كمية لها مقدار واتجاه',w:'تستخدم في الفيزياء',e:'قوة 10N شمالاً'},
+    {t:'الإحصاء',c:'رياضيات',k:['احصاء','انحراف معياري','تباين'],d:'تحليل البيانات. المتوسط والوسيط والمنوال',w:'يلخص البيانات',e:'متوسط 2,4,6 = 4'},
+
+    // فيزياء
+    {t:'قوانين نيوتن',c:'فيزياء',k:['نيوتن','قصور ذاتي','رد فعل'],d:'1-القصور 2-ق=ك×ت 3-رد الفعل',w:'تفسر الحركة',e:'ق = ك × ت'},
+    {t:'الطاقة',c:'فيزياء',k:['طاقة','حركية','كامنة'],d:'حركية = ½ك ع²، كامنة = ك ج ع',w:'محفوظة في النظام المغلق',e:'طاقة الوضع = mgh'}
+  ];
+
+  function searchKBPro(query){
+    var q = normalize(query);
+    if(!q || q.length < 2) return null;
+    var best = null, bestScore = 0;
+    for(var i = 0; i < PRO_KB.length; i++){
+      var item = PRO_KB[i];
+      var score = 0;
+      for(var j = 0; j < item.k.length; j++){
+        var kw = normalize(item.k[j]);
+        if(q.indexOf(kw) !== -1) score += kw.length * 2;
+      }
+      if(normalize(item.t).indexOf(q) !== -1) score += 10;
+      if(score > bestScore){ bestScore = score; best = item; }
+    }
+    return bestScore >= 2 ? best : null;
+  }
+
+  console.log('✅ YasEdu Pro Max v2 loaded');
+}
+
+initProMaxV2();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Premium AI (Fast & Reliable)
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+var PREMIUM_SERVER_URL = 'https://yasedu-premium.mbadrhashbal.workers.dev';
+
+function initPremium(){
+  if(!window.Bot || !window.App){ setTimeout(initPremium, 200); return; }
+  var Session = window.App.session;
+  var U = window.App.utils;
+  var originalSend = window.Bot.send;
+
+  window.Bot.send = async function(){
+    var plan = Session.getPlan();
+    // لو مش بريميوم، شغل الكود القديم
+    if(plan !== 'premium') return originalSend.call(this);
+
+    var inp = U.$('bot-input');
+    var text = inp && inp.value.trim();
+    if(!text) return;
+
+    var body = U.$('bot-body');
+    var s = window.App.state.user;
+    inp.value = '';
+
+    // مسج المستخدم
+    var userRow = document.createElement('div');
+    userRow.className = 'msg mine';
+    userRow.innerHTML = '<div class="msg-avatar">' + U.initials(s.name) + '</div>' +
+      '<div class="msg-content"><div class="msg-bubble">' + U.esc(text) + '</div></div>';
+    body.appendChild(userRow);
+    body.scrollTop = body.scrollHeight;
+
+    // مؤشر التحميل
+    var typingRow = document.createElement('div');
+    typingRow.className = 'msg';
+    typingRow.innerHTML = '<div class="msg-avatar" style="background:linear-gradient(135deg,var(--brand),var(--brand-dark));font-size:16px">🤖</div>' +
+      '<div class="msg-content"><div class="msg-bubble" style="display:flex;align-items:center;gap:8px"><span class="spinner"></span> يفكر...</div></div>';
+    body.appendChild(typingRow);
+    body.scrollTop = body.scrollHeight;
+
+    try {
+      // إرسال الطلب للسيرفر بدون مشاكل CORS
+      var res = await fetch(PREMIUM_SERVER_URL, {
+        method: 'POST',
+        body: JSON.stringify({ message: text, history: [] })
+      });
+
+      if(!res.ok) throw new Error('Server error: ' + res.status);
+      var data = await res.json();
+      if(data.error) throw new Error(data.error);
+
+      typingRow.remove();
+      
+      var reply = data.reply || 'عذراً، مقدرتش أرد.';
+      var formatted = reply.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+
+      var botRow = document.createElement('div');
+      botRow.className = 'msg';
+      botRow.innerHTML = '<div class="msg-avatar" style="background:linear-gradient(135deg,var(--brand),var(--brand-dark));font-size:16px">🤖</div>' +
+        '<div class="msg-content"><div class="msg-bubble">' + formatted + '</div></div>';
+      body.appendChild(botRow);
+      body.scrollTop = body.scrollHeight;
+
+      Session.addXP(1);
+
+    } catch(err) {
+      typingRow.remove();
+      var errRow = document.createElement('div');
+      errRow.className = 'msg';
+      errRow.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-content"><div class="msg-bubble" style="color:var(--red)">عذراً: ' + U.esc(err.message) + '</div></div>';
+      body.appendChild(errRow);
+    }
+  };
+}
+initPremium();
+})();
+</script>
 </body>
 </html>
