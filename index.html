@@ -5062,5 +5062,199 @@ document.head.appendChild(firebaseLink);
 console.log('🚀 Speed Boost Active');
 })();
 </script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Fix Custom Quiz Mode (Second Button)
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+setTimeout(function(){
+  if(!window.Quiz || !window.App){ return; }
+
+  var U = window.App.utils;
+  var UI = window.App.ui;
+  var SERVER = 'https://yasedu-premium.mbadrhashbal.workers.dev';
+
+  // 1. تفعيل الزرار التاني (تخصيص كامل)
+  window.toggleQuizMode = function(mode){
+    var autoPanel = U.$('quiz-config-auto');
+    var customPanel = U.$('quiz-config-custom');
+    var autoBtn = U.$('mode-auto');
+    var customBtn = U.$('mode-custom');
+    
+    if(mode === 'custom'){
+      if(autoPanel) autoPanel.style.display = 'none';
+      if(customPanel) customPanel.style.display = 'block';
+      if(autoBtn) { autoBtn.className = 'btn btn-sm btn-secondary'; autoBtn.style.flex = '1'; }
+      if(customBtn) { customBtn.className = 'btn btn-sm'; customBtn.style.flex = '1'; }
+    } else {
+      if(autoPanel) autoPanel.style.display = 'block';
+      if(customPanel) customPanel.style.display = 'none';
+      if(autoBtn) { autoBtn.className = 'btn btn-sm'; autoBtn.style.flex = '1'; }
+      if(customBtn) { customBtn.className = 'btn btn-sm btn-secondary'; customBtn.style.flex = '1'; }
+    }
+  };
+
+  // 2. تعديل دالة التوليد عشان تفهم الوضعين
+  window.Quiz.generate = async function(){
+    var textEl = U.$('quiz-text') || document.querySelector('textarea');
+    var text = textEl ? textEl.value.trim() : '';
+    
+    if(!text || text.length < 30){
+      UI.toast('اكتب نص الأول (30 حرف على الأقل)', 'error');
+      return;
+    }
+
+    var btn = document.querySelector('#quiz-auto-panel .btn-lg');
+    if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> جاري التوليد...'; }
+
+    // هل إحنا في وضع "تخصيص كامل"؟
+    var isCustomMode = U.$('quiz-config-custom') && U.$('quiz-config-custom').style.display !== 'none';
+
+    var finalQuestions = [];
+    var totalNeeded = 0;
+
+    try {
+      if(isCustomMode) {
+        // ══════════════════════════════════════
+        // الوضع الثاني: تخصيص كامل
+        // ══════════════════════════════════════
+        var mcqCount = parseInt(U.$('custom-mcq-count').value) || 0;
+        var tfCount = parseInt(U.$('custom-tf-count').value) || 0;
+        var fbCount = parseInt(U.$('custom-fb-count').value) || 0;
+        var expCount = parseInt(U.$('custom-explain-count').value) || 0;
+        
+        totalNeeded = mcqCount + tfCount + fbCount + expCount;
+        
+        if(totalNeeded === 0){
+          UI.toast('حدد عدد سؤال واحد على الأقل', 'error');
+          if(btn){ btn.disabled = false; btn.innerHTML = '✨ توليد الأسئلة'; }
+          return;
+        }
+
+        // برومبت شامل
+        var prompt = 'اقرأ النص ده وولّد أسئلة منه:\n"' + text + '"\n\n';
+        prompt += 'الأعداد المطلوبة:\n';
+        if(mcqCount > 0) prompt += '- ' + mcqCount + ' اختيار متعدد (mcq)\n';
+        if(tfCount > 0) prompt += '- ' + tfCount + ' صح/خطأ (truefalse)\n';
+        if(fbCount > 0) prompt += '- ' + fbCount + ' ملء فراغ (fillblank)\n';
+        if(expCount > 0) prompt += '- ' + expCount + ' مقالي (explain)\n';
+        prompt += '\nصيغة JSON: [{"type":"mcq","question":"...","options":[],"answer":"..."}]\n';
+        prompt += 'أنواع: mcq, truefalse, fillblank, explain.';
+
+        var res = await fetch(SERVER, {
+          method: 'POST',
+          body: JSON.stringify({ type: 'quiz', message: prompt })
+        });
+
+        if(!res.ok) throw new Error('فشل الاتصال');
+        var data = await res.json();
+        if(data.error) throw new Error(data.error);
+        if(!data.questions || !data.questions.length) throw new Error('مفيش أسئلة');
+
+        // نرتب الأسئلة حسب النوع
+        var mcqQs = [], tfQs = [], fbQs = [], expQs = [];
+        data.questions.forEach(function(q){
+          var type = q.type || 'mcq';
+          if(type === 'mcq' || type === 'truefalse' || type === 'fillblank' || type === 'explain'){
+            if(type === 'mcq') mcqQs.push(q);
+            else if(type === 'truefalse') tfQs.push(q);
+            else if(type === 'fillblank') fbQs.push(q);
+            else expQs.push(q);
+          }
+        });
+
+        // نبني الأسئلة النهائية بالأعداد المطلوبة
+        function buildQuestion(q, type){
+          var newQ = { type: type, question: q.question || 'سؤال', answer: q.answer || '', options: [] };
+          if(type === 'mcq'){
+            var opts = q.options || [];
+            while(opts.length < 4) opts.push('خيار ' + (opts.length+1));
+            newQ.options = opts.slice(0, 4);
+          } else if(type === 'truefalse'){
+            newQ.options = ['صح', 'خطأ'];
+            var ans = String(q.answer).toLowerCase();
+            newQ.answer = (ans.includes('خطأ') || ans === 'false') ? 'خطأ' : 'صح';
+          }
+          return newQ;
+        }
+
+        // ناخد العدد المطلوب من كل نوع
+        mcqQs.slice(0, mcqCount).forEach(function(q){ finalQuestions.push(buildQuestion(q, 'mcq')); });
+        tfQs.slice(0, tfCount).forEach(function(q){ finalQuestions.push(buildQuestion(q, 'truefalse')); });
+        fbQs.slice(0, fbCount).forEach(function(q){ finalQuestions.push(buildQuestion(q, 'fillblank')); });
+        expQs.slice(0, expCount).forEach(function(q){ finalQuestions.push(buildQuestion(q, 'explain')); });
+
+        // لو جيميناي مجابش كفاية، نكمل بأي أسئلة زيادة
+        if(finalQuestions.length < totalNeeded){
+          data.questions.forEach(function(q){
+            if(finalQuestions.length < totalNeeded){
+              finalQuestions.push(buildQuestion(q, q.type || 'mcq'));
+            }
+          });
+        }
+
+      } else {
+        // ══════════════════════════════════════
+        // الوضع الأول: تلقائي (زي القديم)
+        // ══════════════════════════════════════
+        var count = parseInt(U.$('quiz-count').value) || 5;
+        var quizType = U.$('quiz-type-sel').value || 'mcq';
+        totalNeeded = count;
+
+        var prompt = 'اقرأ النص ده وولّد أسئلة منه:\n"' + text + '"\n\n';
+        prompt += 'المطلوب: ' + count + ' أسئلة. النوع: ' + quizType + '.\n';
+        prompt += 'صيغة: [{"question":"...","options":[],"answer":"..."}]';
+
+        var res = await fetch(SERVER, {
+          method: 'POST',
+          body: JSON.stringify({ type: 'quiz', message: prompt })
+        });
+
+        if(!res.ok) throw new Error('فشل الاتصال');
+        var data = await res.json();
+        if(data.error) throw new Error(data.error);
+        if(!data.questions || !data.questions.length) throw new Error('مفيش أسئلة');
+
+        finalQuestions = data.questions.slice(0, count).map(function(q){
+          var newQ = { type: quizType, question: q.question || 'سؤال', answer: q.answer || '', options: [] };
+          if(quizType === 'mcq'){
+            var opts = q.options || [];
+            while(opts.length < 4) opts.push('خيار ' + (opts.length+1));
+            newQ.options = opts.slice(0, 4);
+          } else if(quizType === 'truefalse'){
+            newQ.options = ['صح', 'خطأ'];
+            var ans = String(q.answer).toLowerCase();
+            newQ.answer = (ans.includes('خطأ') || ans === 'false') ? 'خطأ' : 'صح';
+          }
+          return newQ;
+        });
+      }
+
+      // بدء الاختبار
+      window.Quiz.questions = finalQuestions;
+      window.Quiz.mode = 'auto';
+      window.Quiz.curQ = 0;
+      window.Quiz.score = 0;
+      window.Quiz.attempted = [];
+
+      U.$('quiz-setup').style.display = 'none';
+      U.$('quiz-run').style.display = 'block';
+      window.Quiz.renderQuestion();
+      
+      UI.toast('✅ ' + finalQuestions.length + ' سؤال', 'success');
+
+    } catch(err) {
+      UI.toast('خطأ: ' + err.message, 'error');
+    } finally {
+      if(btn){ btn.disabled = false; btn.innerHTML = '✨ توليد الأسئلة'; }
+    }
+  };
+
+  console.log('✅ Both Quiz Modes Working');
+}, 1000);
+})();
+</script>
 </body>
 </html>
