@@ -4150,5 +4150,917 @@ function addCouponsToAdminPanel(){
 addCouponsToAdminPanel();
 })();
 </script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Pro Max Math Engine (Smart Parser)
+   محرك رياضيات ذكي يفهم كل الصيغ
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function initSmartMath(){
+  if(!window.Bot || !window.App){ setTimeout(initSmartMath, 500); return; }
+
+  var Session = window.App.session;
+  var baseReply = window.Bot.reply;
+
+  // ==========================================
+  // 1. محرك توحيد الصيغة الرياضية (Math Normalizer)
+  // ==========================================
+  function normalizeMath(txt){
+    var t = String(txt).toLowerCase().trim();
+
+    // أرقام عربية → إنجليزية
+    t = t.replace(/[٠-٩]/g, function(d){ return String.fromCharCode(d.charCodeAt(0) - 1584); });
+
+    // رموز عربية → إنجليزية
+    t = t.replace(/[×✕]/g, '*')
+         .replace(/[÷]/g, '/')
+         .replace(/[−–]/g, '-')
+         .replace(/[،]/g, ',')
+         .replace(/[\^]/g, '^');
+
+    // كلمات عربية → رموز رياضية
+    var words = {
+      'اكس تربيع': 'x^2', 'اكس اس 2': 'x^2', 'اكس اس اثنين': 'x^2',
+      'اكس تكعيب': 'x^3', 'اكس اس 3': 'x^3',
+      'اكس': 'x', 'س': 'x', 'ص': 'y',
+      'زائد': '+', 'موجب': '+', 'ناقص': '-', 'سالب': '-',
+      'ضرب': '*', 'في': '*', 'مضروب في': '*',
+      'على': '/', 'تقسيم': '/', 'مقسوم على': '/',
+      'يساوي': '=', 'يساوى': '=', 'تساوي': '=',
+      'جذر': 'sqrt', 'جزر': 'sqrt',
+      'لو': 'log', 'لوغاريتم': 'log',
+      'جا': 'sin', 'جتا': 'cos', 'ظا': 'tan',
+      'باى': 'pi', 'باي': 'pi',
+      'تربيع': '^2', 'تكعيب': '^3'
+    };
+    Object.keys(words).forEach(function(w){
+      t = t.replace(new RegExp(w, 'g'), words[w]);
+    });
+
+    // إزالة المسافات الزائدة حول الرموز
+    t = t.replace(/\s*([+\-*/^=()])\s*/g, '$1');
+
+    return t.trim();
+  }
+
+  // ==========================================
+  // 2. محلل التعبيرات الرياضية (Expression Parser)
+  // ==========================================
+  function evaluateExpression(expr){
+    try {
+      // تحويل x^2 إلى (x*x) للتعامل معها لو كانت معادلة
+      // نستخدم eval بحذر بعد التأكد من سلامة النص
+      if(/[a-wyz]/i.test(expr.replace(/sqrt|log|sin|cos|tan|pi/g, ''))){
+        return null; // فيه متغيرات مش معروفة
+      }
+      
+      // استبدال الدوال الرياضية
+      var clean = expr
+        .replace(/sqrt\(([^)]+)\)/g, 'Math.sqrt($1)')
+        .replace(/log\(([^)]+)\)/g, 'Math.log10($1)')
+        .replace(/sin\(([^)]+)\)/g, 'Math.sin(($1)*Math.PI/180)')
+        .replace(/cos\(([^)]+)\)/g, 'Math.cos(($1)*Math.PI/180)')
+        .replace(/tan\(([^)]+)\)/g, 'Math.tan(($1)*Math.PI/180)')
+        .replace(/pi/g, 'Math.PI')
+        .replace(/\^/g, '**');
+      
+      // التأكد من إن التعبير سليم (مكون من أرقام وعمليات فقط)
+      if(!/^[0-9+\-*/().\s*Math\w]+$/.test(clean)) return null;
+      
+      var result = Function('"use strict"; return (' + clean + ')')();
+      if(typeof result === 'number' && isFinite(result)){
+        return Math.round(result * 10000) / 10000;
+      }
+      return null;
+    } catch(e) { return null; }
+  }
+
+  // ==========================================
+  // 3. حل المعادلات (Equation Solver)
+  // ==========================================
+  function solveEquation(eq){
+    // eq = "2x+3=11" أو "x^2-5x+6=0"
+    var sides = eq.split('=');
+    if(sides.length !== 2) return null;
+    
+    var left = sides[0].trim();
+    var right = sides[1].trim();
+
+    // أ) معادلة خطية: ax + b = c
+    var linearPattern = /^(-?\d*\.?\d*)\*?x([+\-]\d*\.?\d*)?$/;
+    var lm = left.match(linearPattern);
+    if(lm && /^-?\d+(\.\d+)?$/.test(right)){
+      var a = parseFloat(lm[1] || '1');
+      if(a === 0) a = 1;
+      var b = lm[2] ? parseFloat(lm[2]) : 0;
+      var c = parseFloat(right);
+      var x = (c - b) / a;
+      
+      return '📐 **حل المعادلة:**\n\n' + eq + '\n\n' +
+        '**الخطوات:**\n' +
+        '1. المعادلة: ' + a + 'x ' + (b >= 0 ? '+ ' + b : '- ' + Math.abs(b)) + ' = ' + c + '\n' +
+        '2. ننقل ' + Math.abs(b) + ' للطرف الآخر: ' + a + 'x = ' + (c - b) + '\n' +
+        '3. نقسم على ' + a + ': x = ' + (c - b) + ' ÷ ' + a + '\n\n' +
+        '✅ **x = ' + (Math.round(x * 10000) / 10000) + '**';
+    }
+
+    // ب) معادلة تربيعية: ax² + bx + c = 0
+    var quadPattern = /^(-?\d*\.?\d*)\*?x\^?2\s*([+\-]\s*\d*\.?\d*)\*?x\s*([+\-]\s*\d+)?$/;
+    var qm = left.match(quadPattern);
+    if(qm && /^-?\d+(\.\d+)?$/.test(right) && parseFloat(right) === 0){
+      var A = parseFloat(qm[1] || '1');
+      if(A === 0) A = 1;
+      var B = parseFloat(qm[2].replace(/\s/g, ''));
+      var C = qm[3] ? parseFloat(qm[3].replace(/\s/g, '')) : 0;
+      
+      var disc = B * B - 4 * A * C;
+      var out = '📐 **حل المعادلة التربيعية:**\n\n' + eq + '\n\n';
+      out += '**الخطوات:**\n';
+      out += '1. a = ' + A + '، b = ' + B + '، c = ' + C + '\n';
+      out += '2. Δ = b² - 4ac = (' + B + ')² - 4(' + A + ')(' + C + ') = ' + disc + '\n';
+      
+      if(disc > 0){
+        var x1 = (-B + Math.sqrt(disc)) / (2 * A);
+        var x2 = (-B - Math.sqrt(disc)) / (2 * A);
+        out += '3. Δ > 0 → **حلان مختلفان:**\n\n';
+        out += '✅ **x₁ = ' + (Math.round(x1 * 10000) / 10000) + '**\n';
+        out += '✅ **x₂ = ' + (Math.round(x2 * 10000) / 10000) + '**';
+      } else if(disc === 0){
+        out += '3. Δ = 0 → **حل واحد مكرر:**\n\n';
+        out += '✅ **x = ' + (Math.round(-B / (2 * A) * 10000) / 10000) + '**';
+      } else {
+        var re = -B / (2 * A);
+        var im = Math.sqrt(-disc) / (2 * A);
+        out += '3. Δ < 0 → **لا حلول حقيقية**\n\n';
+        out += '💡 الحلول مركبة: x = ' + (Math.round(re * 10000) / 10000) + ' ± ' + (Math.round(im * 10000) / 10000) + 'i';
+      }
+      return out;
+    }
+
+    return null;
+  }
+
+  // ==========================================
+  // 4. الدالة الرئيسية للرياضيات
+  // ==========================================
+  function smartMath(text){
+    var normalized = normalizeMath(text);
+
+    // 1. لو فيه "=" → معادلة
+    if(normalized.includes('=')){
+      var eqSolution = solveEquation(normalized);
+      if(eqSolution) return eqSolution;
+    }
+
+    // 2. لو فيه x^2 أو x² بس من غير "=" → تبسيط أو تحليل
+    if(/x\^?2/.test(normalized) && !normalized.includes('=')){
+      // تبسيط تعبير بسيط
+      var simplified = evaluateExpression(normalized.replace(/x/g, '1')); // نستبدل x بـ 1 للتقييم
+      if(simplified !== null){
+        return '📐 **تبسيط التعبير:**\n\n' + text + '\n\n' +
+          '💡 **للتقييم:** لو x = 1، الناتج = ' + simplified + '\n' +
+          '📌 لو عايز حل معادلة، اكتبها بالشكل: ' + text + ' = 0';
+      }
+    }
+
+    // 3. عمليات حسابية مباشرة
+    var result = evaluateExpression(normalized);
+    if(result !== null){
+      return '🧮 **النتيجة:**\n\n' + text + ' = **' + result + '**';
+    }
+
+    // 4. لوغاريتمات وجذور
+    var logM = normalized.match(/(?:log|لو)\s*_?(\d+)?\s*\(?\s*(\d+)\s*\)?/);
+    if(logM){
+      var base = parseFloat(logM[1] || '10');
+      var num = parseFloat(logM[2]);
+      var val = Math.log(num) / Math.log(base);
+      return '📐 **اللوغاريتم:**\n\nlog₍' + base + '₎(' + num + ') = **' + (Math.round(val * 10000) / 10000) + '**';
+    }
+
+    return null;
+  }
+
+  // ==========================================
+  // 5. ربط المحرك بالمساعد
+  // ==========================================
+  window.Bot.reply = function(text){
+    // جرب الرياضيات الأول
+    var mathResult = smartMath(text);
+    if(mathResult) return mathResult;
+
+    // لو مش رياضيات، ارجع للمحرك الأصلي
+    if(typeof baseReply === 'function') return baseReply.call(this, text);
+    return '🤔 مش لاقي إجابة. جرب تسأل بطريقة تانية.';
+  };
+
+  // إضافة دالة مساعدة للكود القديم
+  window.Bot.smartMath = smartMath;
+
+  console.log('✅ Pro Max Smart Math Engine Loaded');
+}
+
+initSmartMath();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Super Factor Unit (Fixed)
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function initSuperFactor(){
+  if(!window.Bot || !window.App){ setTimeout(initSuperFactor, 500); return; }
+
+  var baseReply = window.Bot.reply;
+
+  // دالة مساعدة للتحقق من الجذور
+  function findRoots(a, b, c){
+    var disc = b*b - 4*a*c;
+    if(disc < 0) return null;
+    var sqrtDisc = Math.sqrt(disc);
+    var r1 = (-b + sqrtDisc) / (2*a);
+    var r2 = (-b - sqrtDisc) / (2*a);
+    return { r1: r1, r2: r2, isPerfect: Number.isInteger(sqrtDisc) };
+  }
+
+  // الدالة الرئيسية للتحليل
+  window.Bot.factor = function(inputText){
+    // 1. تنظيف مبدئي (بدون لمس المعادلة)
+    var t = String(inputText).trim()
+      .replace(/[٠-٩]/g, function(d){ return String.fromCharCode(d.charCodeAt(0) - 1584); }) // أرقام عربية
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/[×✕]/g, '*')
+      .replace(/[−–]/g, '-')
+      .replace(/[،]/g, ',')
+      .replace(/جذر/g, 'sqrt')
+      .toLowerCase();
+    
+    // شيل كلمة "حلل" أو "حلللي" أو "حلل المعادلة"
+    t = t.replace(/^(حلل|حللي|حلل المعادلة|حلل المعادله|factor|factorize)\s*/i, '');
+    
+    // 2. لو النص فيه "="، اعتبره معادلة
+    var isEq = t.includes('=');
+    if(isEq){
+      t = t.replace(/=0/g, '').replace(/=/g, '');
+    }
+    
+    // 3. شيل المسافات الزايدة
+    t = t.replace(/\s+/g, '');
+
+    // 4. الفرق بين مربعين: x^2 - a^2 (على طول من غير أي حوسة)
+    var diffSquares = t.match(/^(-?)(\d*)x\^?2-(\d+)$/);
+    if(diffSquares && (!diffSquares[2] || diffSquares[2] === '1')){
+      var a2 = Math.sqrt(parseFloat(diffSquares[3]));
+      if(a2 % 1 === 0){
+        return '📐 **التحليل (الفرق بين مربعين):**\n\n' +
+               'التعبير: x² - ' + diffSquares[3] + '\n' +
+               'القاعدة: a² - b² = (a - b)(a + b)\n\n' +
+               '✅ **التحليل:** (x - ' + a2 + ')(x + ' + a2 + ')\n\n' +
+               '📌 **الجذور:** x = ' + a2 + ' أو x = -' + a2;
+      }
+    }
+
+    // 5. التحليل العام: ax^2 + bx + c
+    var generalQuad = t.match(/^(-?\d*\.?\d*)x\^?2([+\-]\d*\.?\d*)?x?([+\-]\d+)?$/);
+    if(generalQuad){
+      var a = parseFloat(generalQuad[1]) || 1;
+      var bPart = generalQuad[2];
+      var b = bPart ? parseFloat(bPart.replace(/\s/g,'')) : 0;
+      // لو فيه x^2 بس ومفيش x، يبقى b = 0
+      if(!bPart && t.includes('x^2')) b = 0; 
+      var c = generalQuad[3] ? parseFloat(generalQuad[3].replace(/\s/g,'')) : 0;
+
+      // لو دي معادلة: x^2 = 4 أو x^2 + bx = c
+      if(isEq && b === 0 && c === 0 && t.includes('=')) {
+        // دي حالة خاصة، هنعالجها تحت
+      }
+
+      var roots = findRoots(a, b, c);
+      
+      var out = '📐 **تحليل التعبير التربيعي:**\n\n' +
+                'التعبير: ' + a + 'x² ' + (b >= 0 ? '+ ' + b : '- ' + Math.abs(b)) + 'x ' + (c >= 0 ? '+ ' + c : '- ' + Math.abs(c)) + '\n';
+      
+      if(roots){
+        if(roots.r1 === roots.r2){
+          out += '✅ **تحليل:** ' + (a===1?'':a) + '(x ' + (roots.r1<0?'+ '+Math.abs(roots.r1):'- '+roots.r1) + ')²\n';
+          out += '📌 **جذر مكرر:** x = ' + roots.r1;
+        } else {
+          var t1 = '(x ' + (roots.r1 < 0 ? '+ ' + Math.abs(roots.r1) : '- ' + roots.r1) + ')';
+          var t2 = '(x ' + (roots.r2 < 0 ? '+ ' + Math.abs(roots.r2) : '- ' + roots.r2) + ')';
+          out += '✅ **تحليل:** ' + (a===1?'':a) + t1 + t2 + '\n';
+          out += '📌 **الجذور:** x = ' + roots.r1 + ' أو x = ' + roots.r2;
+        }
+      } else {
+        out += '⚠️ المميز سالب، مفيش تحليل في الأعداد الحقيقية.';
+      }
+      return out;
+    }
+
+    // 6. لو ده مجرد x^2 = رقم (زي x^2 = 4)
+    var x2Eq = t.match(/^x\^?2=(\d+)$/);
+    if(x2Eq){
+      var num = parseFloat(x2Eq[1]);
+      var sqrtNum = Math.sqrt(num);
+      if(sqrtNum % 1 === 0){
+        return '📐 **حل معادلة:**\n\nx² = ' + num + '\n\n' +
+               '✅ **الحل:** x = ±' + sqrtNum + '\n' +
+               '📌 يعني: x = ' + sqrtNum + ' أو x = -' + sqrtNum;
+      }
+    }
+
+    return null;
+  };
+
+  // تعديل دالة الرد عشان تدي الأولوية للتحليل
+  window.Bot.reply = function(text){
+    // لو فيه إشارة لـ x^2 أو x²
+    if(/x\^?2|x2|اكس تربيع|اكس اس 2/i.test(text) || /حلل/i.test(text)){
+      var factorResult = window.Bot.factor(text);
+      if(factorResult) return factorResult;
+    }
+
+    // لو مفيش، ارجع للمحرك الأساسي
+    if(typeof baseReply === 'function') return baseReply.call(this, text);
+    return '🤔 مش لاقي إجابة.';
+  };
+
+  console.log('✅ Super Factor Unit Loaded (Fixed)');
+}
+
+initSuperFactor();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Enhanced Quiz Generator (Gemini + Smart Local)
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function initEnhancedQuiz(){
+  if(!window.Quiz || !window.App){ setTimeout(initEnhancedQuiz, 500); return; }
+
+  var Session = window.App.session;
+  var U = window.App.utils;
+  var UI = window.App.ui;
+  
+  // الرابط بتاع سيرفرك
+  var SERVER = 'https://yasedu-premium.mbadrhashbal.workers.dev';
+
+  // نحفظ الدالة الأصلية
+  var originalGenerate = window.Quiz.generate;
+
+  window.Quiz.generate = async function(){
+    var textEl = U.$('quiz-text');
+    var text = textEl ? textEl.value.trim() : '';
+    
+    if(!text || text.length < 80){
+      UI.toast('الصق نصاً تعليمياً (80 حرف على الأقل)', 'error');
+      return;
+    }
+
+    var plan = Session.getPlan();
+    var isPremium = (plan === 'premium');
+    var isPro = (plan === 'pro' || plan === 'premium');
+
+    // لو Premium: استخدم Gemini
+    if(isPremium) {
+      var btn = document.querySelector('#quiz-auto-panel .btn-lg');
+      if(btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Gemini يولد الأسئلة...'; }
+
+      var count = parseInt(U.$('quiz-count').value) || 5;
+      var quizType = U.$('quiz-type-sel') ? U.$('quiz-type-sel').value : 'mcq';
+
+      try {
+        var res = await fetch(SERVER, {
+          method: 'POST',
+          body: JSON.stringify({ type: 'quiz', text: text, count: count, quizType: quizType })
+        });
+        
+        if(!res.ok) throw new Error('فشل الاتصال بالسيرفر');
+        var data = await res.json();
+        if(data.error) throw new Error(data.error);
+        
+        if(!data.questions || !data.questions.length) throw new Error('لم يتم توليد أسئلة');
+        
+        // تحويل الأسئلة لشكل المنصة
+        window.Quiz.questions = data.questions.map(function(q){
+          return {
+            type: quizType,
+            question: q.question,
+            answer: q.answer,
+            options: q.options || []
+          };
+        });
+        
+        window.Quiz.mode = 'auto';
+        window.Quiz.curQ = 0;
+        window.Quiz.score = 0;
+        window.Quiz.attempted = [];
+        
+        U.$('quiz-setup').style.display = 'none';
+        U.$('quiz-run').style.display = 'block';
+        window.Quiz.renderQuestion();
+        UI.toast('✅ تم توليد الأسئلة بواسطة Gemini', 'success');
+        
+      } catch(err) {
+        UI.toast('خطأ: ' + err.message, 'error');
+      } finally {
+        if(btn) { btn.disabled = false; btn.innerHTML = '✨ توليد الأسئلة'; }
+      }
+      return;
+    }
+
+    // لو Pro: استخدم المحرك المحلي المحسن
+    if(isPro) {
+      var btn = document.querySelector('#quiz-auto-panel .btn-lg');
+      if(btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> جاري التحليل...'; }
+
+      try {
+        var count = parseInt(U.$('quiz-count').value) || 5;
+        var quizType = U.$('quiz-type-sel') ? U.$('quiz-type-sel').value : 'mcq';
+        
+        // توليد أسئلة محلية (محسنة)
+        var questions = smartGenerate(text, count, quizType);
+        
+        if(questions.length < 3) throw new Error('النص قصير جداً، جرب نص أطول');
+        
+        window.Quiz.questions = questions;
+        window.Quiz.mode = 'auto';
+        window.Quiz.curQ = 0;
+        window.Quiz.score = 0;
+        window.Quiz.attempted = [];
+        
+        U.$('quiz-setup').style.display = 'none';
+        U.$('quiz-run').style.display = 'block';
+        window.Quiz.renderQuestion();
+        UI.toast('✅ تم توليد ' + questions.length + ' سؤال', 'success');
+        
+      } catch(err) {
+        UI.toast('خطأ: ' + err.message, 'error');
+      } finally {
+        if(btn) { btn.disabled = false; btn.innerHTML = '✨ توليد الأسئلة'; }
+      }
+      return;
+    }
+
+    // لو Free: استخدم الكود الأصلي
+    return originalGenerate.call(this);
+  };
+
+  // ══════════════════════════════════════
+  // المحرك المحلي المحسن (Pro)
+  // ══════════════════════════════════════
+  function smartGenerate(text, count, type){
+    // تقسيم النص لجمل
+    var sentences = text.split(/[.؟!؟\n]+/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length >= 20; });
+    if(sentences.length < 3) return [];
+
+    var questions = [];
+    var usedKeywords = {};
+
+    if(type === 'mcq' || type === 'fillblank' || type === 'truefalse') {
+      // لكل جملة، نستخرج الكلمات المفتاحية ونعمل سؤال
+      for(var i = 0; i < sentences.length && questions.length < count; i++) {
+        var sen = sentences[i];
+        // استخراج الكلمات (أطول من 4 حروف)
+        var words = sen.split(/\s+/).map(function(w){ return w.replace(/[،,.!؟:;]/g, ''); }).filter(function(w){ return w.length >= 4; });
+        if(!words.length) continue;
+        
+        // اختار أطول كلمة كإجابة
+        words.sort(function(a,b){ return b.length - a.length; });
+        var keyword = words[0];
+        if(usedKeywords[keyword]) continue;
+        usedKeywords[keyword] = true;
+
+        var question;
+
+        if(type === 'fillblank') {
+          // ملء الفراغ: نشيل الكلمة من الجملة
+          question = {
+            type: 'fillblank',
+            question: sen.replace(keyword, '______'),
+            answer: keyword
+          };
+        } else if(type === 'truefalse') {
+          // صح/خطأ: نصيغ جملة ونحولها لصح أو خطأ
+          var isTrue = Math.random() > 0.5;
+          var modifiedSen = sen;
+          if(!isTrue) {
+            // نغير كلمة عشوائية
+            var wordsToChange = sen.split(/\s+/);
+            var idx = Math.floor(Math.random() * wordsToChange.length);
+            wordsToChange[idx] = 'كلمة_خطأ';
+            modifiedSen = wordsToChange.join(' ');
+          }
+          question = {
+            type: 'truefalse',
+            question: modifiedSen,
+            answer: isTrue
+          };
+        } else if(type === 'mcq') {
+          // اختيار متعدد: نجيب كلمة من جملة تانية كخيار خاطئ
+          var wrongWords = [];
+          for(var j = 0; j < sentences.length; j++) {
+            if(j === i) continue;
+            var w = sentences[j].split(/\s+/).filter(function(x){ return x.length >= 4; });
+            if(w.length) wrongWords.push(w[Math.floor(Math.random() * w.length)].replace(/[،,.!؟:;]/g, ''));
+            if(wrongWords.length >= 3) break;
+          }
+          var options = [keyword].concat(wrongWords.slice(0, 3));
+          // shuffle
+          for(var k = options.length - 1; k > 0; k--) {
+            var r = Math.floor(Math.random() * (k + 1));
+            var tmp = options[k]; options[k] = options[r]; options[r] = tmp;
+          }
+          question = {
+            type: 'mcq',
+            question: 'ما معنى/تعريف: ' + keyword + '؟',
+            answer: keyword,
+            options: options
+          };
+        }
+        
+        if(question) questions.push(question);
+      }
+    }
+
+    // لو طلب نوع "match" أو "order" أو "explain" أو مفيش كفاية، نرجع للبنك الثابت
+    if(questions.length < 3) {
+      var topic = window.Quiz.detectTopic ? window.Quiz.detectTopic(text) : 'math';
+      var fallbackMap = {
+        'mcq': window.Quiz.genMCQ,
+        'fillblank': window.Quiz.genFillBlank,
+        'truefalse': window.Quiz.genTrueFalse,
+        'match': window.Quiz.genMatch,
+        'order': window.Quiz.genOrder,
+        'explain': window.Quiz.genExplain
+      };
+      var fallbackFn = fallbackMap[type] || window.Quiz.genMCQ;
+      if(fallbackFn) {
+        return fallbackFn(topic, count);
+      }
+    }
+
+    return questions.slice(0, count);
+  }
+
+  console.log('✅ Enhanced Quiz Generator Loaded');
+}
+
+initEnhancedQuiz();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Fully Custom Quiz Generator
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function initFullyCustomQuiz(){
+  if(!window.Quiz || !window.App){ setTimeout(initFullyCustomQuiz, 500); return; }
+
+  var Session = window.App.session;
+  var U = window.App.utils;
+  var UI = window.App.ui;
+  var SERVER_URL = 'https://yasedu-premium.mbadrhashbal.workers.dev';
+
+  // 1. تعديل واجهة شاشة الاختبارات عشان نضيف خانة "الطلب المخصص"
+  var originalQuizScreen = window.Router.routes.quiz;
+  window.Router.routes.quiz = function(){
+    var html = originalQuizScreen();
+    
+    // نغير شكل الـ select القديم ونضيف خانة طلب مخصص
+    var customUI = 
+      '<div class="card" style="margin-bottom:14px;border:2px solid var(--brand);background:linear-gradient(135deg, rgba(99,102,241,.05), rgba(245,158,11,.05))">'+
+      '<div style="font-size:15px;font-weight:800;margin-bottom:8px">🎯 إعدادات الأسئلة</div>'+
+      
+      // الاختيار بين "تلقائي بالكامل" أو "تحديد النوع"
+      '<div style="display:flex;gap:6px;padding:4px;background:var(--p-100);border-radius:10px;margin-bottom:14px">'+
+      '<button id="mode-auto" class="btn btn-sm" style="flex:1" onclick="window.toggleQuizMode(\'auto\')">🤖 توليد تلقائي</button>'+
+      '<button id="mode-custom" class="btn btn-sm btn-secondary" style="flex:1" onclick="window.toggleQuizMode(\'custom\')">✏️ تخصيص كامل</button>'+
+      '</div>'+
+
+      // الوضع التلقائي: اختيار نوع واحد (القديم)
+      '<div id="quiz-config-auto">'+
+      '<div style="margin-bottom:10px"><label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">نوع الأسئلة:</label>'+
+      '<select id="quiz-type-sel" class="input" style="font-weight:700">'+
+      '<option value="mcq">اختيار متعدد</option>'+
+      '<option value="fillblank">ملء الفراغ</option>'+
+      '<option value="truefalse">صح/خطأ</option>'+
+      '</select></div>'+
+      '</div>'+
+
+      // الوضع المخصص: إدخال يدوي للعدد المطلوب من كل نوع
+      '<div id="quiz-config-custom" style="display:none">'+
+      '<div style="font-size:12px;color:var(--text-2);margin-bottom:10px;font-weight:600">حدد عدد الأسئلة من كل نوع اللي إنت عايزه:</div>'+
+      
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'+
+      '<div style="background:var(--surface);border:1px solid var(--border);padding:10px;border-radius:8px;text-align:center">'+
+      '<div style="font-size:11px;font-weight:700;margin-bottom:4px">اختيار متعدد</div>'+
+      '<input type="number" id="custom-mcq-count" min="0" max="20" value="2" style="width:100%;text-align:center;font-size:16px;font-weight:800;border:none;background:transparent;color:var(--brand)">'+
+      '</div>'+
+      '<div style="background:var(--surface);border:1px solid var(--border);padding:10px;border-radius:8px;text-align:center">'+
+      '<div style="font-size:11px;font-weight:700;margin-bottom:4px">صح/خطأ</div>'+
+      '<input type="number" id="custom-tf-count" min="0" max="20" value="1" style="width:100%;text-align:center;font-size:16px;font-weight:800;border:none;background:transparent;color:var(--brand)">'+
+      '</div>'+
+      '<div style="background:var(--surface);border:1px solid var(--border);padding:10px;border-radius:8px;text-align:center">'+
+      '<div style="font-size:11px;font-weight:700;margin-bottom:4px">ملء الفراغ</div>'+
+      '<input type="number" id="custom-fb-count" min="0" max="20" value="1" style="width:100%;text-align:center;font-size:16px;font-weight:800;border:none;background:transparent;color:var(--brand)">'+
+      '</div>'+
+      '<div style="background:var(--surface);border:1px solid var(--border);padding:10px;border-radius:8px;text-align:center">'+
+      '<div style="font-size:11px;font-weight:700;margin-bottom:4px">سؤال مقالي</div>'+
+      '<input type="number" id="custom-explain-count" min="0" max="20" value="1" style="width:100%;text-align:center;font-size:16px;font-weight:800;border:none;background:transparent;color:var(--brand)">'+
+      '</div>'+
+      '</div>'+
+      '</div>'+
+
+      '</div>';
+
+    // نحط الخانة دي مكان الـ select القديم
+    var oldTypeSelectRegex = /<div style="margin-bottom:14px"><label[^>]*>أسلوب الأسئلة:<\/label>[\s\S]*?<\/div>/;
+    html = html.replace(oldTypeSelectRegex, customUI);
+
+    return html;
+  };
+
+  // 2. دالة تبديل الوضع (تلقائي / مخصص)
+  window.toggleQuizMode = function(mode){
+    var autoPanel = U.$('quiz-config-auto');
+    var customPanel = U.$('quiz-config-custom');
+    var autoBtn = U.$('mode-auto');
+    var customBtn = U.$('mode-custom');
+    
+    if(mode === 'custom'){
+      if(autoPanel) autoPanel.style.display = 'none';
+      if(customPanel) customPanel.style.display = 'block';
+      if(autoBtn) { autoBtn.className = 'btn btn-sm btn-secondary'; autoBtn.style.flex = '1'; }
+      if(customBtn) { customBtn.className = 'btn btn-sm'; customBtn.style.flex = '1'; }
+    } else {
+      if(autoPanel) autoPanel.style.display = 'block';
+      if(customPanel) customPanel.style.display = 'none';
+      if(autoBtn) { autoBtn.className = 'btn btn-sm'; autoBtn.style.flex = '1'; }
+      if(customBtn) { customBtn.className = 'btn btn-sm btn-secondary'; customBtn.style.flex = '1'; }
+    }
+  };
+
+  // 3. تعديل دالة التوليد الرئيسية
+  var originalGenerate = window.Quiz.generate;
+
+  window.Quiz.generate = async function(){
+    var textEl = U.$('quiz-text');
+    var text = textEl ? textEl.value.trim() : '';
+    
+    if(!text || text.length < 80){
+      UI.toast('الصق نصاً تعليمياً (80 حرف على الأقل)', 'error');
+      return;
+    }
+
+    var plan = Session.getPlan();
+    var isPremium = (plan === 'premium');
+    var isPro = (plan === 'pro' || plan === 'premium');
+
+    // لو فري، نرجع للكود القديم
+    if(!isPro) {
+      return originalGenerate.call(this);
+    }
+
+    // هل الوضع مخصص؟
+    var isCustomMode = U.$('quiz-config-custom') && U.$('quiz-config-custom').style.display !== 'none';
+    var btn = document.querySelector('#quiz-auto-panel .btn-lg');
+
+    // ══════════════════════════════════
+    // الوضع المخصص (Custom Mode)
+    // ══════════════════════════════════
+    if(isCustomMode) {
+      var mcqCount = parseInt(U.$('custom-mcq-count').value) || 0;
+      var tfCount = parseInt(U.$('custom-tf-count').value) || 0;
+      var fbCount = parseInt(U.$('custom-fb-count').value) || 0;
+      var expCount = parseInt(U.$('custom-explain-count').value) || 0;
+      
+      var totalCount = mcqCount + tfCount + fbCount + expCount;
+      
+      if(totalCount === 0) {
+        UI.toast('حدد عدد سؤال واحد على الأقل', 'error');
+        return;
+      }
+
+      // للبريميوم: نستخدم Gemini
+      if(isPremium) {
+        if(btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Gemini يصنع الأسئلة...'; }
+
+        var prompt = 'أنت مصمم اختبارات محترف. قم بتوليد أسئلة من النص التالي:\n\n';
+        prompt += 'النص:\n"""\n' + text + '\n"""\n\n';
+        prompt += 'العدد المطلوب:\n';
+        if(mcqCount > 0) prompt += '- ' + mcqCount + ' سؤال اختيار متعدد (mcq)\n';
+        if(tfCount > 0) prompt += '- ' + tfCount + ' سؤال صح/خطأ (truefalse)\n';
+        if(fbCount > 0) prompt += '- ' + fbCount + ' سؤال ملء الفراغ (fillblank)\n';
+        if(expCount > 0) prompt += '- ' + expCount + ' سؤال مقالي (explain)\n';
+        prompt += '\nأرجع الرد بصيغة JSON فقط، بهذا الشكل:\n';
+        prompt += '[{"type":"mcq","question":"السؤال","options":["أ","ب","ج","د"],"answer":"الإجابة"}]\n';
+        prompt += 'الأنواع: mcq, truefalse, fillblank, explain.\n';
+        prompt += 'truefalse: options = ["صح", "خطأ"].\n';
+        prompt += 'fillblank أو explain: options = [].\n';
+
+        try {
+          var res = await fetch(SERVER_URL, {
+            method: 'POST',
+            body: JSON.stringify({ type: 'quiz', message: prompt })
+          });
+          
+          if(!res.ok) throw new Error('فشل الاتصال');
+          var data = await res.json();
+          if(data.error) throw new Error(data.error);
+          
+          if(!data.questions || !data.questions.length) throw new Error('لم يتم توليد أسئلة');
+          
+          window.Quiz.questions = data.questions;
+          window.Quiz.mode = 'auto';
+          window.Quiz.curQ = 0;
+          window.Quiz.score = 0;
+          window.Quiz.attempted = [];
+          
+          U.$('quiz-setup').style.display = 'none';
+          U.$('quiz-run').style.display = 'block';
+          window.Quiz.renderQuestion();
+          UI.toast('✅ تم توليد ' + data.questions.length + ' سؤال', 'success');
+          
+        } catch(err) {
+          UI.toast('خطأ: ' + err.message, 'error');
+        } finally {
+          if(btn) { btn.disabled = false; btn.innerHTML = '✨ توليد الأسئلة'; }
+        }
+        return;
+      }
+
+      // للبرو: نستخدم المحرك المحلي
+      if(isPro) {
+        if(btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تحليل النص...'; }
+
+        setTimeout(function(){
+          try {
+            var questions = [];
+            
+            if(mcqCount > 0) questions = questions.concat(generateLocal(text, mcqCount, 'mcq'));
+            if(tfCount > 0) questions = questions.concat(generateLocal(text, tfCount, 'truefalse'));
+            if(fbCount > 0) questions = questions.concat(generateLocal(text, fbCount, 'fillblank'));
+            if(expCount > 0) questions = questions.concat(generateLocal(text, expCount, 'explain'));
+            
+            // خلط الأسئلة
+            for(var i = questions.length - 1; i > 0; i--) {
+              var j = Math.floor(Math.random() * (i + 1));
+              var tmp = questions[i]; questions[i] = questions[j]; questions[j] = tmp;
+            }
+
+            if(questions.length === 0) throw new Error('النص مش كفاية');
+            
+            window.Quiz.questions = questions;
+            window.Quiz.mode = 'auto';
+            window.Quiz.curQ = 0;
+            window.Quiz.score = 0;
+            window.Quiz.attempted = [];
+            
+            U.$('quiz-setup').style.display = 'none';
+            U.$('quiz-run').style.display = 'block';
+            window.Quiz.renderQuestion();
+            UI.toast('✅ تم توليد ' + questions.length + ' سؤال', 'success');
+            
+          } catch(err) {
+            UI.toast('خطأ: ' + err.message, 'error');
+          } finally {
+            if(btn) { btn.disabled = false; btn.innerHTML = '✨ توليد الأسئلة'; }
+          }
+        }, 800);
+        return;
+      }
+    }
+
+    // ══════════════════════════════════
+    // الوضع التلقائي (زي القديم)
+    // ══════════════════════════════════
+    return originalGenerate.call(this);
+  };
+
+  // دالة توليد محلية للنوع المحدد
+  function generateLocal(text, count, type) {
+    var sentences = text.split(/[.؟!؟\n]+/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length >= 25; });
+    if(sentences.length < 2) return [];
+
+    var questions = [];
+    var stopWords = ['هو', 'هي', 'في', 'من', 'على', 'إلى', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'التي', 'الذي', 'كان', 'كانت', 'أن', 'إن', 'ما', 'لا', 'قد'];
+
+    for(var i = 0; i < sentences.length && questions.length < count; i++) {
+      var sen = sentences[i];
+      var words = sen.split(/\s+/).map(function(w){ return w.replace(/[،,.!؟:;()"']/g, ''); }).filter(function(w){ return w.length >= 4 && stopWords.indexOf(w) === -1; });
+      if(!words.length) continue;
+      var keyword = words[0];
+
+      if(type === 'fillblank') {
+        questions.push({ type: 'fillblank', question: sen.replace(keyword, '______'), answer: keyword });
+      } else if(type === 'truefalse') {
+        var isTrue = Math.random() > 0.5;
+        var finalSen = sen;
+        if(!isTrue) {
+          var wArr = sen.split(/\s+/);
+          wArr[Math.floor(Math.random() * wArr.length)] = 'كلمة_خاطئة';
+          finalSen = wArr.join(' ');
+        }
+        questions.push({ type: 'truefalse', question: finalSen, answer: isTrue });
+      } else if(type === 'mcq') {
+        var opts = [keyword];
+        for(var j = 0; j < 3; j++) opts.push('خيار_' + (j+1));
+        for(var k = opts.length - 1; k > 0; k--) { var r = Math.floor(Math.random()*(k+1)); var t=opts[k]; opts[k]=opts[r]; opts[r]=t; }
+        questions.push({ type: 'mcq', question: 'ما معنى: "'+keyword+'"؟', answer: keyword, options: opts });
+      } else if(type === 'explain') {
+        questions.push({ type: 'explain', question: 'اشرح: ' + keyword, answer: '' });
+      }
+    }
+
+    // لو مفيش كفاية، كرر الأسئلة
+    while(questions.length < count && sentences.length > 0) {
+      questions.push(questions[questions.length % questions.length] || questions[0]);
+    }
+
+    return questions;
+  }
+
+  console.log('✅ Fully Custom Quiz Loaded');
+}
+
+initFullyCustomQuiz();
+})();
+</script>
+  <style>
+  /* إخفاء زرار الوضع اليدوي بالكامل */
+  #quiz-mode-manual { display: none !important; }
+  #quiz-manual-panel { display: none !important; }
+</style>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Hide Manual Quiz (CSS + JS)
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function hideManualQuiz(){
+  if(!window.Quiz || !window.App){ setTimeout(hideManualQuiz, 500); return; }
+  
+  // إلغاء أي وظائف للوضع اليدوي
+  window.Quiz.setMode = function(){};
+  window.Quiz.addManualQ = function(){};
+  window.Quiz.removeManualQ = function(){};
+  window.Quiz.startManual = function(){};
+
+  console.log('✅ Manual Quiz Mode removed permanently');
+}
+
+hideManualQuiz();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Speed Booster (Prefetch & Preconnect)
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+// 1. تجهيز الاتصال بالسيرفرات قبل ما يحتاجها المتصفح
+function preconnect(url, crossOrigin) {
+  var link = document.createElement('link');
+  link.rel = 'preconnect';
+  link.href = url;
+  if (crossOrigin) link.crossOrigin = 'anonymous';
+  document.head.appendChild(link);
+}
+
+preconnect('https://fonts.googleapis.com');
+preconnect('https://fonts.gstatic.com', true);
+preconnect('https://www.gstatic.com', true);
+preconnect('https://aaaa-c3572-default-rtdb.europe-west1.firebasedatabase.app', true);
+preconnect('https://yasedu-premium.mbadrhashbal.workers.dev', true);
+
+// 2. تحميل مسبق لخط Cairo (عشان يظهر بسرعة)
+var fontLink = document.createElement('link');
+fontLink.rel = 'preload';
+fontLink.as = 'style';
+fontLink.href = 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap';
+document.head.appendChild(fontLink);
+
+// 3. تحميل مسبق لمكتبة Firebase (عشان تكون جاهزة)
+var firebaseLink = document.createElement('link');
+firebaseLink.rel = 'preload';
+firebaseLink.as = 'script';
+firebaseLink.href = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+document.head.appendChild(firebaseLink);
+
+console.log('🚀 Speed Boost Active');
+})();
+</script>
 </body>
 </html>
