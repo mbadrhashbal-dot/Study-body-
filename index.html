@@ -3762,5 +3762,393 @@ function initPremium(){
 initPremium();
 })();
 </script>
+  <script>
+/* ═══ Premium Quiz Generator (Gemini) ═══ */
+(function(){
+'use strict';
+var SERVER = 'https://yasedu-premium.mbadrhashbal.workers.dev';
+
+function initPremiumQuiz(){
+  if(!window.App || !window.Quiz){ setTimeout(initPremiumQuiz, 200); return; }
+  
+  // اعتراض دالة التوليد الأصلية
+  var originalGenerate = window.Quiz.generate;
+
+  window.Quiz.generate = async function(){
+    var plan = window.App.session.getPlan();
+    
+    // لو مش بريميوم، شغل الكود القديم
+    if(plan !== 'premium') {
+      return originalGenerate.call(this);
+    }
+
+    var text = document.getElementById('quiz-text').value.trim();
+    if(!text || text.length < 80) {
+      window.App.ui.toast('الصق نصاً (80 حرف على الأقل)', 'error');
+      return;
+    }
+
+    var btn = document.querySelector('#quiz-auto-panel .btn-lg');
+    if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> جاري التوليد...'; }
+
+    var count = parseInt(document.getElementById('quiz-count').value) || 5;
+    var typeSel = document.getElementById('quiz-type-sel');
+    var quizType = typeSel ? typeSel.value : 'mcq';
+
+    try {
+      var res = await fetch(SERVER, {
+        method: 'POST',
+        body: JSON.stringify({ type: 'quiz', text: text, count: count, quizType: quizType })
+      });
+      
+      var data = await res.json();
+      if(data.error) throw new Error(data.error);
+      if(!data.questions || !data.questions.length) throw new Error('لم يتم توليد أسئلة');
+
+      // تحويل البيانات للشكل اللي المنصة بتفهمه
+      var generatedQuestions = data.questions.map(function(q){
+        return {
+          type: quizType,
+          question: q.question,
+          answer: q.answer,
+          options: q.options || []
+        };
+      });
+
+      // تشغيل الاختبار مباشرة
+      window.Quiz.questions = generatedQuestions;
+      window.Quiz.curQ = 0;
+      window.Quiz.score = 0;
+      window.Quiz.attempted = [];
+      window.Quiz.mode = 'auto';
+
+      document.getElementById('quiz-setup').style.display = 'none';
+      document.getElementById('quiz-run').style.display = 'block';
+      
+      window.Quiz.renderQuestion();
+      window.App.ui.toast('تم توليد الأسئلة بنجاح ✅', 'success');
+
+    } catch(err) {
+      window.App.ui.toast('خطأ: ' + err.message, 'error');
+    } finally {
+      if(btn){ btn.disabled = false; btn.innerHTML = '✨ توليد الأسئلة'; }
+    }
+  };
+}
+initPremiumQuiz();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Upgrade Admin Codes Tab (Codes + Coupons)
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function upgradeCodesTab(){
+  if(!window.Admin || !window.App){ setTimeout(upgradeCodesTab, 500); return; }
+  
+  var U = window.App.utils;
+  var UI = window.App.ui;
+
+  // استبدال دالة عرض الأكواد القديمة بالنسخة المطورة
+  window.Admin.showCodes = async function(){
+    var content = U.$('admin-content');
+    if(!content) return;
+
+    content.innerHTML = 
+      // 1. مولد الأكواد العادية
+      '<div class="code-gen-area" style="border:2px solid var(--brand);">'+
+      '<div class="code-gen-title">🔑 توليد كود ترقية</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:12px">'+
+      '<select id="code-plan-sel" class="input" style="flex:1"><option value="pro">⚡ Pro</option><option value="premium">👑 Premium</option></select>'+
+      '<button class="btn" onclick="Admin.generateCode()" style="flex-shrink:0">🔑 توليد</button>'+
+      '</div>'+
+      '<div id="code-display" style="display:none"><div class="code-display" id="code-val"></div><button class="btn btn-secondary btn-block" onclick="Admin.copyCode()">📋 نسخ الكود</button></div>'+
+      '</div>'+
+
+      // 2. مولد الكوبونات (الجديد)
+      '<div class="code-gen-area" style="margin-top:14px;border:2px solid var(--gold);">'+
+      '<div class="code-gen-title" style="color:var(--gold-dark)">🎟️ توليد كوبون (مع صلاحية)</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:8px">'+
+      '<select id="coupon-plan-sel" class="input" style="flex:1"><option value="pro">⚡ Pro</option><option value="premium">👑 Premium</option></select>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:12px">'+
+      '<input class="input" id="coupon-days" type="number" value="30" min="1" placeholder="أيام" style="flex:1">'+
+      '<button class="btn btn-gold" onclick="Admin.generateCoupon()" style="flex-shrink:0">🎟️ توليد كوبون</button>'+
+      '</div>'+
+      '<div id="coupon-display" style="display:none"><div class="code-display" id="coupon-val" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold))"></div><button class="btn btn-secondary btn-block" onclick="Admin.copyCoupon()">📋 نسخ الكوبون</button></div>'+
+      '</div>'+
+
+      // 3. القائمة (بتعرض الأكواد والكوبونات مع بعض)
+      '<div class="code-gen-area" style="margin-top:14px"><div class="code-gen-title">📋 كل الأكواد والكوبونات</div>'+
+      '<div id="codes-list"><div class="admin-loading">⏳ جاري التحميل...</div></div></div>';
+
+    // تحميل القائمة
+    loadAllCodes();
+  };
+
+  async function loadAllCodes(){
+    var list = U.$('codes-list');
+    if(!list) return;
+    list.innerHTML = '<div class="admin-loading">⏳...</div>';
+    
+    try {
+      // جلب الأكواد العادية
+      var snap1 = await window.db.ref('codes').once('value');
+      var codes = snap1.val() || {};
+      var keys1 = Object.keys(codes);
+
+      if(keys1.length === 0){
+        list.innerHTML = '<div class="admin-empty">لا أكواد بعد</div>';
+        return;
+      }
+
+      keys1.sort(function(a,b){ return (codes[b].created||0) - (codes[a].created||0); });
+      
+      var html = '<div class="generated-codes-list">';
+      keys1.slice(0, 40).forEach(function(k){
+        var c = codes[k];
+        var planInfo = window.App.plans[c.plan||'pro'];
+        var isCoupon = k.startsWith('YASEDU-');
+        var badgeColor = isCoupon ? 'var(--gold-dark)' : 'var(--brand)';
+        var badgeText = isCoupon ? '🎟️ كوبون' : (c.plan==='premium'?'👑 Premium':'⚡ Pro');
+        
+        html += '<div class="code-item" style="border-color:' + (isCoupon ? 'var(--gold-soft)' : 'var(--border)') + '">'+
+          '<div class="code-item-code" style="color:' + badgeColor + '">' + U.esc(k) + '</div>'+
+          '<span class="badge ' + (isCoupon ? 'badge-gold' : 'badge-brand') + '">' + badgeText + '</span>'+
+          '<span class="code-item-status" style="color:' + (c.used ? 'var(--red)' : 'var(--green)') + ';font-weight:700">' + (c.used ? '🔴 مستخدم' : '🟢 متاح') + '</span>'+
+          '<button class="admin-btn admin-btn-danger" onclick="Admin.deleteCode(\'' + U.esc(k) + '\')">🗑</button>'+
+          '</div>';
+      });
+      html += '</div>';
+      
+      list.innerHTML = html;
+    } catch(e) {
+      list.innerHTML = '<div class="admin-empty">فشل التحميل</div>';
+    }
+  }
+
+  // إضافة دوال الكوبونات لو مش موجودة
+  if(!window.Admin.generateCoupon){
+    window.Admin.generateCoupon = async function(){
+      var plan = U.$('coupon-plan-sel').value || 'pro';
+      var days = parseInt(U.$('coupon-days').value) || 30;
+      var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      var code = 'YASEDU-';
+      for(var i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      
+      try {
+        await window.db.ref('codes/' + code).set({
+          plan: plan, days: days,
+          created: Date.now(),
+          expiresAt: Date.now() + (days * 24 * 60 * 60 * 1000),
+          used: false,
+          createdBy: window.App.state.user.uid
+        });
+        var display = U.$('coupon-display');
+        var val = U.$('coupon-val');
+        if(display) display.style.display = 'block';
+        if(val) val.textContent = code;
+        UI.toast('تم إنشاء الكوبون: ' + code + ' (صالح ' + days + ' يوم)', 'success', 6000);
+        loadAllCodes();
+      } catch(e) { UI.toast('خطأ: ' + e.message, 'error'); }
+    };
+  }
+
+  if(!window.Admin.copyCoupon){
+    window.Admin.copyCoupon = function(){
+      var val = U.$('coupon-val');
+      if(val && navigator.clipboard){
+        navigator.clipboard.writeText(val.textContent).then(function(){
+          UI.toast('تم نسخ الكوبون', 'success');
+        });
+      }
+    };
+  }
+
+  console.log('✅ Admin Codes Tab upgraded with Coupons');
+}
+
+upgradeCodesTab();
+})();
+</script>
+  <script>
+/* ═══════════════════════════════════════════════════════
+   YasEdu — Add Coupons Tab to Admin FAB Panel
+   ═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+function addCouponsToAdminPanel(){
+  if(!window.AdminPanel || !window.App){ setTimeout(addCouponsToAdminPanel, 500); return; }
+  
+  var U = window.App.utils;
+  var UI = window.App.ui;
+
+  // 1. إضافة زرار التاب في شريط التابات بتاع لوحة الزرار العائم
+  var tabsContainer = document.getElementById('ap-tabs');
+  if(tabsContainer){
+    var couponTabBtn = document.createElement('button');
+    couponTabBtn.className = 'ap-tab-btn';
+    couponTabBtn.setAttribute('onclick', 'AdminPanel.tab(\'coupons\',this)');
+    couponTabBtn.style.cssText = 'padding:8px 14px;border-radius:7px;border:none;background:none;color:var(--text-2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit';
+    couponTabBtn.textContent = '🎟️ الكوبونات';
+    
+    // نحطها قبل زرار "بث" أو "خطر"
+    var broadcastBtn = Array.from(tabsContainer.children).find(function(b){ return b.textContent.includes('بث'); });
+    if(broadcastBtn){
+      tabsContainer.insertBefore(couponTabBtn, broadcastBtn);
+    } else {
+      tabsContainer.appendChild(couponTabBtn);
+    }
+  }
+
+  // 2. حفظ دالة التاب الأصلية
+  var originalTab = window.AdminPanel.tab;
+  
+  // 3. تعديل دالة التاب عشان تشغل دالة الكوبونات
+  window.AdminPanel.tab = function(name, btn){
+    if(name === 'coupons'){
+      // تغيير شكل الأزرار
+      document.querySelectorAll('.ap-tab-btn').forEach(function(t){
+        t.style.background = 'none';
+        t.style.color = 'var(--text-2)';
+        t.style.boxShadow = 'none';
+      });
+      if(btn){
+        btn.style.background = 'var(--surface)';
+        btn.style.color = 'var(--brand)';
+        btn.style.boxShadow = 'var(--sh)';
+      }
+      // عرض محتوى الكوبونات
+      AdminPanel.showCoupons();
+      return;
+    }
+    // لأي تاب تاني، نرجع للدالة الأصلية
+    originalTab.call(window.AdminPanel, name, btn);
+  };
+
+  // 4. دالة عرض الكوبونات
+  window.AdminPanel.showCoupons = function(){
+    var c = document.getElementById('admin-panel-content');
+    if(!c) return;
+    
+    c.innerHTML = 
+      '<div style="background:var(--p-50);border:2px solid var(--gold);border-radius:12px;padding:16px;margin-bottom:14px">'+
+      '<div style="font-size:15px;font-weight:800;margin-bottom:12px;color:var(--gold-dark)">🎟️ توليد كوبون جديد</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:10px">'+
+      '<select id="ap-coupon-plan" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-weight:700;background:var(--surface);color:var(--text)">'+
+      '<option value="pro">⚡ Pro</option>'+
+      '<option value="premium">👑 Premium</option>'+
+      '</select>'+
+      '<input id="ap-coupon-days" type="number" value="30" min="1" placeholder="أيام" style="width:80px;padding:10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-weight:700;background:var(--surface);color:var(--text);text-align:center">'+
+      '<button onclick="AdminPanel.genCoupon()" style="padding:10px 18px;border-radius:8px;background:var(--gold);color:#fff;border:none;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap">🎟️ توليد</button>'+
+      '</div>'+
+      '<div id="ap-coupon-result" style="display:none;background:var(--p-900);color:#fff;border-radius:8px;padding:14px;font-family:monospace;font-size:16px;font-weight:800;text-align:center;letter-spacing:3px;margin-bottom:8px"></div>'+
+      '<button id="ap-coupon-copy" onclick="AdminPanel.copyCoupon()" style="display:none;width:100%;padding:10px;border-radius:8px;background:var(--p-100);border:1px solid var(--border);font-weight:700;cursor:pointer;font-family:inherit">📋 نسخ الكوبون</button>'+
+      '</div>'+
+
+      '<div style="background:var(--p-50);border:1px solid var(--border);border-radius:12px;padding:16px">'+
+      '<div style="font-size:14px;font-weight:800;margin-bottom:10px">📋 الكوبونات والأكواد</div>'+
+      '<div id="ap-coupons-list">⏳ جاري التحميل...</div>'+
+      '</div>';
+
+    AdminPanel.loadAllCodes();
+  };
+
+  // 5. دالة توليد الكوبون
+  window.AdminPanel.genCoupon = async function(){
+    var plan = document.getElementById('ap-coupon-plan').value || 'pro';
+    var days = parseInt(document.getElementById('ap-coupon-days').value) || 30;
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var code = 'YASEDU-';
+    for(var i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    
+    try {
+      await window.db.ref('codes/' + code).set({
+        plan: plan,
+        days: days,
+        created: Date.now(),
+        expiresAt: Date.now() + (days * 24 * 60 * 60 * 1000),
+        used: false,
+        createdBy: window.App.state.user.uid
+      });
+      
+      var el = document.getElementById('ap-coupon-result');
+      var btn = document.getElementById('ap-coupon-copy');
+      if(el){ el.textContent = code; el.style.display = 'block'; }
+      if(btn) btn.style.display = 'block';
+      
+      if(window.App.ui) window.App.ui.toast('تم إنشاء الكوبون: ' + code, 'success');
+      AdminPanel.loadAllCodes();
+    } catch(e) {
+      if(window.App.ui) window.App.ui.toast('خطأ: ' + e.message, 'error');
+    }
+  };
+
+  // 6. دالة نسخ الكوبون
+  window.AdminPanel.copyCoupon = function(){
+    var el = document.getElementById('ap-coupon-result');
+    if(el && navigator.clipboard){
+      navigator.clipboard.writeText(el.textContent).then(function(){
+        if(window.App.ui) window.App.ui.toast('تم النسخ', 'success');
+      });
+    }
+  };
+
+  // 7. دالة تحميل قائمة الأكواد
+  window.AdminPanel.loadAllCodes = async function(){
+    var list = document.getElementById('ap-coupons-list');
+    if(!list) return;
+    
+    try {
+      var snap = await window.db.ref('codes').once('value');
+      var codes = snap.val() || {};
+      var keys = Object.keys(codes);
+      
+      if(!keys.length){
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3)">لا أكواد بعد</div>';
+        return;
+      }
+      
+      keys.sort(function(a,b){ return (codes[b].created||0) - (codes[a].created||0); });
+      
+      list.innerHTML = keys.slice(0, 25).map(function(k){
+        var c = codes[k];
+        var isCoupon = k.startsWith('YASEDU-');
+        var statusColor = c.used ? 'var(--red)' : 'var(--green)';
+        var statusText = c.used ? 'مستخدم' : 'متاح';
+        var badge = isCoupon ? '🎟️ كوبون' : (c.plan === 'premium' ? '👑 Premium' : '⚡ Pro');
+        var badgeColor = isCoupon ? 'var(--gold-dark)' : 'var(--brand)';
+        
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border)">'+
+          '<div style="font-family:monospace;font-weight:800;flex:1;letter-spacing:1px;font-size:12px">' + k + '</div>'+
+          '<span style="font-size:10px;font-weight:700;color:' + badgeColor + '">' + badge + '</span>'+
+          '<span style="font-size:10px;color:' + statusColor + ';font-weight:700">' + statusText + '</span>'+
+          '<button onclick="AdminPanel.delAnyCode(\'' + k + '\')" style="background:var(--red);color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">🗑</button>'+
+          '</div>';
+      }).join('');
+    } catch(e) {
+      list.innerHTML = '<div style="color:var(--red);padding:10px">فشل التحميل</div>';
+    }
+  };
+
+  // 8. دالة حذف أي كود
+  window.AdminPanel.delAnyCode = function(code){
+    if(!confirm('حذف الكود "' + code + '"؟')) return;
+    window.db.ref('codes/' + code).remove().then(function(){
+      if(window.App.ui) window.App.ui.toast('تم الحذف', 'success');
+      AdminPanel.loadAllCodes();
+      AdminPanel.loadStats && AdminPanel.loadStats();
+    });
+  };
+
+  console.log('✅ Coupons tab added to Admin FAB panel');
+}
+
+addCouponsToAdminPanel();
+})();
+</script>
 </body>
 </html>
