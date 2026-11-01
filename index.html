@@ -509,6 +509,8 @@ img{max-width:100%;display:block}
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>window.YAS_SERVER='https://yasedu-premium.mbadrhashbal.workers.dev';</script>
+<script src="kb.js"></script>
 
 <script>
 /* ═══════════════════════════════════════════════════════
@@ -913,7 +915,6 @@ function init(){
     if(splash){splash.classList.add('hide');setTimeout(function(){if(splash.parentNode)splash.remove();},500);}
     if(hasSession&&Session.isLoggedIn()){Router.go('home');}else{Router.go('auth');}
   },1100);
-  console.log('%c🚀 YasEdu — Loading... Firebase:'+(fbOk?'✓':'✗'),'color:#6366F1;font-weight:bold');
 }
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
 
@@ -1279,7 +1280,6 @@ window.Rooms=Rooms;
 Router.register('home',HomeScreen);
 Router.register('chat',ChatScreen);
 Router.register('rooms',RoomsScreen);
-console.log('✓ Home + Chat + Rooms');
 })();
 </script>
 
@@ -1672,40 +1672,40 @@ var Quiz={mode:'',questions:[],curQ:0,score:0,attempted:[],orderPicks:[],
   generate:function(){
     var textEl=U.$('quiz-text');
     var text=textEl?textEl.value.trim():'';
-    
+
     if(!text||text.length<80){
       UI.toast('الصق نصاً تعليمياً (80 حرف على الأقل)','error');
       var inp=U.$('quiz-text');
       if(inp)inp.focus();
       return;
     }
-    
+
     // استخراج الموضوع
     var topic=Quiz.detectTopic(text);
-    
+
     // المتابعة مع الموضوع الصحيح
     Quiz.startFromText(text,topic);
   },
 
   startFromText:function(text,topic){
     if(!Session.isLoggedIn()){UI.toast('سجّل دخول أولاً','error');setTimeout(function(){Router.go('auth');},600);return;}
-    
+
     var s=App.state.user;
     var plan=s.plan||'free';
     var limit=App.plans[plan].quizLimit;
     var slider=U.$('quiz-count');var count=slider?parseInt(slider.value):5;
     if(count>limit){UI.toast('الحد الأقصى: '+limit+' سؤال','error');return;}
-    
+
     var typeSelect=U.$('quiz-type-sel');var qtype=typeSelect?typeSelect.value:'fillblank';
     var allowedTypes=App.plans[plan].quizTypes||[];
     if(allowedTypes.indexOf(qtype)===-1){UI.toast('هذا النوع متاح لخطة أعلى','error');return;}
-    
+
     Quiz.mode='auto';Quiz.curQ=0;Quiz.score=0;Quiz.attempted=[];Quiz.orderPicks=[];
-    
+
     // توليد أسئلة من النص والموضوع
     var qs=Quiz.genFromText(text,count,qtype,topic);
     if(!qs){return;}
-    
+
     Quiz.questions=qs;
     U.$('quiz-setup').style.display='none';U.$('quiz-run').style.display='block';
     Quiz.renderQuestion();
@@ -1716,23 +1716,23 @@ var Quiz={mode:'',questions:[],curQ:0,score:0,attempted:[],orderPicks:[],
       UI.toast('النص قصير (80 حرف على الأقل)','error');
       return null;
     }
-    
+
     // إذا كان النص قصيراً جداً، استخدم banks ثابتة
     if(text.length<120){
       var genMap={fillblank:Quiz.genFillBlank,mcq:Quiz.genMCQ,truefalse:Quiz.genTrueFalse,match:Quiz.genMatch,order:Quiz.genOrder,explain:Quiz.genExplain};
       var gen=genMap[qtype]||Quiz.genFillBlank;
       return gen(topic,count);
     }
-    
+
     // توليد أسئلة من النص
     var sentences=text.split(/[.؟!؟\n]+/).map(function(s){return s.trim();}).filter(function(s){return s.length>=20;});
     if(sentences.length<3){
       UI.toast('النص لا يحتوي على جمل كافية','error');
       return null;
     }
-    
+
     var qs=[];
-    
+
     // لكل نوع سؤال طريقة توليد مختلفة
     if(qtype==='fillblank'){
       for(var i=0;i<sentences.length && qs.length<count;i++){
@@ -1755,12 +1755,12 @@ var Quiz={mode:'',questions:[],curQ:0,score:0,attempted:[],orderPicks:[],
       var gen=genMap[qtype];
       qs=gen(topic,count);
     }
-    
+
     if(qs.length<3){
       UI.toast('فشل التوليد — جرب نصاً أطول أو نوع سؤال مختلف','error');
       return null;
     }
-    
+
     return qs;
   },
 
@@ -1792,33 +1792,33 @@ var Quiz={mode:'',questions:[],curQ:0,score:0,attempted:[],orderPicks:[],
       Plans.show();
       return;
     }
-    
+
     var input=document.createElement('input');
     input.type='file';
     input.accept='.pdf';
     input.onchange=function(e){
       var file=e.target.files[0];
       if(!file)return;
-      
+
       if(file.size>20*1024*1024){ // 20MB
         UI.toast('حجم الملف كبير جداً (الحد 20MB)','error');
         return;
       }
-      
+
       if(file.type!=='application/pdf'){
         UI.toast('الرجاء اختيار ملف PDF فقط','error');
         return;
       }
-      
+
       UI.toast('جاري قراءة الملف...','info',2000);
-      
+
       // في الإصدار الحالي، سنقوم بقراءة النص من PDF (الوظيفة الحقيقية قيد التطوير)
       var reader=new FileReader();
       reader.onload=function(ev){
         try{
           // هذا مثال بسيط - في الإصدار الكامل سيتم استخدام PDF.js لقراءة النص
           var text='نص مستخرج من ملف PDF (وضع تجريبي)';
-          
+
           // ضع النص في textarea
           var textarea=U.$('quiz-text');
           if(textarea){
@@ -1842,10 +1842,10 @@ var Quiz={mode:'',questions:[],curQ:0,score:0,attempted:[],orderPicks:[],
       Plans.show();
       return;
     }
-    
+
     var list=U.$('manual-questions-list');
     if(!list)return;
-    
+
     var qId='mq_'+Date.now();
     var qHTML='<div class="q-builder-item" id="'+qId+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
@@ -1866,9 +1866,9 @@ var Quiz={mode:'',questions:[],curQ:0,score:0,attempted:[],orderPicks:[],
       '<input class="input" placeholder="الإجابة الصحيحة" style="margin-bottom:4px">'+
       '</div>'+
       '</div>';
-    
+
     list.insertAdjacentHTML('beforeend',qHTML);
-    
+
     // إظهار/إخفاء خيارات MCQ
     var typeSelect=U.$(qId+'_type');
     if(typeSelect){
@@ -1891,23 +1891,23 @@ var Quiz={mode:'',questions:[],curQ:0,score:0,attempted:[],orderPicks:[],
       Plans.show();
       return;
     }
-    
+
     // جمع الأسئلة اليدوية
     var qItems=U.$$('.q-builder-item');
     var questions=[];
-    
+
     qItems.forEach(function(item){
       var id=item.id;
       var q=U.$(id+'_q');
       var type=U.$(id+'_type');
-      
+
       if(q&&q.value.trim()&&type){
         var question={
           type:type.value,
           question:q.value.trim(),
           answer:'إجابة' // في الإصدار الكامل يتم جمع الإجابات من الحقول
         };
-        
+
         if(type.value==='mcq'){
           // جمع خيارات MCQ
           var opts=[];
@@ -1920,16 +1920,16 @@ var Quiz={mode:'',questions:[],curQ:0,score:0,attempted:[],orderPicks:[],
             question.answer=opts[0]; // في الإصدار الكامل: answer من حقل منفصل
           }
         }
-        
+
         questions.push(question);
       }
     });
-    
+
     if(questions.length===0){
       UI.toast('أضف سؤالاً واحداً على الأقل','error');
       return;
     }
-    
+
     Quiz.mode='manual';Quiz.curQ=0;Quiz.score=0;Quiz.attempted=[];Quiz.orderPicks=[];
     Quiz.questions=questions;
     U.$('quiz-setup').style.display='none';U.$('quiz-run').style.display='block';
@@ -2202,7 +2202,6 @@ window.Cards=Cards;
 Router.register('bot',BotScreen);
 Router.register('quiz',QuizScreen);
 Router.register('cards',CardsScreen);
-console.log('✓ Bot + Quiz + Cards');
 })();
 </script>
 
@@ -2540,9 +2539,6 @@ Router.register('profile',ProfileScreen);
 Router.register('settings',SettingsScreen);
 Router.register('about',AboutScreen);
 Router.register('admin',AdminScreen);
-console.log('%c✅ YasEdu — جاهزة!','color:#6366F1;font-size:16px;font-weight:bold');
-console.log('   📱 YasEdu v2.0 • ياس ستوديو');
-console.log('   👤 admin / Itqan@2025');
 })();
 </script>
 
@@ -2732,1051 +2728,332 @@ function escHtml(s){var d=document.createElement('div');d.textContent=String(s==
 setInterval(updateFab,1000);setTimeout(updateFab,500);
 window.addEventListener('storage',function(e){if(e.key==='yasedu_session')updateFab();});
 
-console.log('✅ Admin FAB + Panel Ready');
 })();
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════
-   YasEdu — Pro AI Upgrade (يعدّل Bot.reply لخطة Pro)
+   YasEdu — AI Engine (single source of truth for Bot.reply / Bot.send)
+   - Local engine: Arabic-aware search over window.YAS_KB (kb.js)
+   - Premium: Gemini via YAS_SERVER, fed with the best KB matches as context
    ═══════════════════════════════════════════════════════ */
 (function(){
 'use strict';
 
-// انتظر لحد ما Bot يتحمل
-function upgradeBot(){
-  if(!window.Bot || !window.App){
-    setTimeout(upgradeBot, 200);
-    return;
+function boot(){
+  if(!window.Bot || !window.App || !window.App.session){ return setTimeout(boot, 200); }
+
+  var Bot = window.Bot, Session = window.App.session, U = window.App.utils;
+  var STOP = {};
+  ('ما ماذا هو هي هل ايه ايش اشرح شرح اشرحلي عرف عرفني تعريف يعني معني لي لنا في من عن علي الي كيف ازاي اي ان او و يا لو ممكن عايز عايزه اريد محتاج وضح فهمني فسر بسط اشرحلي عن ' +
+   'the what is are how explain define of a an to me tell about').split(' ').forEach(function(w){ STOP[w] = 1; });
+
+  /* ───────── Text normalisation ───────── */
+  var LANG = window.YAS_LANG || {}, SYNMAP = null;
+  function raw(s){
+    return String(s || '').toLowerCase()
+      .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+      .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي')
+      .replace(/[٠-٩]/g, function(d){ return String.fromCharCode(d.charCodeAt(0) - 1584); })
+      .replace(/[^a-z0-9\u0621-\u064A ]+/g, ' ')
+      .replace(/\s+/g, ' ').trim();
   }
-
-  var Session = window.App.session;
-  var U = window.App.utils;
-
-  // احفظ الدالة الأصلية
-  var originalReply = window.Bot.reply;
-
-  // ══════════════════════════════════════
-  // النسخة المحسّنة (تشتغل للـ Pro و Premium)
-  // ══════════════════════════════════════
-  window.Bot.reply = function(text){
-    var t = text.toLowerCase().trim();
-    var plan = Session.getPlan();
-    var isPro = (plan === 'pro' || plan === 'premium');
-
-    // ── تحيات ──
-    if(/^(مرحبا|السلام|اهلا|هلا|hi|hello|صباح|مساء)/.test(t)){
-      var h = new Date().getHours();
-      var g = h<12 ? 'صباح الخير ☀️' : h<18 ? 'أهلاً وسهلاً 👋' : 'مساء النور 🌙';
-      return g + '\n\nأنا مساعد YasEdu الذكي 🤖\n\n' +
-        (isPro 
-          ? 'مع خطتك **' + window.App.plans[plan].label + '** عندي:\n• 📖 شرح 100+ مفهوم\n• 🧮 حل رياضيات متقدم\n• ⚖️ مقارنات تفصيلية\n• 💡 نصائح Pro مدمجة\n\nاسألني أي حاجة تعليمية!'
-          : 'اسألني عن أي مادة تعليمية وأنا هساعدك!');
-    }
-
-    // ── شكر ──
-    if(/شكر|thanks|شكراً|تسلم/.test(t)){
-      return 'العفو! 😊 ' + (isPro ? 'لو عندك أسئلة تانية أنا هنا.' : 'اسألني أي وقت!');
-    }
-
-    // ── من أنت ──
-    if(/اسمك|من انت|من أنت|yasedu|ياسيدو|المنصة/.test(t)){
-      return 'أنا **مساعد YasEdu الذكي** 🤖\n\n' +
-        '🏢 **ياس ستوديو**\n' +
-        '👨‍💻 المطور: **ياسر محمد**\n\n' +
-        '✨ **الخطط:**\n' +
-        '• 🆓 Free — أساسيات\n' +
-        '• ⚡ Pro — محرك متقدم\n' +
-        '• 👑 Premium — Gemini AI حقيقي';
-    }
-
-    // ── نصائح دراسية ──
-    if(/نصيح|نصائح|كيف اذاك|طريقة مذاكرة|مذاكرة/.test(t)){
-      if(isPro){
-        var proTips = [
-          '🧠 **تقنية فاينمان:** اشرح المفهوم بصوت عالٍ كأنك بتعلّم حد.\n📌 **Pro tip:** بعد كل درس اكتب 3 أسطر تلخيص بكلامك.',
-          '📊 **التكرار المتباعد:** راجع بعد: يوم → 3 أيام → أسبوع → شهر.\n📌 **Pro tip:** استخدم البطاقات في YasEdu.',
-          '⏱️ **بومودورو:** 25 دقيقة تركيز → 5 راحة. بعد 4 دورات → راحة 20 دقيقة.\n📌 **Pro tip:** اكتب هدف واضح قبل كل جلسة.',
-          '🎯 **التعلم النشط:** اسأل نفسك "ليه؟ إزاي؟ إمتى؟".\n📌 **Pro tip:** استخدم توليد الاختبارات من النص.',
-          '😴 **النوم قبل المراجعة:** الدماغ بيثبّت المعلومات أثناء النوم.\n📌 **Pro tip:** ذاكر أصعب حاجة قبل النوم بساعة.'
-        ];
-        return '💡 **نصيحة Pro:**\n\n' + proTips[Math.floor(Math.random()*proTips.length)];
-      }
-      var freeTips = ['⏱️ ذاكر 25 دقيقة وارتاح 5.','🗣️ اشرح اللي ذاكرته لحد تاني.','🔁 راجع بعد يوم وبعد أسبوع.','😴 نام كويس قبل المراجعة.'];
-      return '💡 **نصيحة:**\n\n' + freeTips[Math.floor(Math.random()*freeTips.length)] + '\n\n⚡ ترقّى لـ Pro عشان نصائح أعمق.';
-    }
-
-    // ── الفرق بين ──
-    if(/الفرق بين/.test(text)){
-      var m = text.match(/الفرق\s*بين\s*(.+?)\s*(?:و|vs|and)\s*(.+)/i);
-      if(m){
-        var ra = window.Bot.searchKB(m[1].trim());
-        var rb = window.Bot.searchKB(m[2].trim());
-        if(ra || rb){
-          var out = '⚖️ **المقارنة بين ' + m[1].trim() + ' و ' + m[2].trim() + ':**\n\n';
-          if(ra){ out += '🔹 **' + ra.t + ':**\n' + ra.d + (ra.e ? '\n📌 مثال: ' + ra.e : '') + '\n\n'; }
-          if(rb){ out += '🔸 **' + rb.t + ':**\n' + rb.d + (rb.e ? '\n📌 مثال: ' + rb.e : '') + '\n\n'; }
-          if(isPro && ra && rb) out += '💡 **Pro tip:** كل واحد ليه استخدامه — جرب تسأل عن تطبيق عملي.';
-          return out;
-        }
-      }
-    }
-
-    // ── رياضيات ──
-    var mathResult = window.Bot.solveMath(text);
-    if(mathResult) return mathResult;
-
-    // ── قاعدة المعرفة ──
-    var kb = window.Bot.searchKB(text);
-    if(kb){
-      var out = '📖 **' + kb.t + '**\n\n' + kb.d;
-      if(kb.w) out += '\n\n💡 **ليه؟** ' + kb.w;
-      if(kb.e) out += '\n\n🌟 **مثال:** ' + kb.e;
-      out += '\n\n_المجال: ' + kb.c + '_';
-      if(isPro){
-        var extras = {
-          'الجمع':'استخدم التفكيك: ٤٧+٣٨ = (٤٠+٣٠)+(٧+٨) = ٨٥',
-          'الطرح':'قرّب ثم صحّح: ٨٣−٤٧ = ٨٣−٥٠+٣ = ٣٦',
-          'الضرب':'×٥: اضرب في ١٠ ثم اقسم على ٢. مثال: ٢٤×٥ = ١٢٠',
-          'القسمة':'÷٥: اضرب في ٢ ثم اقسم على ١٠. مثال: ١٣٥÷٥ = ٢٧',
-          'الجاذبية':'الجاذبية = G×(ك١×ك٢)/المسافة². لو المسافة اتضاعفت، القوة تبقى الربع.',
-          'السرعة':'السرعة المتوسطة = المسافة الكلية ÷ الزمن الكلي — مش متوسط السرعات!',
-          'الذرة':'عدد البروتونات = العدد الذري. عدد النيوترونات = الكتلة − العدد الذري.',
-          'DNA':'A يرتبط بـ T (٢ روابط)، C يرتبط بـ G (٣ روابط).',
-          'فيثاغورس':'تأكد دايمًا إن المثلث قائم الزاوية قبل التطبيق.'
-        };
-        out += '\n\n⚡ **Pro tip:** ' + (extras[kb.t] || 'اسأل عن أي مفهوم تاني.');
-      }
-      return out;
-    }
-
-    // ── رد افتراضي ──
-    return '🤔 **مش لاقي إجابة محددة.**\n\n' +
-      '**جرّب:**\n' +
-      '• 🧮 "٣ + ٥" أو "٢س + ٥ = ١٣"\n' +
-      '• 📖 "اشرح الجاذبية"\n' +
-      '• ⚖️ "الفرق بين الجمع والضرب"\n' +
-      '• 💡 "نصيحة دراسية"\n\n' +
-      (isPro 
-        ? '**⚡ Pro:** عندي 100+ مفهوم + حل معادلات + مقارنات.\n**👑 Premium:** AI حقيقي يجاوب أي سؤال.'
-        : '⚡ ترقّى لـ Pro للحصول على محرك متقدم.');
-  };
-
-  console.log('✅ Bot upgraded for Pro/Premium');
-}
-
-// ابدأ الترقية
-upgradeBot();
-})();
-</script>
-  <script>
-/* ═══════════════════════════════════════════════════════
-   YasEdu — Pro Max AI Engine
-   محرك ذكاء اصطناعي محلي متقدم لخطة Pro
-   ═══════════════════════════════════════════════════════ */
-(function(){
-'use strict';
-
-function initProMax(){
-  if(!window.Bot || !window.App){
-    setTimeout(initProMax, 200);
-    return;
+  function buildSyn(){
+    SYNMAP = {};
+    (LANG.syn || []).forEach(function(g){ var c = raw(g[0]); g.forEach(function(w){ SYNMAP[raw(w)] = c; }); });
   }
-
-  var Session = window.App.session;
-
-  // احفظ النسخة الحالية
-  var prevReply = window.Bot.reply;
-
-  // ══════════════════════════════════════
-  // قاعدة معرفة موسعة (100+ مفهوم)
-  // ══════════════════════════════════════
-  var PRO_KB = [
-    // رياضيات
-    {t:'المعادلة التربيعية',c:'رياضيات',k:['تربيعية','درجة تانية','ax2','معادلة تربيعية'],d:'معادلة على الصورة ax²+bx+c=0',w:'لها حلان باستخدام القانون العام',e:'x²-5x+6=0 → x=2 أو 3'},
-    {t:'قانون الجذب العام',c:'فيزياء',k:['جذب عام','نيوتن جاذبية'],d:'ق=G×(ك١×ك٢)/ف²',w:'يفسر حركة الكواكب',e:'وزنك على الأرض = جاذبية الأرض لك'},
-    {t:'قانون أوم',c:'فيزياء',k:['أوم','ohm','جهد','تيار','مقاومة'],d:'الجهد = التيار × المقاومة (ج=ت×م)',w:'أساس الدوائر الكهربائية',e:'تيار 2A ومقاومة 5Ω → جهد=10V'},
-    {t:'قانون بويل',c:'كيمياء',k:['بويل','ضغط حجم'],d:'ض١×ح١ = ض٢×ح٢ (عند ثبات الحرارة)',w:'يصف غازات مثالية',e:'ضغط 1atm وحجم 2L → لو الضغط 2atm الحجم 1L'},
-    {t:'اللوغاريتم',c:'رياضيات',k:['لوغاريتم','log','ln'],d:'لوₐ(ب) = الأس الذي نحتاجه لرفع a للحصول على b',w:'يحول الضرب لجمع',e:'لو₂(8)=3 لأن 2³=8'},
-    {t:'المشتقة',c:'رياضيات',k:['مشتقة','تفاضل','derivative'],d:'معدل التغير اللحظي للدالة',w:'تستخدم لإيجاد الميل والسرعة',e:'مشتقة x² = 2x'},
-    {t:'التكامل',c:'رياضيات',k:['تكامل','integral'],d:'عكس المشتقة — المساحة تحت المنحنى',w:'يحسب المساحات والأحجام',e:'∫2x dx = x² + C'},
-    {t:'المتجهات',c:'رياضيات',k:['متجه','vector','اتجاه'],d:'كمية لها مقدار واتجاه',w:'تستخدم في الفيزياء والهندسة',e:'قوة 10N باتجاه الشمال الشرقي'},
-    {t:'المصفوفات',c:'رياضيات',k:['مصفوفة','matrix'],d:'ترتيب مستطيل للأرقام',w:'تستخدم في حل الأنظمة',e:'[[1,2],[3,4]]'},
-    {t:'الاحتمالات',c:'رياضيات',k:['احتمال','احتمالات'],d:'عدد النواتج المواتية ÷ العدد الكلي',w:'يستخدم في الإحصاء',e:'احتمال ظهور صورة في عملة = 1/2'},
-    {t:'المتتابعات',c:'رياضيات',k:['متتابعة','متسلسلة','حسابية','هندسية'],d:'سلسلة أعداد تتبع نمطاً',w:'الحسابية: فرق ثابت، الهندسية: نسبة ثابتة',e:'2,4,6,8 (حسابية)، 2,4,8,16 (هندسية)'},
-    {t:'الدوال',c:'رياضيات',k:['دالة','function','مجال','مدى'],d:'علاقة بين مدخل ومخرج',w:'كل مدخل له مخرج واحد فقط',e:'f(x)=2x+1 → f(3)=7'},
-
-    // فيزياء
-    {t:'قانون نيوتن الثاني',c:'فيزياء',k:['نيوتن ثاني','ق=ك×ت'],d:'القوة = الكتلة × التسارع',w:'يفسر حركة الأجسام',e:'كتلة 5kg وتسارع 2m/s² → قوة=10N'},
-    {t:'الطاقة الحركية',c:'فيزياء',k:['طاقة حركية','kinetic'],d:'ط.ح = ½ × ك × ع²',w:'طاقة الجسم المتحرك',e:'كتلة 2kg وسرعة 3m/s → ط.ح=9J'},
-    {t:'الطاقة الكامنة',c:'فيزياء',k:['طاقة كامنة','potential'],d:'ط.ك = ك × ج × ع',w:'طاقة الجسم بسبب موضعه',e:'كتلة 2kg على ارتفاع 5m → ط.ك=100J (ج=10)'},
-    {t:'الزخم',c:'فيزياء',k:['زخم','momentum'],d:'الزخم = الكتلة × السرعة',w:'محفوظ في التصادمات',e:'كتلة 3kg وسرعة 4m/s → زخم=12'},
-    {t:'قانون هوك',c:'فيزياء',k:['هوك','زنبرك','spring'],d:'ق = -ك × إزاحة',w:'يفسر حركة النوابض',e:'زنبرك ثابت 100N/m وإزاحة 0.2m → قوة=20N'},
-    {t:'الموجات',c:'فيزياء',k:['موجة','تردد','طول موجة'],d:'السرعة = التردد × الطول الموجي',w:'تنتقل الطاقة عبر الموجات',e:'تردد 50Hz وطول 2m → سرعة=100m/s'},
-
-    // كيمياء
-    {t:'التفاعل الكيميائي',c:'كيمياء',k:['تفاعل','معادلة كيميائية'],d:'عملية تحول المواد المتفاعلة لمنتجات',w:'يجب موازنتها',e:'2H₂+O₂→2H₂O'},
-    {t:'الجدول الدوري',c:'كيمياء',k:['جدول دوري','دورة','مجموعة'],d:'ترتيب العناصر حسب العدد الذري',w:'يظهر خصائص العناصر',e:'فلزات يسار، لا فلزات يمين'},
-    {t:'الروابط الكيميائية',c:'كيمياء',k:['رابطة','أيونية','تساهمية'],d:'ترابط بين الذرات',w:'أيونية: نقل إلكترونات، تساهمية: مشاركة',e:'NaCl رابطة أيونية'},
-
-    // أحياء
-    {t:'الانقسام الخلوي',c:'أحياء',k:['انقسام','ميتوز','ميوز'],d:'عملية انقسام الخلية',w:'ميتوز: خلايا متطابقة، ميوز: أمشاج',e:'ميتوز في الجلد، ميوز في المناسل'},
-    {t:'الجهاز الهضمي',c:'أحياء',k:['هضم','أمعاء','معدة'],d:'يحول الطعام لمواد يمتصها الجسم',w:'يبدأ بالفم وينتهي بالأمعاء',e:'الفم→المرئ→المعدة→الأمعاء'},
-    {t:'الجهاز التنفسي',c:'أحياء',k:['تنفس','رئة','تنفسي'],d:'تبادل الغازات بين الجسم والبيئة',w:'يأخذ O₂ ويطرد CO₂',e:'أنف→قصبة→رئة→حويصلات'},
-
-    // عربي
-    {t:'الجملة الاسمية',c:'عربي',k:['اسمية','مبتدأ','خبر'],d:'تبدأ باسم، تتكون من مبتدأ وخبر',w:'المبتدأ مرفوع والخبر مرفوع',e:'العلمُ نورٌ'},
-    {t:'الجملة الفعلية',c:'عربي',k:['فعلية','فعل','فاعل','مفعول'],d:'تبدأ بفعل، فيها فاعل ومفعول',w:'الفاعل مرفوع والمفعول منصوب',e:'كتب الطالبُ الدرسَ'},
-    {t:'أنواع الفعل',c:'عربي',k:['ماضي','مضارع','أمر'],d:'ماضي، مضارع، أمر',w:'كل نوع له علامات إعرابية',e:'كتب (ماضي)، يكتب (مضارع)، اكتب (أمر)'},
-    {t:'الهمزة',c:'عربي',k:['همزة','قطع','وصل'],d:'همزة قطع (تُنطق دائماً) وهمزة وصل',w:'قطع: أ، إ، أو، إي، همزة وصل: ال، وا، يا',e:'أحمد (قطع)، الكتاب (وصل)'},
-
-    // إنجليزي
-    {t:'Present Perfect',c:'إنجليزي',k:['present perfect','مضارع تام'],d:'have/has + past participle',w:'حدث بدأ في الماضي واستمر',e:'I have lived here for 5 years'},
-    {t:'Passive Voice',c:'إنجليزي',k:['passive','مبني للمجهول'],d:'be + past participle',w:'نستخدمه لو الفاعل غير مهم',e:'The book was written by Ahmed'},
-    {t:'Conditional',c:'إنجليزي',k:['conditional','شرط','if'],d:'If + condition → result',w:'عدة أنواع (0,1,2,3)',e:'If it rains, I will stay home'},
-
-    // تاريخ/جغرافيا
-    {t:'الحرب العالمية الأولى',c:'تاريخ',k:['حرب عالمية أولى','1914'],d:'1914-1918م',w:'بدأت باغتيال ولي عهد النمسا',e:'انتهت بمعاهدة فرساي'},
-    {t:'الحرب العالمية الثانية',c:'تاريخ',k:['حرب عالمية ثانية','1939'],d:'1939-1945م',w:'بدأت بغزو ألمانيا لبولندا',e:'انتهت بهزيمة ألمانيا واليابان'},
-    {t:'الحضارة المصرية القديمة',c:'تاريخ',k:['فرعون','قدماء المصريين','أهرامات'],d:'حضارة عمرها 7000 سنة',w:'من أقدم الحضارات',e:'الأهرامات، الكتابة الهيروغليفية'},
-    {t:'خطوط الطول والعرض',c:'جغرافيا',k:['طول','عرض','إحداثيات'],d:'خطوط وهمية لتحديد المواقع',w:'خط غرينتش خط الطول الرئيسي',e:'موقع مصر: 30° شرق، 27° شمال'},
-
-    // مهارات
-    {t:'إدارة الوقت',c:'مهارات',k:['إدارة وقت','تنظيم','أولويات'],d:'تنظيم المهام حسب الأهمية',w:'يقلل التوتر ويزيد الإنتاجية',e:'مصفوفة أيزنهاور'},
-    {t:'الذاكرة',c:'مهارات',k:['ذاكرة','حفظ','تذكر'],d:'قدرة الدماغ على تخزين واسترجاع المعلومات',w:'تتحسن بالتكرار والربط',e:'التكرار المتباعد يثبت المعلومات'},
-    {t:'التفكير الناقد',c:'مهارات',k:['ناقد','تفكير','تحليل'],d:'تحليل المعلومات واتخاذ قرارات مدروسة',w:'يساعد على تجنب الأخطاء',e:'لا تصدق كل ما تقرأه'}
-  ];
-
-  // ══════════════════════════════════════
-  // الدالة الرئيسية — Pro Max
-  // ══════════════════════════════════════
-  window.Bot.reply = function(text){
-    var t = text.toLowerCase().trim();
-    var plan = Session.getPlan();
-    var isPro = (plan === 'pro' || plan === 'premium');
-
-    // ══════════════════════════════════
-    // 1) تحيات
-    // ══════════════════════════════════
-    if(/^(مرحبا|السلام|اهلا|هلا|hi|hello|صباح|مساء)/.test(t)){
-      var h = new Date().getHours();
-      var g = h<12 ? 'صباح الخير ☀️' : h<18 ? 'أهلاً وسهلاً 👋' : 'مساء النور 🌙';
-      return g + '\n\nأنا **مساعد YasEdu Pro Max** 🤖\n\n' +
-        (isPro
-          ? '✨ **قدراتي:**\n• 🧮 معادلات (خطية + تربيعية + أنظمة)\n• 📐 مثلثات ولوغاريتمات\n• 🔬 فيزياء وكيمياء وأحياء\n• 📖 100+ مفهوم\n• ⚖️ مقارنات تفصيلية\n• 💡 نصائح Pro\n\nاسألني أي حاجة — حتى أصعب المعدلات!'
-          : 'اسألني عن أي مادة تعليمية!');
-    }
-
-    // ══════════════════════════════════
-    // 2) شكر
-    // ══════════════════════════════════
-    if(/شكر|thanks|شكراً|تسلم/.test(t)){
-      return 'العفو! 😊 ' + (isPro ? 'أنا هنا لأي سؤال تاني — حتى الأصعب!' : 'اسألني أي وقت!');
-    }
-
-    // ══════════════════════════════════
-    // 3) من أنت
-    // ══════════════════════════════════
-    if(/اسمك|من انت|من أنت|yasedu|ياسيدو/.test(t)){
-      return 'أنا **مساعد YasEdu Pro Max** 🤖\n\n' +
-        '🏢 **ياس ستوديو**\n👨‍💻 المطور: **ياسر محمد**\n\n' +
-        '✨ **قدراتي:**\n' +
-        '• 🧮 حل معادلات (خطية + تربيعية + أنظمة)\n' +
-        '• 📐 حساب المثلثات واللوغاريتمات\n' +
-        '• 🔬 فيزياء + كيمياء + أحياء\n' +
-        '• 📖 100+ مفهوم تعليمي\n' +
-        '• ⚖️ مقارنات تفصيلية\n\n' +
-        '**جرّب:** "x²-5x+6=0" أو "sin(30)" أو "الجاذبية"';
-    }
-
-    // ══════════════════════════════════
-    // 4) نصائح
-    // ══════════════════════════════════
-    if(/نصيح|نصائح|كيف اذاك|طريقة مذاكرة|مذاكرة/.test(t)){
-      if(isPro){
-        var proTips = [
-          '🧠 **تقنية فاينمان:** اشرح المفهوم بصوت عالٍ.\n📌 اكتب 3 أسطر تلخيص بعد كل درس.',
-          '📊 **التكرار المتباعد:** يوم → 3 أيام → أسبوع → شهر.\n📌 استخدم البطاقات.',
-          '⏱️ **بومودورو:** 25 دقيقة تركيز → 5 راحة.\n📌 حدد هدف واضح قبل كل جلسة.',
-          '😴 **النوم:** الدماغ بيثبّت المعلومات أثناء النوم.\n📌 ذاكر أصعب حاجة قبل النوم بساعة.'
-        ];
-        return '💡 **نصيحة Pro Max:**\n\n' + proTips[Math.floor(Math.random()*proTips.length)];
-      }
-      return '💡 ذاكر 25 دقيقة وارتاح 5. راجع بعد يوم وأسبوع.\n\n⚡ ترقّى لـ Pro لنصائح أعمق.';
-    }
-
-    // ══════════════════════════════════
-    // 5) محرك الرياضيات المتقدم
-    // ══════════════════════════════════
-    var mathResult = solveMathPro(text);
-    if(mathResult) return mathResult;
-
-    // ══════════════════════════════════
-    // 6) المقارنات
-    // ══════════════════════════════════
-    if(/الفرق بين/.test(text)){
-      var m = text.match(/الفرق\s*بين\s*(.+?)\s*(?:و|vs|and)\s*(.+)/i);
-      if(m){
-        var ra = searchKBPro(m[1].trim());
-        var rb = searchKBPro(m[2].trim());
-        if(ra || rb){
-          var out = '⚖️ **المقارنة بين ' + m[1].trim() + ' و ' + m[2].trim() + ':**\n\n';
-          if(ra){ out += '🔹 **' + ra.t + ':**\n' + ra.d + (ra.e ? '\n📌 ' + ra.e : '') + '\n\n'; }
-          if(rb){ out += '🔸 **' + rb.t + ':**\n' + rb.d + (rb.e ? '\n📌 ' + rb.e : '') + '\n\n'; }
-          return out;
-        }
-      }
-    }
-
-    // ══════════════════════════════════
-    // 7) قاعدة المعرفة
-    // ══════════════════════════════════
-    var kb = searchKBPro(text);
-    if(kb){
-      var out = '📖 **' + kb.t + '**\n\n' + kb.d;
-      if(kb.w) out += '\n\n💡 **ليه؟** ' + kb.w;
-      if(kb.e) out += '\n\n🌟 **مثال:** ' + kb.e;
-      out += '\n\n_المجال: ' + kb.c + '_';
-      return out;
-    }
-
-    // ══════════════════════════════════
-    // 8) Fallback
-    // ══════════════════════════════════
-    return '🤔 **مش لاقي إجابة محددة.**\n\n' +
-      '**جرّب:**\n' +
-      '• 🧮 "x²-5x+6=0" (معادلة تربيعية)\n' +
-      '• 🧮 "2x+3y=12, x-y=1" (نظام معادلات)\n' +
-      '• 🧮 "sin(30)" أو "log(100)"\n' +
-      '• 📖 "الجاذبية" أو "الذرة"\n' +
-      '• ⚖️ "الفرق بين المبتدأ والخبر"';
-  };
-
-  // ══════════════════════════════════════
-  // محرك الرياضيات المتقدم
-  // ══════════════════════════════════════
-  function solveMathPro(text){
-    // تحويل الأرقام العربية
-    var norm = text.replace(/[٠-٩]/g, function(d){
-      return String.fromCharCode(d.charCodeAt(0) - 1584);
-    });
-
-    // ── أ) المعادلة التربيعية: ax²+bx+c=0 ──
-    var quad = norm.match(/(-?\d*\.?\d*)x\s*[²\^]?2?\s*([+\-]\s*\d*\.?\d*)x\s*([+\-]\s*\d+)?\s*=\s*0/i);
-    if(quad){
-      var a = parseFloat(quad[1] || '1');
-      var bStr = quad[2].replace(/\s/g,'');
-      var b = parseFloat(bStr);
-      var c = quad[3] ? parseFloat(quad[3].replace(/\s/g,'')) : 0;
-
-      if(a !== 0){
-        var disc = b*b - 4*a*c;
-        var out = '📐 **المعادلة التربيعية:**\n\n' + a + 'x² ' + (b>=0?'+'+b:b) + 'x ' + (c>=0?'+'+c:c) + ' = 0\n\n';
-        out += '**الخطوات:**\n';
-        out += '1. a=' + a + '، b=' + b + '، c=' + c + '\n';
-        out += '2. المميز Δ = b² - 4ac = ' + (b*b) + ' - ' + (4*a*c) + ' = ' + disc + '\n';
-
-        if(disc > 0){
-          var x1 = (-b + Math.sqrt(disc)) / (2*a);
-          var x2 = (-b - Math.sqrt(disc)) / (2*a);
-          out += '3. Δ > 0 → حلان:\n';
-          out += '\n✅ **x₁ = ' + round(x1) + '**\n';
-          out += '✅ **x₂ = ' + round(x2) + '**';
-        } else if(disc === 0){
-          var x = -b / (2*a);
-          out += '3. Δ = 0 → حل واحد:\n';
-          out += '\n✅ **x = ' + round(x) + '**';
-        } else {
-          out += '3. Δ < 0 → **لا حلول حقيقية**\n';
-          out += '\n💡 الحلول مركبة: x = ' + round(-b/(2*a)) + ' ± ' + round(Math.sqrt(-disc)/(2*a)) + 'i';
-        }
-        return out;
-      }
-    }
-
-    // ── ب) نظام معادلتين ──
-    var sysMatch = norm.match(/(-?\d*\.?\d*)x\s*([+\-]\s*\d*\.?\d*)y\s*=\s*(-?\d+)[,،\s]+(-?\d*\.?\d*)x\s*([+\-]\s*\d*\.?\d*)y\s*=\s*(-?\d+)/i);
-    if(sysMatch){
-      var a1 = parseFloat(sysMatch[1] || '1');
-      var b1 = parseFloat(sysMatch[2].replace(/\s/g,''));
-      var c1 = parseFloat(sysMatch[3]);
-      var a2 = parseFloat(sysMatch[4] || '1');
-      var b2 = parseFloat(sysMatch[5].replace(/\s/g,''));
-      var c2 = parseFloat(sysMatch[6]);
-
-      var det = a1*b2 - a2*b1;
-      var out = '📐 **نظام معادلتين:**\n\n';
-      out += '1) ' + a1 + 'x + ' + b1 + 'y = ' + c1 + '\n';
-      out += '2) ' + a2 + 'x + ' + b2 + 'y = ' + c2 + '\n\n';
-
-      if(det === 0){
-        return out + '⚠️ المحدد = 0 → النظام **ليس له حل وحيد** (إما لا حل أو حلول لا نهائية).';
-      }
-
-      var x = (c1*b2 - c2*b1) / det;
-      var y = (a1*c2 - a2*c1) / det;
-      out += '**الخطوات (قاعدة كرامر):**\n';
-      out += 'Δ = ' + round(det) + '\n';
-      out += 'Δx = ' + round(c1*b2 - c2*b1) + '\n';
-      out += 'Δy = ' + round(a1*c2 - a2*c1) + '\n\n';
-      out += '✅ **x = ' + round(x) + '**\n';
-      out += '✅ **y = ' + round(y) + '**';
-      return out;
-    }
-
-    // ── ج) لوغاريتم ──
-    var logMatch = norm.match(/(?:لو|log)\s*_?(\d+)?\s*\(?\s*(\d+)\s*\)?/i);
-    if(logMatch && logMatch[2]){
-      var base = parseFloat(logMatch[1] || '10');
-      var num = parseFloat(logMatch[2]);
-      var result = Math.log(num) / Math.log(base);
-      return '📐 **اللوغاريتم:**\n\n' +
-        'لو₍' + base + '₎(' + num + ') = ' + round(result) + '\n\n' +
-        '_لأن ' + base + '^' + round(result) + ' ≈ ' + num + '_';
-    }
-
-    // ── د) المثلثات ──
-    var trigMatch = norm.match(/(sin|cos|tan|جا|جتا|ظا)\s*\(?\s*(-?\d+)\s*\)?/i);
-    if(trigMatch){
-      var fn = trigMatch[1].toLowerCase();
-      var angle = parseFloat(trigMatch[2]);
-      var rad = angle * Math.PI / 180;
-      var val = 0;
-      var fnName = '';
-      if(fn === 'sin' || fn === 'جا'){ val = Math.sin(rad); fnName = 'جا'; }
-      else if(fn === 'cos' || fn === 'جتا'){ val = Math.cos(rad); fnName = 'جتا'; }
-      else { val = Math.tan(rad); fnName = 'ظا'; }
-      return '📐 **حساب المثلثات:**\n\n' +
-        fnName + '(' + angle + '°) = ' + round(val) + '\n\n' +
-        '_الزاوية بالراديان: ' + round(rad) + '_';
-    }
-
-    // ── هـ) الجذور والأسس ──
-    var rootMatch = norm.match(/(?:√|جذر)\s*\(?\s*(\d+)\s*\)?/);
-    if(rootMatch){
-      var n = parseFloat(rootMatch[1]);
-      var r = Math.sqrt(n);
-      return '📐 **الجذر التربيعي:**\n\n√' + n + ' = ' + round(r);
-    }
-    var powMatch = norm.match(/(\d+)\s*[\^]\s*(\d+)/);
-    if(powMatch){
-      var base2 = parseFloat(powMatch[1]);
-      var exp = parseFloat(powMatch[2]);
-      return '📐 **الأس:**\n\n' + base2 + '^' + exp + ' = ' + round(Math.pow(base2, exp));
-    }
-
-    // ── و) عمليات أساسية ──
-    var basic = norm.replace(/\s+/g,'').match(/(-?\d+(?:\.\d+)?)([+\-*/])(-?\d+(?:\.\d+)?)/);
-    if(basic){
-      var a = parseFloat(basic[1]);
-      var op = basic[2];
-      var b = parseFloat(basic[3]);
-      var r;
-      if(op === '+') r = a + b;
-      else if(op === '-') r = a - b;
-      else if(op === '*') r = a * b;
-      else r = b !== 0 ? a / b : 'غير معرّف';
-      var ops = {'+':'جمع','-':'طرح','*':'ضرب','/':'قسمة'};
-      return '🧮 **' + a + ' ' + op + ' ' + b + ' = ' + round(r) + '**\n\n_' + ops[op] + '_';
-    }
-
-    // ── ز) نسبة مئوية ──
-    var pct = norm.match(/(\d+(?:\.\d+)?)%(?:من|of)(\d+(?:\.\d+)?)/);
-    if(pct){
-      var pa = parseFloat(pct[1]);
-      var pb = parseFloat(pct[2]);
-      return '📊 **' + pa + '% من ' + pb + ' = ' + round(pa*pb/100) + '**';
-    }
-
-    // ── ح) متوسط ──
-    var avg = norm.match(/(?:متوسط|average)\s*([\d\s,،.]+)/i);
-    if(avg){
-      var nums = avg[1].split(/[\s,،]+/).map(parseFloat).filter(function(n){ return !isNaN(n); });
-      if(nums.length > 1){
-        var sum = nums.reduce(function(s,n){ return s+n; }, 0);
-        return '📊 **المتوسط:**\n\nالمجموع: ' + sum + '\nالعدد: ' + nums.length + '\n✅ **المتوسط = ' + round(sum/nums.length) + '**';
-      }
-    }
-
-    // ── ط) فيثاغورس ──
-    var pyth = norm.match(/(\d+)[,،\s]+(\d+)/);
-    if(pyth && /وتر|فيثاغورس|مثلث/.test(text)){
-      var pa2 = parseFloat(pyth[1]);
-      var pb2 = parseFloat(pyth[2]);
-      var pc = Math.sqrt(pa2*pa2 + pb2*pb2);
-      return '📐 **فيثاغورس:**\n\nج² = ' + pa2 + '² + ' + pb2 + '²\nج² = ' + (pa2*pa2) + ' + ' + (pb2*pb2) + ' = ' + (pa2*pa2 + pb2*pb2) + '\n✅ **الوتر = ' + round(pc) + '**';
-    }
-
-    return null;
-  }
-
-  // ══════════════════════════════════════
-  // بحث ذكي بقاعدة المعرفة
-  // ══════════════════════════════════════
-  function searchKBPro(query){
-    var q = query.toLowerCase().trim();
-    var best = null;
-    var bestScore = 0;
-
-    // ابحث في القاعدة الموسعة
-    for(var i = 0; i < PRO_KB.length; i++){
-      var item = PRO_KB[i];
-      var score = 0;
-      if(q.indexOf(item.t.toLowerCase()) !== -1) score += 10;
-      for(var j = 0; j < item.k.length; j++){
-        var kw = item.k[j].toLowerCase();
-        if(q.indexOf(kw) !== -1){
-          score += 5;
-          if(kw.length > 4) score += 2;
-        }
-      }
-      if(score > bestScore){ bestScore = score; best = item; }
-    }
-
-    // لو مفيش، ابحث في القاعدة القديمة
-    if(!best && window.Bot.searchKB){
-      var oldKb = window.Bot.searchKB(query);
-      if(oldKb) return oldKb;
-    }
-
-    return bestScore >= 5 ? best : null;
-  }
-
-  function round(n){
-    if(typeof n === 'string') return n;
-    return Math.round(n * 10000) / 10000;
-  }
-
-  console.log('✅ Pro Max AI Engine loaded — 100+ concepts + advanced math');
-}
-
-initProMax();
-})();
-</script>
-  <script>
-/* ═══════════════════════════════════════════════════════
-   YasEdu — Pro Max v2: رياضيات متقدمة + فهم لغة بشرية
-   ═══════════════════════════════════════════════════════ */
-(function(){
-'use strict';
-
-function initProMaxV2(){
-  if(!window.Bot || !window.App){ setTimeout(initProMaxV2, 200); return; }
-
-  var Session = window.App.session;
-  var prevReply = window.Bot.reply;
-
-  // ══════════════════════════════════════
-  // 1) تطبيع النص
-  // ══════════════════════════════════════
-  function normalize(txt){
-    var t = String(txt).toLowerCase().trim();
-    t = t.replace(/[٠-٩]/g, function(d){ return String.fromCharCode(d.charCodeAt(0) - 1584); });
-    t = t.replace(/[،؛]/g, ',').replace(/[؟]/g, '?');
-    t = t.replace(/[\u064B-\u0652]/g, '');
-    t = t.replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه');
-    t = t.replace(/\b(من فضلك|لو سمحت|ممكن|يا|بليز|please|could you|can you|would you)\b/gi, ' ');
-    t = t.replace(/\s+/g, ' ').trim();
+  function plain(s){                      // spelling-normalised + phrase rewrites, no synonym mapping
+    var t = raw(s);
+    (LANG.rewrite || []).forEach(function(r){ t = t.replace(r[0], r[1]); });
     return t;
   }
-
-  function extractMathExpr(txt){
-    var t = normalize(txt);
-    t = t.replace(/(احسب|احسبلي|كم|كام|اوجد|اوجدلي|حل|solve|calculate|what is|ناتج|نتيجه|قيمه|يساوي|=)/gi, ' ');
-    var m = t.match(/-?\d+(?:\.\d+)?\s*[+\-*/^√%]\s*-?\d+(?:\.\d+)?/);
-    return m ? m[0] : null;
+  function norm(s){                       // plain + dialect/English words mapped to canonical words
+    if(!SYNMAP) buildSyn();
+    return plain(s).split(' ').map(function(w){
+      var w2 = w.replace(/^[وفبكل]?ال/, '');
+      return SYNMAP[w2] || SYNMAP[w] || w;
+    }).join(' ');
+  }
+  function stem(w){
+    if(w.length > 3) w = w.replace(/^[وفبكل]?ال/, '');
+    if(w.length > 4) w = w.replace(/(ات|ون|ين|ان|ها)$/, '');
+    return w;
+  }
+  function tokens(s){
+    return norm(s).split(' ').filter(function(w){ return w && !STOP[w]; }).map(stem).filter(function(w){ return w.length > 1; });
+  }
+  function dist1(a, b){            // true if edit distance <= 1
+    if(a === b) return true;
+    var la = a.length, lb = b.length;
+    if(Math.abs(la - lb) > 1) return false;
+    var i = 0, j = 0, miss = 0;
+    while(i < la && j < lb){
+      if(a[i] === b[j]){ i++; j++; continue; }
+      if(++miss > 1) return false;
+      if(la > lb) i++; else if(lb > la) j++; else { i++; j++; }
+    }
+    return miss + (la - i) + (lb - j) <= 1;
   }
 
-  function round(n){
-    if(typeof n === 'string') return n;
-    if(!isFinite(n)) return '∞';
-    return Math.round(n * 10000) / 10000;
+  /* ───────── Index ───────── */
+  var KB = [], INDEX = {}, VOCAB = [], built = 0;
+
+  function addToken(tok, i, w){
+    if(!INDEX[tok]){ INDEX[tok] = []; VOCAB.push(tok); }
+    INDEX[tok].push([i, w]);
+  }
+  function buildIndex(){
+    KB = window.YAS_KB || [];
+    INDEX = {}; VOCAB = [];
+    KB.forEach(function(e, i){
+      e._t = norm(e.t);
+      e._k = e.k.map(norm).filter(function(k){ return k.length > 1; });
+      tokens(e.t).forEach(function(t){ addToken(t, i, 6); });
+      e._k.forEach(function(k){ tokens(k).forEach(function(t){ addToken(t, i, 4); }); });
+      tokens(e.d).forEach(function(t){ if(t.length > 2) addToken(t, i, 0.5); });
+      tokens(e.c).forEach(function(t){ addToken(t, i, 0.5); });
+    });
+    built = KB.length;
   }
 
-  // ══════════════════════════════════════
-  // 2) محرك الرياضيات المتقدمة
-  // ══════════════════════════════════════
-  function advancedMath(txt){
-    var t = normalize(txt);
+  /* ───────── Search ───────── */
+  function search(query, n){
+    if(!window.YAS_KB || window.YAS_KB.length !== built) buildIndex();
+    var qn = ' ' + norm(query) + ' ', qt = tokens(query), score = {};
+    if(!qt.length) return [];
+    function bump(i, v){ score[i] = (score[i] || 0) + v; }
 
-    // ─── محدد 2×2 ───
-    var detMatch = t.match(/(?:determinant|محدد|det)\s*\[?\s*\[?\s*(-?\d+)\s*,\s*(-?\d+)\s*\]?\s*\[?\s*(-?\d+)\s*,\s*(-?\d+)\s*\]?/i);
-    if(detMatch){
-      var a=+detMatch[1], b=+detMatch[2], c=+detMatch[3], d=+detMatch[4];
-      return '🔢 **محدد المصفوفة 2×2:**\n\n' +
-        '| ' + a + '  ' + b + ' |\n| ' + c + '  ' + d + ' |\n\n' +
-        'Δ = (' + a + '×' + d + ') − (' + b + '×' + c + ')\n' +
-        'Δ = ' + (a*d) + ' − ' + (b*c) + '\n' +
-        '✅ **Δ = ' + (a*d - b*c) + '**';
-    }
-
-    // ─── متتابعات ───
-    var seqMatch = t.match(/(?:متتابعه|متتابعة|تسلسل|sequence)\s*(?:حسابيه|حسابية|arithmetic)?\s*:?\s*([\d\s,،.-]+)/i);
-    if(seqMatch){
-      var seq = seqMatch[1].split(/[,\s،]+/).map(parseFloat).filter(function(n){ return !isNaN(n); });
-      if(seq.length >= 3){
-        var d = seq[1] - seq[0];
-        var d2 = seq[2] - seq[1];
-        if(Math.abs(d - d2) < 0.0001){
-          var a1 = seq[0], n = seq.length, an = a1 + (n-1)*d, sn = n*(a1 + an)/2;
-          return '📊 **متتابعة حسابية:**\n\n' +
-            'الحدود: ' + seq.join(', ') + '\n' +
-            'الفرق الثابت (د) = ' + d + '\n' +
-            'الحد الأول (أ) = ' + a1 + '\n\n' +
-            '📌 الحد النوني: حₙ = ' + a1 + ' + (ن−1)×' + d + '\n' +
-            '📌 مجموع ' + n + ' حد = ' + sn + '\n' +
-            '📌 الحد ' + (n+1) + ' = ' + (a1 + n*d);
-        }
-        var r = seq[1] / seq[0];
-        var r2 = seq[2] / seq[1];
-        if(Math.abs(r - r2) < 0.0001 && r !== 0){
-          return '📊 **متتابعة هندسية:**\n\n' +
-            'الحدود: ' + seq.join(', ') + '\n' +
-            'النسبة الثابتة (ر) = ' + r + '\n' +
-            'الحد الأول (أ) = ' + seq[0] + '\n\n' +
-            '📌 الحد النوني: حₙ = ' + seq[0] + ' × ' + r + '^(ن−1)\n' +
-            '📌 الحد ' + (seq.length+1) + ' = ' + (seq[0] * Math.pow(r, seq.length));
-        }
+    KB.forEach(function(e, i){
+      if(qn.indexOf(' ' + e._t + ' ') > -1) bump(i, 12);
+      e._k.forEach(function(k){ if(qn.indexOf(' ' + k + ' ') > -1) bump(i, 10 + Math.min(k.length, 12) / 6); });
+    });
+    qt.forEach(function(t){
+      var hit = INDEX[t];
+      if(hit){ hit.forEach(function(h){ bump(h[0], h[1]); }); return; }
+      if(t.length < 4) return;
+      for(var v = 0; v < VOCAB.length; v++){
+        if(dist1(t, VOCAB[v])) INDEX[VOCAB[v]].forEach(function(h){ bump(h[0], h[1] * 0.6); });
       }
+    });
+
+    return Object.keys(score)
+      .map(function(i){ return { e: KB[i], s: score[i] }; })
+      .filter(function(r){ return r.s >= 5; })
+      .sort(function(a, b){ return b.s - a.s; })
+      .slice(0, n || 3);
+  }
+
+  /* ───────── Formatting ───────── */
+  function plan(){ return Session.getPlan(); }
+  function isPro(){ var p = plan(); return p === 'pro' || p === 'premium'; }
+
+  function formatEntry(e, related){
+    var out = '📖 **' + e.t + '**\n\n' + e.d;
+    if(isPro() && e.w) out += '\n\n💡 **لماذا؟** ' + e.w;
+    if(e.e) out += '\n\n🌟 **مثال:** ' + e.e;
+    out += '\n\n_المجال: ' + e.c + '_';
+    if(isPro() && related && related.length){
+      out += '\n\n🔗 **اسأل أيضاً:** ' + related.map(function(r){ return r.e.t; }).join(' • ');
     }
+    return out;
+  }
+  function categories(){
+    var by = {}, order = [];
+    KB.forEach(function(e){ if(!by[e.c]){ by[e.c] = 0; order.push(e.c); } by[e.c]++; });
+    return order.map(function(c){ return c + ' (' + by[c] + ')'; });
+  }
+  function sample(arr, n){
+    var a = arr.slice(), out = [];
+    while(a.length && out.length < n) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]);
+    return out;
+  }
 
-    // ─── احتمالات ───
-    var probMatch = t.match(/(?:احتمال|probability)\s*(?:ظهور|سحب|اختيار)?\s*(\d+)\s*(?:من|من اصل|out of)\s*(\d+)/i);
-    if(probMatch){
-      var fav = +probMatch[1], total = +probMatch[2];
-      return '📊 **الاحتمال:**\n\n' +
-        'الاحتمال = عدد النواتج المواتية ÷ العدد الكلي\n' +
-        '= ' + fav + ' ÷ ' + total + '\n' +
-        '✅ **الاحتمال = ' + round(fav/total) + '**\n' +
-        '📌 النسبة المئوية = ' + round(fav/total*100) + '%';
-    }
+  /* ───────── Conversation state & helpers ───────── */
+  var pending = null, lastEntry = null, lastRelated = [];
+  function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
+  function remember(e, rel){ lastEntry = e; lastRelated = rel || []; }
+  function xp(n){ try { Session.addXP(n); } catch(e){} }
 
-    // ─── مشتقة ───
-    var derivMatch = t.match(/(?:مشتقه|مشتقة|derivative of|differentiate)\s*(?:ال)?\s*(?:داله\s*)?(.+)/i);
-    if(derivMatch){
-      var expr = derivMatch[1].trim();
-      var dResult = derivative(expr);
-      if(dResult){
-        return '📐 **المشتقة:**\n\n' +
-          'الدالة: f(x) = ' + expr + '\n' +
-          'المشتقة: f\'(x) = ' + dResult + '\n\n' +
-          '_ملاحظة: مشتقة xⁿ = n·xⁿ⁻¹_';
-      }
-    }
-
-    // ─── تكامل ───
-    var intMatch = t.match(/(?:تكامل|integrate|integral of)\s*(?:ال)?\s*(?:داله\s*)?(.+)/i);
-    if(intMatch){
-      var iExpr = intMatch[1].trim();
-      var iResult = integral(iExpr);
-      if(iResult){
-        return '📐 **التكامل:**\n\n' +
-          'الدالة: f(x) = ' + iExpr + '\n' +
-          'التكامل: ∫f(x)dx = ' + iResult + ' + C\n\n' +
-          '_ملاحظة: ∫xⁿ dx = xⁿ⁺¹/(n+1)_';
-      }
-    }
-
-    // ─── معادلة تربيعية ───
-    var quad = t.match(/(-?\d*\.?\d*)\s*x\s*\^?\s*2?\s*([+\-]\s*\d*\.?\d*)\s*x\s*([+\-]\s*\d+)?\s*=\s*0/i);
-    if(quad){
-      var A = parseFloat(quad[1] || '1') || 1;
-      var B = parseFloat(quad[2].replace(/\s/g,'')) || 0;
-      var C = quad[3] ? parseFloat(quad[3].replace(/\s/g,'')) : 0;
-      if(A !== 0){
-        var disc = B*B - 4*A*C;
-        var sol = '📐 **المعادلة التربيعية:**\n\n' + A + 'x² ' + (B>=0?'+'+B:B) + 'x ' + (C>=0?'+'+C:C) + ' = 0\n\n';
-        sol += '**الخطوات:**\n';
-        sol += '1. a=' + A + '، b=' + B + '، c=' + C + '\n';
-        sol += '2. Δ = b² − 4ac = ' + (B*B) + ' − ' + (4*A*C) + ' = ' + disc + '\n';
-        if(disc > 0){
-          var x1 = (-B + Math.sqrt(disc))/(2*A);
-          var x2 = (-B - Math.sqrt(disc))/(2*A);
-          sol += '3. Δ > 0 → **حلان مختلفان:**\n\n';
-          sol += '✅ **x₁ = ' + round(x1) + '**\n';
-          sol += '✅ **x₂ = ' + round(x2) + '**';
-        } else if(disc === 0){
-          sol += '3. Δ = 0 → **حل واحد مكرر:**\n\n✅ **x = ' + round(-B/(2*A)) + '**';
-        } else {
-          var re = -B/(2*A), im = Math.sqrt(-disc)/(2*A);
-          sol += '3. Δ < 0 → **حلول مركبة:**\n\n';
-          sol += '✅ **x = ' + round(re) + ' ± ' + round(im) + 'i**';
-        }
-        return sol;
-      }
-    }
-
-    // ─── نظام معادلتين ───
-    var sys = t.match(/(-?\d*\.?\d*)\s*x\s*([+\-]\s*\d*\.?\d*)\s*y\s*=\s*(-?\d+)[,،\s]+(-?\d*\.?\d*)\s*x\s*([+\-]\s*\d*\.?\d*)\s*y\s*=\s*(-?\d+)/i);
-    if(sys){
-      var a1=parseFloat(sys[1]||'1')||1, b1=parseFloat(sys[2].replace(/\s/g,'')), c1=parseFloat(sys[3]);
-      var a2=parseFloat(sys[4]||'1')||1, b2=parseFloat(sys[5].replace(/\s/g,'')), c2=parseFloat(sys[6]);
-      var det = a1*b2 - a2*b1;
-      var o = '📐 **نظام معادلتين:**\n\n1) ' + a1 + 'x + ' + b1 + 'y = ' + c1 + '\n2) ' + a2 + 'x + ' + b2 + 'y = ' + c2 + '\n\n';
-      if(det === 0) return o + '⚠️ المحدد = 0 → لا حل وحيد.';
-      var xv = (c1*b2 - c2*b1)/det;
-      var yv = (a1*c2 - a2*c1)/det;
-      o += '**قاعدة كرامر:**\nΔ = ' + round(det) + '\n\n';
-      o += '✅ **x = ' + round(xv) + '**\n';
-      o += '✅ **y = ' + round(yv) + '**';
-      return o;
-    }
-
-    // ─── لوغاريتم ───
-    var logM = t.match(/(?:لو|log)\s*_?(\d+)?\s*\(?\s*(\d+)\s*\)?/i);
-    if(logM && logM[2]){
-      var base = parseFloat(logM[1] || '10'), num = parseFloat(logM[2]);
-      return '📐 **اللوغاريتم:**\n\n' +
-        'log₍' + base + '₎(' + num + ') = ' + round(Math.log(num)/Math.log(base)) + '\n\n' +
-        '_لأن ' + base + '^' + round(Math.log(num)/Math.log(base)) + ' = ' + num + '_';
-    }
-
-    // ─── مثلثات ───
-    var trig = t.match(/(sin|cos|tan|جا|جتا|ظا)\s*\(?\s*(-?\d+)\s*\)?/i);
-    if(trig){
-      var fn = trig[1].toLowerCase(), ang = parseFloat(trig[2]), rad = ang*Math.PI/180;
-      var v = 0, fname = '';
-      if(fn==='sin'||fn==='جا'){ v=Math.sin(rad); fname='sin'; }
-      else if(fn==='cos'||fn==='جتا'){ v=Math.cos(rad); fname='cos'; }
-      else { v=Math.tan(rad); fname='tan'; }
-      return '📐 **حساب المثلثات:**\n\n' + fname + '(' + ang + '°) = ' + round(v) + '\n\n_راديان: ' + round(rad) + '_';
-    }
-
-    // ─── جذر ───
-    var rootM = t.match(/(?:√|جذر|sqrt)\s*\(?\s*(\d+)\s*\)?/);
-    if(rootM){ return '📐 **الجذر:**\n\n√' + rootM[1] + ' = ' + round(Math.sqrt(+rootM[1])); }
-
-    // ─── أس ───
-    var powM = t.match(/(\d+(?:\.\d+)?)\s*\^\s*(\d+)/);
-    if(powM){ return '📐 **الأس:**\n\n' + powM[1] + '^' + powM[2] + ' = ' + round(Math.pow(+powM[1], +powM[2])); }
-
-    // ─── عمليات أساسية ───
-    var basic = extractMathExpr(txt);
-    if(basic){
-      var bm = basic.match(/(-?\d+(?:\.\d+)?)([+\-*/])(-?\d+(?:\.\d+)?)/);
-      if(bm){
-        var av=+bm[1], op=bm[2], bv=+bm[3], r;
-        if(op==='+') r=av+bv; else if(op==='-') r=av-bv;
-        else if(op==='*') r=av*bv; else r=bv!==0?av/bv:'غير معرّف';
-        var ops={'+':'جمع','-':'طرح','*':'ضرب','/':'قسمة'};
-        return '🧮 **' + av + ' ' + op + ' ' + bv + ' = ' + round(r) + '**\n\n_' + ops[op] + '_';
-      }
-    }
-
-    // ─── نسبة مئوية ───
-    var pct = t.match(/(\d+(?:\.\d+)?)%\s*(?:من|of)\s*(\d+(?:\.\d+)?)/);
-    if(pct) return '📊 **' + pct[1] + '% من ' + pct[2] + ' = ' + round(+pct[1]*+pct[2]/100) + '**';
-
-    // ─── متوسط ───
-    var avg = t.match(/(?:متوسط|average|معدل)\s*([\d\s,.،]+)/i);
-    if(avg){
-      var nums = avg[1].split(/[\s,،]+/).map(parseFloat).filter(function(n){ return !isNaN(n); });
-      if(nums.length > 1){
-        var s = nums.reduce(function(a,b){ return a+b; }, 0);
-        return '📊 **المتوسط:**\n\nالمجموع: ' + s + '\nالعدد: ' + nums.length + '\n✅ **= ' + round(s/nums.length) + '**';
-      }
-    }
-
-    // ─── فيثاغورس ───
-    var pyth = t.match(/(\d+)[,،\s]+(\d+)/);
-    if(pyth && /وتر|فيثاغورس|مثلث/.test(txt)){
-      var pa=+pyth[1], pb=+pyth[2];
-      return '📐 **فيثاغورس:**\n\nج² = ' + pa + '² + ' + pb + '² = ' + (pa*pa+pb*pb) +
-        '\n✅ **الوتر = ' + round(Math.sqrt(pa*pa+pb*pb)) + '**';
-    }
-
+  function quizStart(n){
+    var pool = KB.filter(function(e){ return e.c !== 'المنصة' && e.d.length > 20; });
+    var cats = pool.map(function(e){ return e.c; }).filter(function(c, i, a){ return a.indexOf(c) === i; });
+    cats.forEach(function(c){
+      var cn = norm(c); if(cn.length > 2 && (' ' + n + ' ').indexOf(' ' + cn + ' ') > -1) pool = pool.filter(function(e){ return e.c === c; });
+    });
+    pending = pick(pool);
+    return '🎯 **سؤال (' + pending.c + '):**\n\nاشرح بكلماتك: **' + pending.t + '**\n\n(اكتب إجابتك، أو "مش عارف" لأعرض الإجابة، أو "تخطي")';
+  }
+  function quizAnswer(text, n){
+    var e = pending;
+    if(/^(تخطي|الغاء|كفايه|وقف|stop)/.test(n)){ pending = null; return 'تمام، وقفنا الاختبار. اكتب "اختبرني" لما تحب 🎯'; }
+    var skip = /^(مش عارف|معرفش|مش متاكد|مش فاكر|الاجابه|اظهر|وريني|الجواب|لا اعرف)/.test(n);
+    var ref = tokens(e.d).filter(function(w, i, a){ return w.length > 2 && a.indexOf(w) === i; });
+    var ans = tokens(text), hits = ref.filter(function(w){ return ans.indexOf(w) > -1; }).length;
+    var ratio = hits / Math.max(1, Math.min(ref.length, 6)), head;
+    if(skip) head = '👌 ولا يهمك، دي الإجابة:';
+    else if(ans.length >= 2 && ratio >= 0.5){ head = '✅ **ممتاز!** إجابتك قريبة جداً.'; xp(3); }
+    else if(ans.length >= 2 && ratio >= 0.2){ head = '🟡 **قريب!** كملها بالإجابة الكاملة:'; xp(1); }
+    else head = '🔁 مش دقيق أوي، دي الإجابة الصحيحة:';
+    pending = null; remember(e, []);
+    return head + '\n\n' + formatEntry(e) + '\n\nعايز سؤال تاني؟ اكتب **اختبرني**.';
+  }
+  function followUp(n){
+    if(!lastEntry) return null;
+    var e = lastEntry, short = n.length < 40;
+    if(!short) return null;
+    if(/^(مثال|هات مثال|مثال تاني|مثلا|اديني مثال|example)/.test(n)) return e.e ? '🌟 **مثال على ' + e.t + ':**\n\n' + e.e : 'مفيش مثال متسجل لـ **' + e.t + '** — بس تقدر تسألني "اختبرني" عليه!';
+    if(/^(ليه|لماذا|ليش|why|علشان ايه|طيب ليه)/.test(n)) return e.w ? '💡 **ليه؟**\n\n' + e.w : 'الفكرة الأساسية: ' + e.d;
+    if(/(مش فاهم|مفهمتش|ما فهمت|معقد|صعب|بسط|وضح)/.test(n)) return '🧩 **هبسطها:**\n\n' + (e.e ? 'تخيّل المثال ده: ' + e.e + '\n\n' : '') + (e.w ? 'والفكرة إن: ' + e.w : 'الفكرة: ' + e.d);
+    if(/^(كمل|كمان|اكتر|زياده|وبعدين|تفاصيل|اشرح اكتر|more)/.test(n)) return '📖 **' + e.t + ' — بتفصيل أكتر:**\n\n' + e.d + (e.w ? '\n\n💡 ' + e.w : '') + (e.e ? '\n\n🌟 ' + e.e : '') + (lastRelated.length ? '\n\n🔗 **كمان:** ' + lastRelated.map(function(r){ return r.e.t; }).join(' • ') : '');
+    if(/^(غيره|حاجه تانيه|التالي|والتاني|ايه كمان|related)/.test(n)) return lastRelated.length ? '🔗 **مواضيع قريبة:** ' + lastRelated.map(function(r){ return r.e.t; }).join(' • ') + '\n\nاكتب اسم أي واحد منهم.' : null;
     return null;
   }
 
-  // ══════════════════════════════════════
-  // 3) مشتقة
-  // ══════════════════════════════════════
-  function derivative(expr){
-    var terms = expr.replace(/\s/g, '').split(/(?=[+\-])/);
-    var result = [];
-    for(var i = 0; i < terms.length; i++){
-      var term = terms[i];
-      if(!term) continue;
-      var m = term.match(/([+\-]?)(\d*\.?\d*)\*?x(?:\^(\d+))?/);
-      if(m){
-        var sign = m[1] === '-' ? -1 : 1;
-        var coef = parseFloat(m[2] || '1') || 1;
-        var pow = m[3] ? parseFloat(m[3]) : 1;
-        if(pow > 0){
-          var newCoef = coef * pow;
-          var newPow = pow - 1;
-          var termStr = newCoef === 1 ? 'x' : (newCoef === -1 ? '-x' : newCoef + 'x');
-          if(newPow > 1) termStr += '^' + newPow;
-          result.push((sign > 0 && result.length > 0 ? '+' : '') + (sign > 0 ? termStr : '-' + termStr));
-        }
-      }
-    }
-    return result.length > 0 ? result.join('') : '0';
-  }
+  /* ───────── Reply ───────── */
+  function reply(text){
+    if(!window.YAS_KB || window.YAS_KB.length !== built) buildIndex();
+    var t = text.toLowerCase().trim(), p = plan(), label = window.App.plans[p].label;
+    var n = plain(text), talk = LANG.talk || [];
 
-  // ══════════════════════════════════════
-  // 4) تكامل
-  // ══════════════════════════════════════
-  function integral(expr){
-    var terms = expr.replace(/\s/g, '').split(/(?=[+\-])/);
-    var result = [];
-    for(var i = 0; i < terms.length; i++){
-      var term = terms[i];
-      if(!term) continue;
-      var m = term.match(/([+\-]?)(\d*\.?\d*)\*?x(?:\^(\d+))?/);
-      if(m){
-        var sign = m[1] === '-' ? -1 : 1;
-        var coef = parseFloat(m[2] || '1') || 1;
-        var pow = m[3] ? parseFloat(m[3]) : 1;
-        var newCoef = coef / (pow + 1);
-        var newPow = pow + 1;
-        var termStr = (newCoef === 1 ? '' : newCoef) + 'x';
-        if(newPow > 1) termStr += '^' + newPow;
-        result.push((sign > 0 && result.length > 0 ? '+' : '') + (sign > 0 ? termStr : '-' + termStr));
-      } else if(/^[+\-]?\d+\.?\d*$/.test(term)){
-        var c = parseFloat(term);
-        result.push((c > 0 && result.length > 0 ? '+' : '') + c + 'x');
-      }
-    }
-    return result.length > 0 ? result.join('') : '0';
-  }
+    for(var ti = 0; ti < 1 && talk.length; ti++){ if(talk[0][0].test(n)) return pick(talk[0][1]); }   // safety message first
+    if(pending) return quizAnswer(text, n);
+    if(/(اختبرني|اسالني|امتحني|quiz|سؤال لي|اديني سؤال)/.test(n)) return quizStart(n);
+    var fu = followUp(n); if(fu) return fu;
 
-  // ══════════════════════════════════════
-  // 5) فهم اللغة البشرية
-  // ══════════════════════════════════════
-  function humanize(txt){
-    var t = normalize(txt);
-
-    var wantMatch = t.match(/(?:عايز|عاوز|اريد|ابغي|محتاج)\s+(?:اعرف|افهم|اشرح|احسب|اعمل|احصل|wanna|want to)\s+(.+)/i);
-    if(wantMatch) return { intent: 'want', subject: wantMatch[1].trim() };
-
-    var possibleMatch = t.match(/(?:ممكن|ينفع|تقدر)\s+(?:تشرح|تحسب|توضح|تعمل|explain|calculate)\s*(?:لي|لى|ليا|for me)?\s*(.+)/i);
-    if(possibleMatch) return { intent: 'request', subject: possibleMatch[1].trim() };
-
-    var whatMatch = t.match(/(?:ايه|اي|what is|what are)\s+(?:هو|هي|معني|معنى)\s+(.+)/i);
-    if(whatMatch) return { intent: 'define', subject: whatMatch[1].trim() };
-
-    return null;
-  }
-
-  // ══════════════════════════════════════
-  // 6) الدالة الرئيسية
-  // ══════════════════════════════════════
-  window.Bot.reply = function(text){
-    var t = normalize(text);
-    var plan = Session.getPlan();
-    var isPro = (plan === 'pro' || plan === 'premium');
-
-    // فهم بشري
-    var human = humanize(text);
-    if(human){
-      var subject = human.subject;
-      var mResult = advancedMath(subject);
-      if(mResult) return mResult;
-      var kbR = searchKBPro(subject);
-      if(kbR){
-        var o = '📖 **' + kbR.t + '**\n\n' + kbR.d;
-        if(kbR.w) o += '\n\n💡 **ليه؟** ' + kbR.w;
-        if(kbR.e) o += '\n\n🌟 **مثال:** ' + kbR.e;
-        return o;
-      }
-    }
-
-    // تحيات
     if(/^(مرحبا|السلام|اهلا|هلا|hi|hello|صباح|مساء)/.test(t)){
-      var hh = new Date().getHours();
-      var gg = hh<12 ? 'صباح الخير ☀️' : hh<18 ? 'أهلاً وسهلاً 👋' : 'مساء النور 🌙';
-      return gg + '\n\nأنا **Pro Max v2** 🤖\n\n' +
-        (isPro ? '✨ **الجديد:**\n• 🧮 رياضيات متقدمة (تفاضل + تكامل + مصفوفات)\n• 🧠 فهم أفضل للغة (حتى العامية)\n• 📊 متتابعات + احتمالات\n• 📐 مثلثات ولوغاريتمات\n\nجرّب: "احسبلي x²-5x+6=0" أو "مشتقة 3x^2+2x"' : 'اسألني أي حاجة تعليمية!');
+      var h = new Date().getHours();
+      var g = h < 12 ? 'صباح الخير ☀️' : h < 18 ? 'أهلاً وسهلاً 👋' : 'مساء النور 🌙';
+      return g + '\n\nأنا مساعد YasEdu الذكي 🤖\n\nعندي **' + KB.length + '** مفهوم في ' + categories().length +
+        ' مجالات. خطتك: **' + label + '**\n\nاسألني بأي طريقة (فصحى أو مصري أو إنجليزي)، أو اكتب "اختبرني" أو "المواد".';
     }
-
-    if(/شكر|thanks|شكراً|تسلم/.test(t)) return 'العفو! 😊 ' + (isPro ? 'أنا هنا لأي سؤال — حتى الأصعب!' : 'اسألني أي وقت!');
-
-    if(/اسمك|من انت|من أنت|yasedu|ياسيدو/.test(t)){
-      return 'أنا **Pro Max v2** 🤖 — نسخة مطورة من مساعد YasEdu\n\n' +
-        '✨ **الجديد:**\n• 🧮 تفاضل وتكامل\n• 🔢 مصفوفات ومحددات\n• 📊 متتابعات واحتمالات\n• 🧠 فهم عامية مصرية\n• 📖 100+ مفهوم\n\n' +
-        '🏢 **ياس ستوديو** • 👨‍💻 **ياسر محمد**';
-    }
-
-    if(/نصيح|نصائح|كيف اذاكر|طريقة مذاكرة/.test(t)){
-      if(isPro){
-        var tips = ['🧠 فاينمان: اشرح بصوت عالٍ.','📊 تكرار متباعد: يوم→3→أسبوع→شهر.','⏱️ بومودورو: 25→5.','😴 نام قبل المراجعة.'];
-        return '💡 **نصيحة Pro Max:**\n\n' + tips[Math.floor(Math.random()*tips.length)];
+    for(var tj = 1; tj < talk.length; tj++){
+      if(talk[tj][0].test(n) && n.length < 70){
+        if(talk[tj][1] === '__FACT__'){ var f = pick(KB.filter(function(x){ return x.c !== 'المنصة'; })); remember(f, []); return '💡 **هل تعلم؟** ' + f.t + ':\n\n' + f.d + (f.e ? '\n\n🌟 ' + f.e : ''); }
+        return pick(talk[tj][1]);
       }
-      return '💡 ذاكر 25 دقيقة وارتاح 5.\n\n⚡ ترقّى لـ Pro.';
+    }
+    if(/شكر|متشكر|ميرسي|جزاك|thanks|thank|تسلم/.test(n)) return 'العفو! 😊 سعيد بمساعدتك، اسألني أي وقت!';
+    if(/اسمك|من انت|من أنت|من هو ياسر|ياسر محمد|yasedu|ياسيدو|المنصة|منصة/.test(t)){
+      return 'أنا **مساعد YasEdu الذكي** 🤖\n\n🏢 **ياس ستوديو**\n👨‍💻 المطور: **ياسر محمد**\n\n✨ **الخطط:**\n• 🆓 Free — أساسيات\n• ⚡ Pro — شرح أعمق وروابط بين المفاهيم\n• 👑 Premium — Gemini AI مدعوم بقاعدة المعرفة';
+    }
+    if(/^(المواد|المجالات|ايه اللي|بتعرف|تقدر|قائمه|قائمة)/.test(norm(text)) || /المواد المتاحة|مواد/.test(text) && text.length < 20){
+      return '📚 **قاعدة المعرفة (' + KB.length + ' مفهوم):**\n\n' + categories().join(' • ') +
+        '\n\n**جرّب:** ' + sample(KB, 3).map(function(e){ return '"' + e.t + '"'; }).join(' • ');
+    }
+    if(/نصيح|نصائح|اذاكر|طريقة مذاكرة|مذاكره/.test(norm(text))){
+      var tips = KB.filter(function(e){ return e.c === 'مهارات'; });
+      if(tips.length){ var tip = tips[Math.floor(Math.random() * tips.length)]; return '💡 **نصيحة دراسية — ' + tip.t + ':**\n\n' + tip.d + (tip.w ? '\n\n📌 ' + tip.w : '') + '\n\nاكتب "نصيحة" مرة أخرى لنصيحة جديدة.'; }
     }
 
-    // رياضيات متقدمة
-    var am = advancedMath(text);
-    if(am) return am;
-
-    // مقارنات
-    if(/الفرق بين/.test(t)){
-      var mm = text.match(/الفرق\s*بين\s*(.+?)\s*(?:و|vs|and)\s*(.+)/i);
-      if(mm){
-        var ra = searchKBPro(mm[1].trim()), rb = searchKBPro(mm[2].trim());
-        if(ra || rb){
-          var oo = '⚖️ **المقارنة:**\n\n';
-          if(ra) oo += '🔹 **' + ra.t + ':**\n' + ra.d + '\n\n';
-          if(rb) oo += '🔸 **' + rb.t + ':**\n' + rb.d + '\n\n';
-          return oo;
-        }
+    var ci = n.indexOf('الفرق بين'), parts = ci > -1 ? n.slice(ci + 9).trim().split(/\s+وبين\s+|\s+و(?=ال)|\s+و\s+|\s+vs\s+|\s+and\s+|\s+مع\s+/) : [];
+    if(parts.length >= 2){
+      var cmp = [null, parts[0], parts.slice(1).join(' ')];
+      var ra = search(cmp[1], 1)[0], rb = search(cmp[2], 1)[0];
+      if(ra || rb){
+        var out = '⚖️ **المقارنة بين ' + cmp[1].trim() + ' و ' + cmp[2].trim() + ':**\n\n';
+        [[ra, cmp[1], '🔹'], [rb, cmp[2], '🔸']].forEach(function(x){
+          out += x[0] ? x[2] + ' **' + x[0].e.t + ':**\n' + x[0].e.d + (x[0].e.e ? '\n📌 ' + x[0].e.e : '') + '\n\n'
+                      : '❓ **' + x[1].trim() + ':** غير موجود في قاعدة المعرفة\n\n';
+        });
+        return out.trim();
       }
     }
 
-    // قاعدة معرفة
-    var kb = searchKBPro(text);
-    if(kb){
-      var out = '📖 **' + kb.t + '**\n\n' + kb.d;
-      if(kb.w) out += '\n\n💡 **ليه؟** ' + kb.w;
-      if(kb.e) out += '\n\n🌟 **مثال:** ' + kb.e;
-      return out;
+    var hits = search(text, 3), strong = hits[0] && hits[0].s >= 14;
+    if(strong){ remember(hits[0].e, hits.slice(1)); return formatEntry(hits[0].e, hits.slice(1)); }
+
+    var math = Bot.solveMath && Bot.solveMath(text);
+    if(math) return math;
+
+    if(/لخص|ملخص|summary/.test(t) && text.length > 50){
+      return '📝 **ملخص:**\n\nالنص يتحدث عن: "' + text.slice(0, 80) + '..."\n\n💡 لتلخيص أفضل، الصق النص الكامل في صفحة الاختبارات وسأولّد منه أسئلة تلقائياً!';
     }
+    if(hits[0]){ remember(hits[0].e, hits.slice(1)); return formatEntry(hits[0].e, hits.slice(1)); }
 
-    return prevReply.call(this, text);
-  };
-
-  // ══════════════════════════════════════
-  // 7) قاعدة المعرفة الموسعة
-  // ══════════════════════════════════════
-  var PRO_KB = [
-    // رياضيات
-    {t:'المشتقة',c:'رياضيات',k:['مشتقة','تفاضل','derivative','اشتقاق'],d:'معدل التغير اللحظي. مشتقة xⁿ = n·xⁿ⁻¹',w:'تستخدم في السرعة والتسارع والميل',e:'مشتقة x² = 2x'},
-    {t:'التكامل',c:'رياضيات',k:['تكامل','integral','مساحة تحت المنحنى'],d:'عكس المشتقة. ∫xⁿdx = xⁿ⁺¹/(n+1)',w:'يحسب المساحات والأحجام',e:'∫2x dx = x² + C'},
-    {t:'المصفوفات',c:'رياضيات',k:['مصفوفة','محدد','determinant','matrix'],d:'ترتيب مستطيل للأرقام. محدد 2×2 = ad−bc',w:'حل الأنظمة والتحويلات',e:'|1 2; 3 4| = -2'},
-    {t:'المتتابعة الحسابية',c:'رياضيات',k:['متتابعة حسابية','arithmetic'],d:'فرق ثابت بين الحدود. حₙ = أ+(ن−1)د',w:'تظهر في الأنماط',e:'2,5,8,11 (د=3)'},
-    {t:'المتتابعة الهندسية',c:'رياضيات',k:['متتابعة هندسية','geometric'],d:'نسبة ثابتة. حₙ = أ×رⁿ⁻¹',w:'تظهر في النمو',e:'2,6,18,54 (ر=3)'},
-    {t:'الاحتمالات',c:'رياضيات',k:['احتمال','probability'],d:'عدد النواتج المواتية ÷ الكلي',w:'يستخدم في الإحصاء',e:'احتمال صورة = 1/2'},
-    {t:'اللوغاريتم',c:'رياضيات',k:['لوغاريتم','log','ln'],d:'الأس المطلوب. logₐ(b) = c ↔ a^c = b',w:'يحول الضرب لجمع',e:'log₂(8) = 3'},
-    {t:'المثلثات',c:'رياضيات',k:['مثلثات','sin','cos','tan','جا','جتا','ظا'],d:'sin=مقابل/وتر، cos=مجاور/وتر، tan=مقابل/مجاور',w:'تدرس العلاقات في المثلث',e:'sin(30)=0.5'},
-    {t:'المعادلة التربيعية',c:'رياضيات',k:['تربيعية','ax2','درجة تانية'],d:'ax²+bx+c=0. الحل: x=(-b±√(b²-4ac))/2a',w:'لها حلان أو حل أو لا حل',e:'x²-5x+6=0 → 2,3'},
-    {t:'الحدود',c:'رياضيات',k:['نهايات','limit','حد'],d:'القيمة التي تقترب منها الدالة',w:'أساس التفاضل',e:'lim(x→2)(x²)=4'},
-    {t:'المتجهات',c:'رياضيات',k:['متجه','vector'],d:'كمية لها مقدار واتجاه',w:'تستخدم في الفيزياء',e:'قوة 10N شمالاً'},
-    {t:'الإحصاء',c:'رياضيات',k:['احصاء','انحراف معياري','تباين'],d:'تحليل البيانات. المتوسط والوسيط والمنوال',w:'يلخص البيانات',e:'متوسط 2,4,6 = 4'},
-
-    // فيزياء
-    {t:'قوانين نيوتن',c:'فيزياء',k:['نيوتن','قصور ذاتي','رد فعل'],d:'1-القصور 2-ق=ك×ت 3-رد الفعل',w:'تفسر الحركة',e:'ق = ك × ت'},
-    {t:'الطاقة',c:'فيزياء',k:['طاقة','حركية','كامنة'],d:'حركية = ½ك ع²، كامنة = ك ج ع',w:'محفوظة في النظام المغلق',e:'طاقة الوضع = mgh'}
-  ];
-
-  function searchKBPro(query){
-    var q = normalize(query);
-    if(!q || q.length < 2) return null;
-    var best = null, bestScore = 0;
-    for(var i = 0; i < PRO_KB.length; i++){
-      var item = PRO_KB[i];
-      var score = 0;
-      for(var j = 0; j < item.k.length; j++){
-        var kw = normalize(item.k[j]);
-        if(q.indexOf(kw) !== -1) score += kw.length * 2;
-      }
-      if(normalize(item.t).indexOf(q) !== -1) score += 10;
-      if(score > bestScore){ bestScore = score; best = item; }
-    }
-    return bestScore >= 2 ? best : null;
+    return '🤔 **لم أجد إجابة محددة.**\n\n**جرّب:**\n' +
+      sample(KB, 3).map(function(e){ return '• "' + e.t + '"'; }).join('\n') +
+      '\n• "الفرق بين المبتدأ والفاعل"\n• "٥ + ٧"\n• "نصيحة دراسية"\n\n**المجالات:** ' + categories().join(' • ');
   }
 
-  console.log('✅ YasEdu Pro Max v2 loaded');
-}
+  /* ───────── Premium (Gemini + KB context) ───────── */
+  var history = [];
 
-initProMaxV2();
-})();
-</script>
-  <script>
-/* ═══════════════════════════════════════════════════════
-   YasEdu — Premium AI (Fast & Reliable)
-   ═══════════════════════════════════════════════════════ */
-(function(){
-'use strict';
+  function bubble(who, html, extra){
+    var body = U.$('bot-body'); if(!body) return null;
+    var row = document.createElement('div');
+    row.className = 'msg' + (who === 'me' ? ' mine' : '');
+    var avatar = who === 'me'
+      ? '<div class="msg-avatar">' + U.initials(window.App.state.user.name) + '</div>'
+      : '<div class="msg-avatar" style="background:linear-gradient(135deg,var(--brand),var(--brand-dark));font-size:16px">🤖</div>';
+    row.innerHTML = avatar + '<div class="msg-content"><div class="msg-bubble"' + (extra || '') + '>' + html + '</div></div>';
+    body.appendChild(row); body.scrollTop = body.scrollHeight;
+    return row;
+  }
+  function rich(text){ return U.esc(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); }
 
-var PREMIUM_SERVER_URL = 'https://yasedu-premium.mbadrhashbal.workers.dev';
+  function buildPrompt(text){
+    var ctx = search(text, 3).map(function(r){
+      return '- ' + r.e.t + ' (' + r.e.c + '): ' + r.e.d + (r.e.w ? ' | ' + r.e.w : '') + (r.e.e ? ' | مثال: ' + r.e.e : '');
+    }).join('\n');
+    var past = history.slice(-6).map(function(m){ return (m.role === 'user' ? 'الطالب: ' : 'المساعد: ') + m.text; }).join('\n');
+    return (ctx ? 'معلومات مرجعية من قاعدة معرفة YasEdu (استعن بها إن كانت مرتبطة وتجاهلها إن لم تكن):\n' + ctx + '\n\n' : '') +
+           (past ? 'المحادثة السابقة:\n' + past + '\n\n' : '') +
+           'سؤال الطالب: ' + text;
+  }
 
-function initPremium(){
-  if(!window.Bot || !window.App){ setTimeout(initPremium, 200); return; }
-  var Session = window.App.session;
-  var U = window.App.utils;
-  var originalSend = window.Bot.send;
+  var baseSend = Bot.send;
+  Bot.send = async function(){
+    if(plan() !== 'premium') return baseSend.call(Bot);
 
-  window.Bot.send = async function(){
-    var plan = Session.getPlan();
-    // لو مش بريميوم، شغل الكود القديم
-    if(plan !== 'premium') return originalSend.call(this);
-
-    var inp = U.$('bot-input');
+    var inp = U.$('bot-input'), body = U.$('bot-body');
     var text = inp && inp.value.trim();
-    if(!text) return;
+    if(!text || !body) return;
+    if(body.querySelectorAll('.msg').length <= 1) history = [];   // fresh chat
 
-    var body = U.$('bot-body');
-    var s = window.App.state.user;
     inp.value = '';
-
-    // مسج المستخدم
-    var userRow = document.createElement('div');
-    userRow.className = 'msg mine';
-    userRow.innerHTML = '<div class="msg-avatar">' + U.initials(s.name) + '</div>' +
-      '<div class="msg-content"><div class="msg-bubble">' + U.esc(text) + '</div></div>';
-    body.appendChild(userRow);
-    body.scrollTop = body.scrollHeight;
-
-    // مؤشر التحميل
-    var typingRow = document.createElement('div');
-    typingRow.className = 'msg';
-    typingRow.innerHTML = '<div class="msg-avatar" style="background:linear-gradient(135deg,var(--brand),var(--brand-dark));font-size:16px">🤖</div>' +
-      '<div class="msg-content"><div class="msg-bubble" style="display:flex;align-items:center;gap:8px"><span class="spinner"></span> يفكر...</div></div>';
-    body.appendChild(typingRow);
-    body.scrollTop = body.scrollHeight;
+    bubble('me', U.esc(text));
+    var typing = bubble('bot', '<span class="spinner"></span> يفكر...', ' style="display:flex;align-items:center;gap:8px"');
+    var answer, offline = false;
 
     try {
-      // إرسال الطلب للسيرفر بدون مشاكل CORS
-      var res = await fetch(PREMIUM_SERVER_URL, {
-        method: 'POST',
-        body: JSON.stringify({ message: text, history: [] })
-      });
-
-      if(!res.ok) throw new Error('Server error: ' + res.status);
+      var res = await fetch(window.YAS_SERVER, { method: 'POST', body: JSON.stringify({ message: buildPrompt(text), history: [] }) });
+      if(!res.ok) throw new Error('Server ' + res.status);
       var data = await res.json();
       if(data.error) throw new Error(data.error);
-
-      typingRow.remove();
-      
-      var reply = data.reply || 'عذراً، مقدرتش أرد.';
-      var formatted = reply.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-
-      var botRow = document.createElement('div');
-      botRow.className = 'msg';
-      botRow.innerHTML = '<div class="msg-avatar" style="background:linear-gradient(135deg,var(--brand),var(--brand-dark));font-size:16px">🤖</div>' +
-        '<div class="msg-content"><div class="msg-bubble">' + formatted + '</div></div>';
-      body.appendChild(botRow);
-      body.scrollTop = body.scrollHeight;
-
-      Session.addXP(1);
-
-    } catch(err) {
-      typingRow.remove();
-      var errRow = document.createElement('div');
-      errRow.className = 'msg';
-      errRow.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-content"><div class="msg-bubble" style="color:var(--red)">عذراً: ' + U.esc(err.message) + '</div></div>';
-      body.appendChild(errRow);
+      answer = data.reply || '';
+      if(!answer) throw new Error('empty');
+    } catch(err){
+      offline = true;
+      answer = Bot.reply(text);
     }
+
+    if(typing) typing.remove();
+    bubble('bot', rich(answer) + (offline ? '<br><br><small style="opacity:.6">⚠️ تعذّر الاتصال بـ Gemini — هذه إجابة من قاعدة المعرفة المحلية.</small>' : ''));
+    history.push({ role: 'user', text: text }, { role: 'bot', text: answer.slice(0, 600) });
+    Session.addXP(1);
   };
+
+  /* ───────── Public API ───────── */
+  Bot.reply = reply;
+  Bot.searchKB = function(q){ var r = search(q, 1)[0]; return r ? r.e : null; };
+  Bot.kb = { search: search, size: function(){ return KB.length; }, categories: categories };
 }
-initPremium();
+boot();
 })();
 </script>
-  <script>
+<script>
 /* ═══ Premium Quiz Generator (Gemini) ═══ */
 (function(){
 'use strict';
-var SERVER = 'https://yasedu-premium.mbadrhashbal.workers.dev';
 
 function initPremiumQuiz(){
   if(!window.App || !window.Quiz){ setTimeout(initPremiumQuiz, 200); return; }
-  
+
   // اعتراض دالة التوليد الأصلية
   var originalGenerate = window.Quiz.generate;
 
   window.Quiz.generate = async function(){
     var plan = window.App.session.getPlan();
-    
+
     // لو مش بريميوم، شغل الكود القديم
     if(plan !== 'premium') {
       return originalGenerate.call(this);
@@ -3796,11 +3073,11 @@ function initPremiumQuiz(){
     var quizType = typeSel ? typeSel.value : 'mcq';
 
     try {
-      var res = await fetch(SERVER, {
+      var res = await fetch(window.YAS_SERVER, {
         method: 'POST',
         body: JSON.stringify({ type: 'quiz', text: text, count: count, quizType: quizType })
       });
-      
+
       var data = await res.json();
       if(data.error) throw new Error(data.error);
       if(!data.questions || !data.questions.length) throw new Error('لم يتم توليد أسئلة');
@@ -3824,7 +3101,7 @@ function initPremiumQuiz(){
 
       document.getElementById('quiz-setup').style.display = 'none';
       document.getElementById('quiz-run').style.display = 'block';
-      
+
       window.Quiz.renderQuestion();
       window.App.ui.toast('تم توليد الأسئلة بنجاح ✅', 'success');
 
@@ -3838,7 +3115,7 @@ function initPremiumQuiz(){
 initPremiumQuiz();
 })();
 </script>
-  <script>
+<script>
 /* ═══════════════════════════════════════════════════════
    YasEdu — Upgrade Admin Codes Tab (Codes + Coupons)
    ═══════════════════════════════════════════════════════ */
@@ -3847,7 +3124,7 @@ initPremiumQuiz();
 
 function upgradeCodesTab(){
   if(!window.Admin || !window.App){ setTimeout(upgradeCodesTab, 500); return; }
-  
+
   var U = window.App.utils;
   var UI = window.App.ui;
 
@@ -3856,7 +3133,7 @@ function upgradeCodesTab(){
     var content = U.$('admin-content');
     if(!content) return;
 
-    content.innerHTML = 
+    content.innerHTML =
       // 1. مولد الأكواد العادية
       '<div class="code-gen-area" style="border:2px solid var(--brand);">'+
       '<div class="code-gen-title">🔑 توليد كود ترقية</div>'+
@@ -3892,7 +3169,7 @@ function upgradeCodesTab(){
     var list = U.$('codes-list');
     if(!list) return;
     list.innerHTML = '<div class="admin-loading">⏳...</div>';
-    
+
     try {
       // جلب الأكواد العادية
       var snap1 = await window.db.ref('codes').once('value');
@@ -3905,7 +3182,7 @@ function upgradeCodesTab(){
       }
 
       keys1.sort(function(a,b){ return (codes[b].created||0) - (codes[a].created||0); });
-      
+
       var html = '<div class="generated-codes-list">';
       keys1.slice(0, 40).forEach(function(k){
         var c = codes[k];
@@ -3913,7 +3190,7 @@ function upgradeCodesTab(){
         var isCoupon = k.startsWith('YASEDU-');
         var badgeColor = isCoupon ? 'var(--gold-dark)' : 'var(--brand)';
         var badgeText = isCoupon ? '🎟️ كوبون' : (c.plan==='premium'?'👑 Premium':'⚡ Pro');
-        
+
         html += '<div class="code-item" style="border-color:' + (isCoupon ? 'var(--gold-soft)' : 'var(--border)') + '">'+
           '<div class="code-item-code" style="color:' + badgeColor + '">' + U.esc(k) + '</div>'+
           '<span class="badge ' + (isCoupon ? 'badge-gold' : 'badge-brand') + '">' + badgeText + '</span>'+
@@ -3922,7 +3199,7 @@ function upgradeCodesTab(){
           '</div>';
       });
       html += '</div>';
-      
+
       list.innerHTML = html;
     } catch(e) {
       list.innerHTML = '<div class="admin-empty">فشل التحميل</div>';
@@ -3937,7 +3214,7 @@ function upgradeCodesTab(){
       var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       var code = 'YASEDU-';
       for(var i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-      
+
       try {
         await window.db.ref('codes/' + code).set({
           plan: plan, days: days,
@@ -3967,13 +3244,12 @@ function upgradeCodesTab(){
     };
   }
 
-  console.log('✅ Admin Codes Tab upgraded with Coupons');
 }
 
 upgradeCodesTab();
 })();
 </script>
-  <script>
+<script>
 /* ═══════════════════════════════════════════════════════
    YasEdu — Add Coupons Tab to Admin FAB Panel
    ═══════════════════════════════════════════════════════ */
@@ -3982,7 +3258,7 @@ upgradeCodesTab();
 
 function addCouponsToAdminPanel(){
   if(!window.AdminPanel || !window.App){ setTimeout(addCouponsToAdminPanel, 500); return; }
-  
+
   var U = window.App.utils;
   var UI = window.App.ui;
 
@@ -3994,7 +3270,7 @@ function addCouponsToAdminPanel(){
     couponTabBtn.setAttribute('onclick', 'AdminPanel.tab(\'coupons\',this)');
     couponTabBtn.style.cssText = 'padding:8px 14px;border-radius:7px;border:none;background:none;color:var(--text-2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit';
     couponTabBtn.textContent = '🎟️ الكوبونات';
-    
+
     // نحطها قبل زرار "بث" أو "خطر"
     var broadcastBtn = Array.from(tabsContainer.children).find(function(b){ return b.textContent.includes('بث'); });
     if(broadcastBtn){
@@ -4006,7 +3282,7 @@ function addCouponsToAdminPanel(){
 
   // 2. حفظ دالة التاب الأصلية
   var originalTab = window.AdminPanel.tab;
-  
+
   // 3. تعديل دالة التاب عشان تشغل دالة الكوبونات
   window.AdminPanel.tab = function(name, btn){
     if(name === 'coupons'){
@@ -4033,8 +3309,8 @@ function addCouponsToAdminPanel(){
   window.AdminPanel.showCoupons = function(){
     var c = document.getElementById('admin-panel-content');
     if(!c) return;
-    
-    c.innerHTML = 
+
+    c.innerHTML =
       '<div style="background:var(--p-50);border:2px solid var(--gold);border-radius:12px;padding:16px;margin-bottom:14px">'+
       '<div style="font-size:15px;font-weight:800;margin-bottom:12px;color:var(--gold-dark)">🎟️ توليد كوبون جديد</div>'+
       '<div style="display:flex;gap:8px;margin-bottom:10px">'+
@@ -4064,7 +3340,7 @@ function addCouponsToAdminPanel(){
     var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     var code = 'YASEDU-';
     for(var i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-    
+
     try {
       await window.db.ref('codes/' + code).set({
         plan: plan,
@@ -4074,12 +3350,12 @@ function addCouponsToAdminPanel(){
         used: false,
         createdBy: window.App.state.user.uid
       });
-      
+
       var el = document.getElementById('ap-coupon-result');
       var btn = document.getElementById('ap-coupon-copy');
       if(el){ el.textContent = code; el.style.display = 'block'; }
       if(btn) btn.style.display = 'block';
-      
+
       if(window.App.ui) window.App.ui.toast('تم إنشاء الكوبون: ' + code, 'success');
       AdminPanel.loadAllCodes();
     } catch(e) {
@@ -4101,19 +3377,19 @@ function addCouponsToAdminPanel(){
   window.AdminPanel.loadAllCodes = async function(){
     var list = document.getElementById('ap-coupons-list');
     if(!list) return;
-    
+
     try {
       var snap = await window.db.ref('codes').once('value');
       var codes = snap.val() || {};
       var keys = Object.keys(codes);
-      
+
       if(!keys.length){
         list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3)">لا أكواد بعد</div>';
         return;
       }
-      
+
       keys.sort(function(a,b){ return (codes[b].created||0) - (codes[a].created||0); });
-      
+
       list.innerHTML = keys.slice(0, 25).map(function(k){
         var c = codes[k];
         var isCoupon = k.startsWith('YASEDU-');
@@ -4121,7 +3397,7 @@ function addCouponsToAdminPanel(){
         var statusText = c.used ? 'مستخدم' : 'متاح';
         var badge = isCoupon ? '🎟️ كوبون' : (c.plan === 'premium' ? '👑 Premium' : '⚡ Pro');
         var badgeColor = isCoupon ? 'var(--gold-dark)' : 'var(--brand)';
-        
+
         return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border)">'+
           '<div style="font-family:monospace;font-weight:800;flex:1;letter-spacing:1px;font-size:12px">' + k + '</div>'+
           '<span style="font-size:10px;font-weight:700;color:' + badgeColor + '">' + badge + '</span>'+
@@ -4144,13 +3420,12 @@ function addCouponsToAdminPanel(){
     });
   };
 
-  console.log('✅ Coupons tab added to Admin FAB panel');
 }
 
 addCouponsToAdminPanel();
 })();
 </script>
-  <script>
+<script>
 /* ═══════════════════════════════════════════════════════
    YasEdu — Pro Max Math Engine (Smart Parser)
    محرك رياضيات ذكي يفهم كل الصيغ
@@ -4215,7 +3490,7 @@ function initSmartMath(){
       if(/[a-wyz]/i.test(expr.replace(/sqrt|log|sin|cos|tan|pi/g, ''))){
         return null; // فيه متغيرات مش معروفة
       }
-      
+
       // استبدال الدوال الرياضية
       var clean = expr
         .replace(/sqrt\(([^)]+)\)/g, 'Math.sqrt($1)')
@@ -4225,10 +3500,10 @@ function initSmartMath(){
         .replace(/tan\(([^)]+)\)/g, 'Math.tan(($1)*Math.PI/180)')
         .replace(/pi/g, 'Math.PI')
         .replace(/\^/g, '**');
-      
+
       // التأكد من إن التعبير سليم (مكون من أرقام وعمليات فقط)
       if(!/^[0-9+\-*/().\s*Math\w]+$/.test(clean)) return null;
-      
+
       var result = Function('"use strict"; return (' + clean + ')')();
       if(typeof result === 'number' && isFinite(result)){
         return Math.round(result * 10000) / 10000;
@@ -4244,7 +3519,7 @@ function initSmartMath(){
     // eq = "2x+3=11" أو "x^2-5x+6=0"
     var sides = eq.split('=');
     if(sides.length !== 2) return null;
-    
+
     var left = sides[0].trim();
     var right = sides[1].trim();
 
@@ -4257,7 +3532,7 @@ function initSmartMath(){
       var b = lm[2] ? parseFloat(lm[2]) : 0;
       var c = parseFloat(right);
       var x = (c - b) / a;
-      
+
       return '📐 **حل المعادلة:**\n\n' + eq + '\n\n' +
         '**الخطوات:**\n' +
         '1. المعادلة: ' + a + 'x ' + (b >= 0 ? '+ ' + b : '- ' + Math.abs(b)) + ' = ' + c + '\n' +
@@ -4274,13 +3549,13 @@ function initSmartMath(){
       if(A === 0) A = 1;
       var B = parseFloat(qm[2].replace(/\s/g, ''));
       var C = qm[3] ? parseFloat(qm[3].replace(/\s/g, '')) : 0;
-      
+
       var disc = B * B - 4 * A * C;
       var out = '📐 **حل المعادلة التربيعية:**\n\n' + eq + '\n\n';
       out += '**الخطوات:**\n';
       out += '1. a = ' + A + '، b = ' + B + '، c = ' + C + '\n';
       out += '2. Δ = b² - 4ac = (' + B + ')² - 4(' + A + ')(' + C + ') = ' + disc + '\n';
-      
+
       if(disc > 0){
         var x1 = (-B + Math.sqrt(disc)) / (2 * A);
         var x2 = (-B - Math.sqrt(disc)) / (2 * A);
@@ -4359,13 +3634,12 @@ function initSmartMath(){
   // إضافة دالة مساعدة للكود القديم
   window.Bot.smartMath = smartMath;
 
-  console.log('✅ Pro Max Smart Math Engine Loaded');
 }
 
 initSmartMath();
 })();
 </script>
-  <script>
+<script>
 /* ═══════════════════════════════════════════════════════
    YasEdu — Super Factor Unit (Fixed)
    ═══════════════════════════════════════════════════════ */
@@ -4398,16 +3672,16 @@ function initSuperFactor(){
       .replace(/[،]/g, ',')
       .replace(/جذر/g, 'sqrt')
       .toLowerCase();
-    
+
     // شيل كلمة "حلل" أو "حلللي" أو "حلل المعادلة"
     t = t.replace(/^(حلل|حللي|حلل المعادلة|حلل المعادله|factor|factorize)\s*/i, '');
-    
+
     // 2. لو النص فيه "="، اعتبره معادلة
     var isEq = t.includes('=');
     if(isEq){
       t = t.replace(/=0/g, '').replace(/=/g, '');
     }
-    
+
     // 3. شيل المسافات الزايدة
     t = t.replace(/\s+/g, '');
 
@@ -4431,7 +3705,7 @@ function initSuperFactor(){
       var bPart = generalQuad[2];
       var b = bPart ? parseFloat(bPart.replace(/\s/g,'')) : 0;
       // لو فيه x^2 بس ومفيش x، يبقى b = 0
-      if(!bPart && t.includes('x^2')) b = 0; 
+      if(!bPart && t.includes('x^2')) b = 0;
       var c = generalQuad[3] ? parseFloat(generalQuad[3].replace(/\s/g,'')) : 0;
 
       // لو دي معادلة: x^2 = 4 أو x^2 + bx = c
@@ -4440,10 +3714,10 @@ function initSuperFactor(){
       }
 
       var roots = findRoots(a, b, c);
-      
+
       var out = '📐 **تحليل التعبير التربيعي:**\n\n' +
                 'التعبير: ' + a + 'x² ' + (b >= 0 ? '+ ' + b : '- ' + Math.abs(b)) + 'x ' + (c >= 0 ? '+ ' + c : '- ' + Math.abs(c)) + '\n';
-      
+
       if(roots){
         if(roots.r1 === roots.r2){
           out += '✅ **تحليل:** ' + (a===1?'':a) + '(x ' + (roots.r1<0?'+ '+Math.abs(roots.r1):'- '+roots.r1) + ')²\n';
@@ -4488,13 +3762,12 @@ function initSuperFactor(){
     return '🤔 مش لاقي إجابة.';
   };
 
-  console.log('✅ Super Factor Unit Loaded (Fixed)');
 }
 
 initSuperFactor();
 })();
 </script>
-  <script>
+<script>
 /* ═══════════════════════════════════════════════════════
    YasEdu — Enhanced Quiz Generator (Gemini + Smart Local)
    ═══════════════════════════════════════════════════════ */
@@ -4507,9 +3780,8 @@ function initEnhancedQuiz(){
   var Session = window.App.session;
   var U = window.App.utils;
   var UI = window.App.ui;
-  
+
   // الرابط بتاع سيرفرك
-  var SERVER = 'https://yasedu-premium.mbadrhashbal.workers.dev';
 
   // نحفظ الدالة الأصلية
   var originalGenerate = window.Quiz.generate;
@@ -4517,7 +3789,7 @@ function initEnhancedQuiz(){
   window.Quiz.generate = async function(){
     var textEl = U.$('quiz-text');
     var text = textEl ? textEl.value.trim() : '';
-    
+
     if(!text || text.length < 80){
       UI.toast('الصق نصاً تعليمياً (80 حرف على الأقل)', 'error');
       return;
@@ -4536,17 +3808,17 @@ function initEnhancedQuiz(){
       var quizType = U.$('quiz-type-sel') ? U.$('quiz-type-sel').value : 'mcq';
 
       try {
-        var res = await fetch(SERVER, {
+        var res = await fetch(window.YAS_SERVER, {
           method: 'POST',
           body: JSON.stringify({ type: 'quiz', text: text, count: count, quizType: quizType })
         });
-        
+
         if(!res.ok) throw new Error('فشل الاتصال بالسيرفر');
         var data = await res.json();
         if(data.error) throw new Error(data.error);
-        
+
         if(!data.questions || !data.questions.length) throw new Error('لم يتم توليد أسئلة');
-        
+
         // تحويل الأسئلة لشكل المنصة
         window.Quiz.questions = data.questions.map(function(q){
           return {
@@ -4556,17 +3828,17 @@ function initEnhancedQuiz(){
             options: q.options || []
           };
         });
-        
+
         window.Quiz.mode = 'auto';
         window.Quiz.curQ = 0;
         window.Quiz.score = 0;
         window.Quiz.attempted = [];
-        
+
         U.$('quiz-setup').style.display = 'none';
         U.$('quiz-run').style.display = 'block';
         window.Quiz.renderQuestion();
         UI.toast('✅ تم توليد الأسئلة بواسطة Gemini', 'success');
-        
+
       } catch(err) {
         UI.toast('خطأ: ' + err.message, 'error');
       } finally {
@@ -4583,23 +3855,23 @@ function initEnhancedQuiz(){
       try {
         var count = parseInt(U.$('quiz-count').value) || 5;
         var quizType = U.$('quiz-type-sel') ? U.$('quiz-type-sel').value : 'mcq';
-        
+
         // توليد أسئلة محلية (محسنة)
         var questions = smartGenerate(text, count, quizType);
-        
+
         if(questions.length < 3) throw new Error('النص قصير جداً، جرب نص أطول');
-        
+
         window.Quiz.questions = questions;
         window.Quiz.mode = 'auto';
         window.Quiz.curQ = 0;
         window.Quiz.score = 0;
         window.Quiz.attempted = [];
-        
+
         U.$('quiz-setup').style.display = 'none';
         U.$('quiz-run').style.display = 'block';
         window.Quiz.renderQuestion();
         UI.toast('✅ تم توليد ' + questions.length + ' سؤال', 'success');
-        
+
       } catch(err) {
         UI.toast('خطأ: ' + err.message, 'error');
       } finally {
@@ -4630,7 +3902,7 @@ function initEnhancedQuiz(){
         // استخراج الكلمات (أطول من 4 حروف)
         var words = sen.split(/\s+/).map(function(w){ return w.replace(/[،,.!؟:;]/g, ''); }).filter(function(w){ return w.length >= 4; });
         if(!words.length) continue;
-        
+
         // اختار أطول كلمة كإجابة
         words.sort(function(a,b){ return b.length - a.length; });
         var keyword = words[0];
@@ -4684,7 +3956,7 @@ function initEnhancedQuiz(){
             options: options
           };
         }
-        
+
         if(question) questions.push(question);
       }
     }
@@ -4709,13 +3981,12 @@ function initEnhancedQuiz(){
     return questions.slice(0, count);
   }
 
-  console.log('✅ Enhanced Quiz Generator Loaded');
 }
 
 initEnhancedQuiz();
 })();
 </script>
-  <script>
+<script>
 /* ═══════════════════════════════════════════════════════
    YasEdu — Fully Custom Quiz Generator
    ═══════════════════════════════════════════════════════ */
@@ -4728,18 +3999,17 @@ function initFullyCustomQuiz(){
   var Session = window.App.session;
   var U = window.App.utils;
   var UI = window.App.ui;
-  var SERVER_URL = 'https://yasedu-premium.mbadrhashbal.workers.dev';
 
   // 1. تعديل واجهة شاشة الاختبارات عشان نضيف خانة "الطلب المخصص"
   var originalQuizScreen = window.Router.routes.quiz;
   window.Router.routes.quiz = function(){
     var html = originalQuizScreen();
-    
+
     // نغير شكل الـ select القديم ونضيف خانة طلب مخصص
-    var customUI = 
+    var customUI =
       '<div class="card" style="margin-bottom:14px;border:2px solid var(--brand);background:linear-gradient(135deg, rgba(99,102,241,.05), rgba(245,158,11,.05))">'+
       '<div style="font-size:15px;font-weight:800;margin-bottom:8px">🎯 إعدادات الأسئلة</div>'+
-      
+
       // الاختيار بين "تلقائي بالكامل" أو "تحديد النوع"
       '<div style="display:flex;gap:6px;padding:4px;background:var(--p-100);border-radius:10px;margin-bottom:14px">'+
       '<button id="mode-auto" class="btn btn-sm" style="flex:1" onclick="window.toggleQuizMode(\'auto\')">🤖 توليد تلقائي</button>'+
@@ -4759,7 +4029,7 @@ function initFullyCustomQuiz(){
       // الوضع المخصص: إدخال يدوي للعدد المطلوب من كل نوع
       '<div id="quiz-config-custom" style="display:none">'+
       '<div style="font-size:12px;color:var(--text-2);margin-bottom:10px;font-weight:600">حدد عدد الأسئلة من كل نوع اللي إنت عايزه:</div>'+
-      
+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'+
       '<div style="background:var(--surface);border:1px solid var(--border);padding:10px;border-radius:8px;text-align:center">'+
       '<div style="font-size:11px;font-weight:700;margin-bottom:4px">اختيار متعدد</div>'+
@@ -4795,7 +4065,7 @@ function initFullyCustomQuiz(){
     var customPanel = U.$('quiz-config-custom');
     var autoBtn = U.$('mode-auto');
     var customBtn = U.$('mode-custom');
-    
+
     if(mode === 'custom'){
       if(autoPanel) autoPanel.style.display = 'none';
       if(customPanel) customPanel.style.display = 'block';
@@ -4815,7 +4085,7 @@ function initFullyCustomQuiz(){
   window.Quiz.generate = async function(){
     var textEl = U.$('quiz-text');
     var text = textEl ? textEl.value.trim() : '';
-    
+
     if(!text || text.length < 80){
       UI.toast('الصق نصاً تعليمياً (80 حرف على الأقل)', 'error');
       return;
@@ -4842,9 +4112,9 @@ function initFullyCustomQuiz(){
       var tfCount = parseInt(U.$('custom-tf-count').value) || 0;
       var fbCount = parseInt(U.$('custom-fb-count').value) || 0;
       var expCount = parseInt(U.$('custom-explain-count').value) || 0;
-      
+
       var totalCount = mcqCount + tfCount + fbCount + expCount;
-      
+
       if(totalCount === 0) {
         UI.toast('حدد عدد سؤال واحد على الأقل', 'error');
         return;
@@ -4868,28 +4138,28 @@ function initFullyCustomQuiz(){
         prompt += 'fillblank أو explain: options = [].\n';
 
         try {
-          var res = await fetch(SERVER_URL, {
+          var res = await fetch(window.YAS_SERVER, {
             method: 'POST',
             body: JSON.stringify({ type: 'quiz', message: prompt })
           });
-          
+
           if(!res.ok) throw new Error('فشل الاتصال');
           var data = await res.json();
           if(data.error) throw new Error(data.error);
-          
+
           if(!data.questions || !data.questions.length) throw new Error('لم يتم توليد أسئلة');
-          
+
           window.Quiz.questions = data.questions;
           window.Quiz.mode = 'auto';
           window.Quiz.curQ = 0;
           window.Quiz.score = 0;
           window.Quiz.attempted = [];
-          
+
           U.$('quiz-setup').style.display = 'none';
           U.$('quiz-run').style.display = 'block';
           window.Quiz.renderQuestion();
           UI.toast('✅ تم توليد ' + data.questions.length + ' سؤال', 'success');
-          
+
         } catch(err) {
           UI.toast('خطأ: ' + err.message, 'error');
         } finally {
@@ -4905,12 +4175,12 @@ function initFullyCustomQuiz(){
         setTimeout(function(){
           try {
             var questions = [];
-            
+
             if(mcqCount > 0) questions = questions.concat(generateLocal(text, mcqCount, 'mcq'));
             if(tfCount > 0) questions = questions.concat(generateLocal(text, tfCount, 'truefalse'));
             if(fbCount > 0) questions = questions.concat(generateLocal(text, fbCount, 'fillblank'));
             if(expCount > 0) questions = questions.concat(generateLocal(text, expCount, 'explain'));
-            
+
             // خلط الأسئلة
             for(var i = questions.length - 1; i > 0; i--) {
               var j = Math.floor(Math.random() * (i + 1));
@@ -4918,18 +4188,18 @@ function initFullyCustomQuiz(){
             }
 
             if(questions.length === 0) throw new Error('النص مش كفاية');
-            
+
             window.Quiz.questions = questions;
             window.Quiz.mode = 'auto';
             window.Quiz.curQ = 0;
             window.Quiz.score = 0;
             window.Quiz.attempted = [];
-            
+
             U.$('quiz-setup').style.display = 'none';
             U.$('quiz-run').style.display = 'block';
             window.Quiz.renderQuestion();
             UI.toast('✅ تم توليد ' + questions.length + ' سؤال', 'success');
-            
+
           } catch(err) {
             UI.toast('خطأ: ' + err.message, 'error');
           } finally {
@@ -4989,7 +4259,6 @@ function initFullyCustomQuiz(){
     return questions;
   }
 
-  console.log('✅ Fully Custom Quiz Loaded');
 }
 
 initFullyCustomQuiz();
@@ -5010,20 +4279,19 @@ initFullyCustomQuiz();
 
 function hideManualQuiz(){
   if(!window.Quiz || !window.App){ setTimeout(hideManualQuiz, 500); return; }
-  
+
   // إلغاء أي وظائف للوضع اليدوي
   window.Quiz.setMode = function(){};
   window.Quiz.addManualQ = function(){};
   window.Quiz.removeManualQ = function(){};
   window.Quiz.startManual = function(){};
 
-  console.log('✅ Manual Quiz Mode removed permanently');
 }
 
 hideManualQuiz();
 })();
 </script>
-  <script>
+<script>
 /* ═══════════════════════════════════════════════════════
    YasEdu — Speed Booster (Prefetch & Preconnect)
    ═══════════════════════════════════════════════════════ */
@@ -5043,7 +4311,7 @@ preconnect('https://fonts.googleapis.com');
 preconnect('https://fonts.gstatic.com', true);
 preconnect('https://www.gstatic.com', true);
 preconnect('https://aaaa-c3572-default-rtdb.europe-west1.firebasedatabase.app', true);
-preconnect('https://yasedu-premium.mbadrhashbal.workers.dev', true);
+preconnect(window.YAS_SERVER, true);
 
 // 2. تحميل مسبق لخط Cairo (عشان يظهر بسرعة)
 var fontLink = document.createElement('link');
@@ -5059,10 +4327,9 @@ firebaseLink.as = 'script';
 firebaseLink.href = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
 document.head.appendChild(firebaseLink);
 
-console.log('🚀 Speed Boost Active');
 })();
 </script>
-  <script>
+<script>
 /* ═══════════════════════════════════════════════════════
    YasEdu — Fix Custom Quiz Mode (Second Button)
    ═══════════════════════════════════════════════════════ */
@@ -5074,7 +4341,6 @@ setTimeout(function(){
 
   var U = window.App.utils;
   var UI = window.App.ui;
-  var SERVER = 'https://yasedu-premium.mbadrhashbal.workers.dev';
 
   // 1. تفعيل الزرار التاني (تخصيص كامل)
   window.toggleQuizMode = function(mode){
@@ -5082,7 +4348,7 @@ setTimeout(function(){
     var customPanel = U.$('quiz-config-custom');
     var autoBtn = U.$('mode-auto');
     var customBtn = U.$('mode-custom');
-    
+
     if(mode === 'custom'){
       if(autoPanel) autoPanel.style.display = 'none';
       if(customPanel) customPanel.style.display = 'block';
@@ -5100,7 +4366,7 @@ setTimeout(function(){
   window.Quiz.generate = async function(){
     var textEl = U.$('quiz-text') || document.querySelector('textarea');
     var text = textEl ? textEl.value.trim() : '';
-    
+
     if(!text || text.length < 30){
       UI.toast('اكتب نص الأول (30 حرف على الأقل)', 'error');
       return;
@@ -5124,9 +4390,9 @@ setTimeout(function(){
         var tfCount = parseInt(U.$('custom-tf-count').value) || 0;
         var fbCount = parseInt(U.$('custom-fb-count').value) || 0;
         var expCount = parseInt(U.$('custom-explain-count').value) || 0;
-        
+
         totalNeeded = mcqCount + tfCount + fbCount + expCount;
-        
+
         if(totalNeeded === 0){
           UI.toast('حدد عدد سؤال واحد على الأقل', 'error');
           if(btn){ btn.disabled = false; btn.innerHTML = '✨ توليد الأسئلة'; }
@@ -5143,7 +4409,7 @@ setTimeout(function(){
         prompt += '\nصيغة JSON: [{"type":"mcq","question":"...","options":[],"answer":"..."}]\n';
         prompt += 'أنواع: mcq, truefalse, fillblank, explain.';
 
-        var res = await fetch(SERVER, {
+        var res = await fetch(window.YAS_SERVER, {
           method: 'POST',
           body: JSON.stringify({ type: 'quiz', message: prompt })
         });
@@ -5207,7 +4473,7 @@ setTimeout(function(){
         prompt += 'المطلوب: ' + count + ' أسئلة. النوع: ' + quizType + '.\n';
         prompt += 'صيغة: [{"question":"...","options":[],"answer":"..."}]';
 
-        var res = await fetch(SERVER, {
+        var res = await fetch(window.YAS_SERVER, {
           method: 'POST',
           body: JSON.stringify({ type: 'quiz', message: prompt })
         });
@@ -5242,7 +4508,7 @@ setTimeout(function(){
       U.$('quiz-setup').style.display = 'none';
       U.$('quiz-run').style.display = 'block';
       window.Quiz.renderQuestion();
-      
+
       UI.toast('✅ ' + finalQuestions.length + ' سؤال', 'success');
 
     } catch(err) {
@@ -5252,7 +4518,6 @@ setTimeout(function(){
     }
   };
 
-  console.log('✅ Both Quiz Modes Working');
 }, 1000);
 })();
 </script>
