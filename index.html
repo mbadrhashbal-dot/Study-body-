@@ -4521,5 +4521,555 @@ setTimeout(function(){
 }, 1000);
 })();
 </script>
+   <!-- ═══════════════════════════════════════════════════════════
+     YasEdu — Super Bot Enhancer v2
+     (عرض المعادلات + Markdown + Gemini + نسخ)
+     ═══════════════════════════════════════════════════════════ -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<style>
+/* ─── Chat Bubbles ─── */
+.msg:not(.mine) .msg-content { max-width: 88%; }
+.msg-bubble { overflow-wrap: break-word; word-break: break-word; }
+
+/* ─── KaTeX ─── */
+.msg-bubble .katex { font-size: 1em; direction: ltr; }
+.math-block, .msg-bubble .katex-display {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: rgba(99,102,241,.06);
+  border: 1px solid rgba(99,102,241,.15);
+  border-radius: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.msg.mine .math-block, .msg.mine .msg-bubble .katex-display {
+  background: rgba(255,255,255,.15);
+  border-color: rgba(255,255,255,.25);
+}
+.math-block::-webkit-scrollbar, .msg-bubble .katex-display::-webkit-scrollbar { height: 4px; }
+.math-block::-webkit-scrollbar-thumb, .msg-bubble .katex-display::-webkit-scrollbar-thumb { background: rgba(99,102,241,.3); border-radius: 2px; }
+
+/* ─── Markdown Elements ─── */
+.msg-bubble p { margin: 0 0 8px; }
+.msg-bubble p:last-child { margin-bottom: 0; }
+.msg-bubble ul, .msg-bubble ol { margin: 8px 0; padding-right: 22px; }
+.msg-bubble li { margin-bottom: 4px; }
+.msg-bubble h1, .msg-bubble h2, .msg-bubble h3 { margin: 12px 0 8px; font-weight: 800; }
+.msg-bubble h1 { font-size: 1.3em; }
+.msg-bubble h2 { font-size: 1.15em; }
+.msg-bubble h3 { font-size: 1.05em; }
+.msg-bubble strong { font-weight: 800; }
+.msg-bubble em { font-style: italic; }
+.msg-bubble blockquote {
+  border-right: 3px solid var(--brand, #6366F1);
+  padding: 4px 12px;
+  margin: 8px 0;
+  background: rgba(99,102,241,.06);
+  border-radius: 6px;
+  font-style: italic;
+}
+.msg-bubble code {
+  background: rgba(0,0,0,.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: .9em;
+  direction: ltr;
+  display: inline-block;
+}
+.msg.mine .msg-bubble code { background: rgba(255,255,255,.2); }
+.msg-bubble pre {
+  background: rgba(0,0,0,.06);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+  direction: ltr;
+  text-align: left;
+}
+.msg-bubble pre code { background: none; padding: 0; font-size: .88em; }
+.msg-bubble table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+  font-size: .9em;
+}
+.msg-bubble th, .msg-bubble td {
+  border: 1px solid var(--border, #E2E8F0);
+  padding: 6px 10px;
+  text-align: right;
+}
+.msg-bubble th { background: rgba(99,102,241,.06); font-weight: 800; }
+
+/* ─── زرار النسخ ─── */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--p-100, #F1F5F9);
+  border: 1px solid var(--border, #E2E8F0);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-2, #475569);
+  transition: all .15s;
+}
+.copy-btn:hover { background: var(--p-200, #E2E8F0); transform: translateY(-1px); }
+.msg.mine .copy-btn { background: rgba(255,255,255,.2); color: #fff; border-color: rgba(255,255,255,.3); }
+
+/* ─── Mobile ─── */
+@media (max-width: 640px) {
+  .msg:not(.mine) .msg-content { max-width: 92%; }
+  .math-block, .msg-bubble .katex-display { padding: 6px 8px; margin: 6px 0; }
+  .msg-bubble .katex { font-size: .95em; }
+}
+</style>
+
+<script>
+(function(){
+'use strict';
+
+/* ═══════════════════════════════════════════════════
+   في انتظار تحميل كل المكونات
+   ═══════════════════════════════════════════════════ */
+function waitFor(conditions, cb, tries) {
+  tries = tries || 0;
+  if (tries > 100) { console.warn('Timeout waiting'); return; }
+  var ok = true;
+  for (var i = 0; i < conditions.length; i++) {
+    if (!conditions[i]()) { ok = false; break; }
+  }
+  if (ok) cb();
+  else setTimeout(function() { waitFor(conditions, cb, tries + 1); }, 200);
+}
+
+waitFor([
+  function() { return window.Bot && window.App; },
+  function() { return typeof katex !== 'undefined'; },
+  function() { return typeof renderMathInElement !== 'undefined'; },
+  function() { return document.getElementById('bot-body'); }
+], function() {
+  console.log('✅ [Super Bot] مكونات جاهزة');
+
+  /* ═══════════════════════════════════════════════════
+     1) محرك تحويل Markdown + LaTeX
+     ═══════════════════════════════════════════════════ */
+  function formatMessage(text) {
+    if (!text) return '';
+
+    // Normalize
+    var html = String(text).replace(/\r\n/g, '\n');
+
+    // Escape HTML الأساسي (المش هيتم كسره)
+    // لكن نسيب $$ و $ عشان KaTeX يشتغل
+    var temp = document.createElement('div');
+    temp.textContent = html;
+    var safe = temp.innerHTML;
+
+    // 1) Code blocks ```...```
+    safe = safe.replace(/```([\s\S]+?)```/g, function(_, code) {
+      return '<pre><code>' + code.trim() + '</code></pre>';
+    });
+
+    // 2) Inline code `...`
+    safe = safe.replace(/`([^`\n]+?)`/g, '<code>$1</code>');
+
+    // 3) Headers
+    safe = safe.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    safe = safe.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    safe = safe.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // 4) Bold & Italic
+    safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    safe = safe.replace(/(?<!\*)\*([^\*\n]+?)\*(?!\*)/g, '<em>$1</em>');
+    safe = safe.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+    // 5) Blockquotes
+    safe = safe.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // 6) القوائم النقطية
+    safe = safe.replace(/^[\s]*[-•]\s+(.+)$/gm, '<li>$1</li>');
+    // لف الـ li المتتالية في ul
+    safe = safe.replace(/(<li>[\s\S]*?<\/li>)(?![\s\S]*?<li>)/g, function(m) {
+      // بس لو مش داخل ul
+      return '<ul>' + m + '</ul>';
+    });
+    safe = safe.replace(/<\/ul>\s*<ul>/g, '');
+
+    // 7) القوائم المرقمة
+    safe = safe.replace(/^[\s]*(\d+)\.\s+(.+)$/gm, '<li>$2</li>');
+
+    // 8) Links [text](url)
+    safe = safe.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+    // 9) Line breaks
+    safe = safe.replace(/\n\n/g, '<br><br>');
+    safe = safe.replace(/\n/g, '<br>');
+    safe = safe.replace(/(<br>){3,}/g, '<br><br>');
+
+    // 10) شيل <br> الجانب العناصر block
+    safe = safe.replace(/<br><(h[1-6]|ul|ol|li|pre|blockquote|table|div)/g, '<$1');
+    safe = safe.replace(/<\/(h[1-6]|ul|ol|li|pre|blockquote|table|div)><br>/g, '</$1>');
+
+    return safe;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     2) عرض المعادلات بـ KaTeX
+     ═══════════════════════════════════════════════════ */
+  function renderMath(el) {
+    if (!el || !renderMathInElement) return;
+    try {
+      renderMathInElement(el, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\(', right: '\\)', display: false }
+        ],
+        throwOnError: false,
+        errorColor: '#EF4444',
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'a']
+      });
+    } catch(e) {
+      console.warn('[Super Bot] KaTeX error:', e);
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     3) تحسين رسالة البوت (اللي جايه من أي مصدر)
+     ═══════════════════════════════════════════════════ */
+  function enhanceBotMessage(msgEl, rawText) {
+    if (!msgEl || msgEl.dataset.enhanced) return;
+
+    var bubble = msgEl.querySelector('.msg-bubble');
+    if (!bubble) return;
+
+    // لو اتحسنت قبل كده، اخرج
+    if (bubble.querySelector('.katex') || bubble.querySelector('ul') || bubble.querySelector('strong')) {
+      msgEl.dataset.enhanced = '1';
+      return;
+    }
+
+    // خد النص الخام
+    rawText = rawText || bubble.textContent || '';
+    if (!rawText.trim()) return;
+
+    // لو فيه علامات تستاهل التحسين
+    var needsEnhance = /\$\$|\\\[|\\\(|(?<!\$)\$(?!\$)|^\s*[-•*]\s|^\s*\d+\.\s|\*\*|```|^#+ |^&gt; /m.test(rawText);
+    if (!needsEnhance) {
+      msgEl.dataset.enhanced = '1';
+      return;
+    }
+
+    // حسّن
+    bubble.innerHTML = formatMessage(rawText);
+    renderMath(bubble);
+
+    msgEl.dataset.enhanced = '1';
+    console.log('✨ [Super Bot] تحسنت رسالة');
+  }
+
+  /* ═══════════════════════════════════════════════════
+     4) ضيف زرار النسخ
+     ═══════════════════════════════════════════════════ */
+  function addCopyButton(msgEl, rawText) {
+    if (!msgEl || msgEl.querySelector('.copy-btn')) return;
+
+    var content = msgEl.querySelector('.msg-content');
+    if (!content) return;
+
+    var actions = content.querySelector('.msg-actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'msg-actions';
+      actions.style.opacity = '1';
+      content.appendChild(actions);
+    }
+
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = '📋 نسخ';
+    btn.onclick = function() {
+      var txt = rawText || (content.querySelector('.msg-bubble') || {}).textContent || '';
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(txt).then(function() {
+          btn.textContent = '✅ تم النسخ';
+          setTimeout(function() { btn.textContent = '📋 نسخ'; }, 1500);
+          if (window.App.ui) window.App.ui.toast('تم النسخ', 'success');
+        }).catch(function() {
+          btn.textContent = '❌ فشل';
+          setTimeout(function() { btn.textContent = '📋 نسخ'; }, 1500);
+        });
+      }
+    };
+    actions.appendChild(btn);
+  }
+
+  /* ═══════════════════════════════════════════════════
+     5) راقب الرسائل الجديدة
+     ═══════════════════════════════════════════════════ */
+  var botBody = document.getElementById('bot-body');
+
+  function processAllMessages() {
+    botBody.querySelectorAll('.msg:not(.mine)').forEach(function(msg) {
+      // خد النص الخام من bubble قبل التحسين
+      var bubble = msg.querySelector('.msg-bubble');
+      var rawText = bubble && !msg.dataset.enhanced ? bubble.textContent : msg.dataset.rawText;
+
+      // لو الرسالة محسّنة، استخدم rawText المحفوظ
+      if (msg.dataset.enhanced && msg.dataset.rawText) {
+        addCopyButton(msg, msg.dataset.rawText);
+        return;
+      }
+
+      if (rawText && rawText.trim()) {
+        msg.dataset.rawText = rawText;
+        enhanceBotMessage(msg, rawText);
+        addCopyButton(msg, rawText);
+      }
+    });
+  }
+
+  // Observer
+  var observer = new MutationObserver(function() {
+    setTimeout(processAllMessages, 100);
+  });
+  observer.observe(botBody, { childList: true, subtree: true });
+
+  // Initial
+  setTimeout(processAllMessages, 300);
+
+  /* ═══════════════════════════════════════════════════
+     6) تعديل Bot.send عشان يدعم Gemini
+     ═══════════════════════════════════════════════════ */
+  var originalSend = window.Bot.send;
+  var WORKER_URL = 'https://yasedu-premium.mbadrhashbal.workers.dev';
+
+  window.Bot.send = async function() {
+    var inp = document.getElementById('bot-input');
+    var text = inp && inp.value.trim();
+    if (!text) return;
+
+    var body = document.getElementById('bot-body');
+    var s = window.App.state.user;
+    var plan = window.App.session.getPlan();
+    var planData = window.App.plans[plan];
+
+    // حد الرسائل
+    var today = new Date().toDateString();
+    var usageKey = 'yasedu_ai_usage_' + today;
+    var used = parseInt(localStorage.getItem(usageKey) || '0', 10);
+    var limit = planData.aiMsgs || 10;
+
+    if (used >= limit) {
+      window.App.ui.toast('وصلت للحد اليومي (' + limit + '). ترقّى للمزيد!', 'warning', 4000);
+      return;
+    }
+
+    // مسج المستخدم
+    var userRow = document.createElement('div');
+    userRow.className = 'msg mine';
+    userRow.innerHTML = '<div class="msg-avatar">' + window.App.utils.initials(s.name) + '</div>' +
+      '<div class="msg-content"><div class="msg-bubble">' + window.App.utils.esc(text) + '</div></div>';
+    body.appendChild(userRow);
+    body.scrollTop = body.scrollHeight;
+    inp.value = '';
+
+    // مؤشر
+    var typingRow = document.createElement('div');
+    typingRow.className = 'msg';
+    typingRow.innerHTML = '<div class="msg-avatar" style="background:linear-gradient(135deg,var(--brand),var(--brand-dark));font-size:16px">🤖</div>' +
+      '<div class="msg-content"><div class="msg-bubble" style="display:flex;align-items:center;gap:8px"><span class="spinner"></span> يفكر...</div></div>';
+    body.appendChild(typingRow);
+    body.scrollTop = body.scrollHeight;
+
+    try {
+      var reply;
+
+      // Premium → Gemini
+      if (plan === 'premium' && WORKER_URL) {
+        try {
+          var res = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: text,
+              history: (window.Bot._history || []).slice(-10)
+            })
+          });
+          if (!res.ok) throw new Error('server:' + res.status);
+          var data = await res.json();
+          if (data.error) throw new Error(data.error);
+          reply = data.reply || 'ما فيش رد';
+        } catch(geminiErr) {
+          console.warn('[Super Bot] Gemini failed, fallback:', geminiErr);
+          reply = localReply(text);
+        }
+      } else {
+        reply = localReply(text);
+      }
+
+      typingRow.remove();
+
+      // أنشئ رسالة البوت
+      var botRow = document.createElement('div');
+      botRow.className = 'msg';
+      botRow.dataset.rawText = reply;
+      botRow.innerHTML = '<div class="msg-avatar" style="background:linear-gradient(135deg,var(--brand),var(--brand-dark));font-size:16px">🤖</div>' +
+        '<div class="msg-content"><div class="msg-bubble">' + formatMessage(reply) + '</div></div>';
+
+      body.appendChild(botRow);
+      renderMath(botRow.querySelector('.msg-bubble'));
+      addCopyButton(botRow, reply);
+      botRow.dataset.enhanced = '1';
+      body.scrollTop = body.scrollHeight;
+
+      // سجل + XP + Usage
+      if (!window.Bot._history) window.Bot._history = [];
+      window.Bot._history.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
+      if (window.Bot._history.length > 20) window.Bot._history = window.Bot._history.slice(-20);
+
+      if (window.Session) window.Session.addXP(1);
+      localStorage.setItem(usageKey, String(used + 1));
+
+    } catch(err) {
+      typingRow.remove();
+      var errRow = document.createElement('div');
+      errRow.className = 'msg';
+      errRow.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-content"><div class="msg-bubble" style="color:var(--red)">عذراً: ' + window.App.utils.esc(err.message) + '</div></div>';
+      body.appendChild(errRow);
+      body.scrollTop = body.scrollHeight;
+    }
+  };
+
+  /* ═══════════════════════════════════════════════════
+     7) Fallback محلي (لو Gemini فشل)
+     ═══════════════════════════════════════════════════ */
+  function localReply(text) {
+    var t = text.toLowerCase().trim();
+
+    // تحية
+    if (/^(مرحبا|السلام|اهلا|هلا|hi|hello|صباح|مساء)/.test(t)) {
+      var h = new Date().getHours();
+      var g = h < 12 ? 'صباح الخير ☀️' : h < 18 ? 'أهلاً وسهلاً 👋' : 'مساء النور 🌙';
+      return g + '\n\nأنا **مساعد YasEdu** 🤖\nاسألني عن أي مادة تعليمية!';
+    }
+
+    // شكر
+    if (/شكر|thanks|تسلم/.test(t)) return 'العفو! 😊 سعيد بمساعدتك.';
+
+    // من أنت
+    if (/من انت|اسمك|who are you/.test(t)) {
+      return 'أنا **مساعد YasEdu** 🤖\n\nطورني **ياسر محمد** (ياس ستوديو).\n\nاستخدم:\n• "٥ + ٣" لحساب\n• "نصيحة مذاكرة"\n• "الفرق بين X و Y"';
+    }
+
+    // نصائح
+    if (/نصيح|نصائح|مذاكرة/.test(t)) {
+      var tips = [
+        '⏱️ **بومودورو:** 25 دقيقة تركيز + 5 راحة',
+        '🔁 **التكرار المتباعد:** راجع بعد يوم → أسبوع → شهر',
+        '😴 **النوم:** الدماغ يثبّت المعلومات أثناء النوم',
+        '📵 **ابعد الموبايل** وقت المذاكرة (يقلل التركيز 60%)',
+        '✏️ **الكتابة باليد** تعزز الاستيعاب'
+      ];
+      return '💡 **نصيحة:**\n\n' + tips[Math.floor(Math.random() * tips.length)];
+    }
+
+    // مقارنة
+    if (/الفرق بين/.test(text)) {
+      var m = text.match(/الفرق\s*بين\s*(.+?)\s*(?:و|vs|and)\s*(.+)/i);
+      if (m) {
+        return '⚖️ **المقارنة بين "' + m[1].trim() + '" و "' + m[2].trim() + '":**\n\n' +
+          '🔹 **' + m[1].trim() + ':** له خصائصه واستخداماته\n' +
+          '🔸 **' + m[2].trim() + ':** له خصائصه واستخداماته\n\n' +
+          '📌 كل واحد ليه دور مختلف.';
+      }
+    }
+
+    // معادلة: ax^2 + bx + c = 0
+    var quad = text.match(/(-?\d*\.?\d*)\s*x\s*[\^]?\s*2?\s*([+\-]\s*\d*\.?\d*)\s*x\s*([+\-]\s*\d+)?\s*=\s*(-?\d+)/i);
+    if (quad) {
+      var a = parseFloat(quad[1] || '1') || 1;
+      var b = parseFloat((quad[2] || '+0').replace(/\s/g, ''));
+      var c = parseFloat((quad[3] || '+0').replace(/\s/g, ''));
+      var eqRight = parseFloat(quad[4]);
+      c = c - eqRight;
+      var disc = b*b - 4*a*c;
+      var sol = '📐 **حل المعادلة التربيعية:**\n\n';
+      sol += '$$' + a + 'x^2 ' + (b>=0?'+ '+b:'- '+Math.abs(b)) + 'x ' + (c>=0?'+ '+c:'- '+Math.abs(c)) + ' = 0$$\n\n';
+      sol += '**الخطوات:**\n';
+      sol += '- a = ' + a + '، b = ' + b + '، c = ' + c + '\n';
+      sol += '- Δ = b² - 4ac = ' + disc + '\n';
+      if (disc > 0) {
+        var x1 = (-b + Math.sqrt(disc)) / (2*a);
+        var x2 = (-b - Math.sqrt(disc)) / (2*a);
+        sol += '\n✅ **الحلول:**\n\n$$x_1 = ' + round(x1) + '$$\n$$x_2 = ' + round(x2) + '$$';
+      } else if (disc === 0) {
+        sol += '\n✅ **حل واحد:** $$x = ' + round(-b/(2*a)) + '$$';
+      } else {
+        sol += '\n⚠️ **Δ < 0** — لا حلول حقيقية (حلول مركبة).';
+      }
+      return sol;
+    }
+
+    // معادلة خطية: ax + b = c
+    var lin = text.match(/(-?\d*\.?\d*)\s*x\s*([+\-]\s*\d*\.?\d+)?\s*=\s*(-?\d+)/i);
+    if (lin) {
+      var la = parseFloat(lin[1] || '1') || 1;
+      var lb = parseFloat((lin[2] || '+0').replace(/\s/g, ''));
+      var lc = parseFloat(lin[3]);
+      var lx = (lc - lb) / la;
+      return '📐 **حل المعادلة الخطية:**\n\n' +
+        '$$' + la + 'x ' + (lb>=0?'+ '+lb:'- '+Math.abs(lb)) + ' = ' + lc + '$$\n\n' +
+        '**الخطوات:**\n' +
+        '- ننقل ' + Math.abs(lb) + ' للطرف الآخر\n' +
+        '- $$' + la + 'x = ' + (lc - lb) + '$$\n' +
+        '- نقسم على ' + la + '\n\n' +
+        '✅ $$x = ' + round(lx) + '$$';
+    }
+
+    // عمليات حسابية بسيطة
+    var basic = text.replace(/\s+/g, '').match(/(-?\d+(?:\.\d+)?)([+\-*/])(-?\d+(?:\.\d+)?)/);
+    if (basic) {
+      var av = parseFloat(basic[1]), op = basic[2], bv = parseFloat(basic[3]), r;
+      if (op==='+') r = av+bv;
+      else if (op==='-') r = av-bv;
+      else if (op==='*') r = av*bv;
+      else r = bv !== 0 ? av/bv : 'غير معرّف';
+      return '🧮 **' + av + ' ' + op + ' ' + bv + ' = ' + r + '**';
+    }
+
+    // نسبة مئوية
+    var pct = text.match(/(\d+(?:\.\d+)?)%\s*(?:من|of)\s*(\d+(?:\.\d+)?)/);
+    if (pct) return '📊 **' + pct[1] + '% من ' + pct[2] + ' = ' + (parseFloat(pct[1])*parseFloat(pct[2])/100) + '**';
+
+    // Fallback
+    return '🤔 **مش لاقي إجابة محددة.**\n\n**جرب:**\n' +
+      '- "٣ + ٥"\n' +
+      '- "٢س + ٣ = ٧" (معادلة خطية)\n' +
+      '- "س² - ٥س + ٦ = ٠" (معادلة تربيعية)\n' +
+      '- "نصيحة مذاكرة"\n' +
+      '- "الفرق بين الجمع والضرب"\n' +
+      '- "من أنت"';
+  }
+
+  function round(n) {
+    return Math.round(n * 10000) / 10000;
+  }
+
+  console.log('✅ [Super Bot] كل شيء جاهز!');
+});
+})();
+</script>
 </body>
 </html>
